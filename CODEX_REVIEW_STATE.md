@@ -59,6 +59,15 @@ scope is explicitly verified.
 - Exact publication continuation: commit/push the CI runtime correction,
   inspect the new database release-gate run, fix any verified publication
   blocker, and record its final outcome here. The master audit remains open.
+- `VERIFIED`: Node 24 cleared the runtime failure on GitHub. Run 34186271771
+  then exposed an unresolved `allowBuilds` placeholder for the existing
+  `unrs-resolver` dependency. Its installed 1.12.2 postinstall was inspected:
+  it invokes `napi-postinstall` to prepare its platform binding. The package is
+  now explicitly allowed; no global script-policy bypass was added. CI path
+  filters include `pnpm-workspace.yaml` so future policy changes rerun the gate.
+  Fresh CI verification is pending. Two local package-inspection commands
+  failed to resolve the transitive module before resolving through its actual
+  ESLint parent; this did not change files or invalidate the retained checks.
 - `BLOCKED`: The VPS/self-hosted Supabase instance does not exist in this local
   workspace, so production signup, resend, recovery, remaining enabled Auth
   flows and real callback delivery require post-deploy verification. Resend DNS
