@@ -7,10 +7,11 @@ scope is explicitly verified.
 
 ## Current pass
 
-- Current requested task (2026-09-08): `IN PROGRESS` — publish the completed
-  project to the new public ExperimentalSkid/PenPals GitHub repository after
-  production-email validation and a source-only secret/privacy review. The
-  master audit below remains incomplete and its continuation is preserved.
+- Current requested task (2026-09-08): `VERIFIED` — project source published
+  to the public ExperimentalSkid/PenPals GitHub repository on `main` after
+  production-email validation and a source-only secret/privacy review.
+  Production VPS activation remains `BLOCKED` on deployment access/settings.
+  The master audit below remains incomplete and its continuation is preserved.
 - `FIXED` → `VERIFIED`: Production Auth-email code now targets the confirmed
   self-hosted Supabase Docker deployment, not hosted Supabase Management API.
   The existing Auth service uses Resend SMTP and a private, unexposed Caddy
@@ -51,23 +52,34 @@ scope is explicitly verified.
 - `VERIFIED`: Initial commit `1b208debf715ee4de8e46d058547ffc069a250f1`
   was pushed to `main` at https://github.com/ExperimentalSkid/PenPals. Remote
   and local commit IDs matched; GitHub uses `main` as its default branch.
-- `ISSUE FOUND` → `FIXED`, verification pending: first GitHub database CI run
+- `ISSUE FOUND` → `FIXED` → `VERIFIED`: first GitHub database CI run
   34186140745 failed during dependency installation because Node 20 cannot run
   pnpm 11 (`node:sqlite` unavailable). CI now selects Node 24, matching the
   validated local runtime; package engines and deployment docs record the
   minimum Node 22.13 requirement. No application dependency was changed.
-- Exact publication continuation: commit/push the CI runtime correction,
-  inspect the new database release-gate run, fix any verified publication
-  blocker, and record its final outcome here. The master audit remains open.
 - `VERIFIED`: Node 24 cleared the runtime failure on GitHub. Run 34186271771
   then exposed an unresolved `allowBuilds` placeholder for the existing
   `unrs-resolver` dependency. Its installed 1.12.2 postinstall was inspected:
   it invokes `napi-postinstall` to prepare its platform binding. The package is
   now explicitly allowed; no global script-policy bypass was added. CI path
   filters include `pnpm-workspace.yaml` so future policy changes rerun the gate.
-  Fresh CI verification is pending. Two local package-inspection commands
+  Fresh CI verification passed in run 34186417263. Two local package-inspection commands
   failed to resolve the transitive module before resolving through its actual
   ESLint parent; this did not change files or invalidate the retained checks.
+- `VERIFIED`: GitHub database release gate 34186417263 succeeded on source
+  commit `8a4da21ff7f7e0ff0e17df5837a826b47351cd74`. Clean dependency install,
+  fresh Supabase startup/application of all 244 migrations, incremental
+  migration check, schema lint, and history parity all passed. Schema lint
+  retained three existing extra warnings and no errors. Image-download rate
+  limits were retried successfully by the CLI. Existing GitHub action runtime
+  deprecation warnings did not fail the run. Local Docker remains unavailable;
+  this fresh database verification ran on GitHub's disposable runner.
+- Exact publication continuation: the source and CI corrections are pushed;
+  publish this documentation-only checkpoint and verify remote/local commit
+  equality. Next product work is the preserved master-audit continuation below.
+  For production email, obtain the VPS connection/public Supabase gateway URL,
+  configure the private deployment environment, and execute the documented
+  live Auth delivery/callback checks. A GitHub push does not deploy the VPS.
 - `BLOCKED`: The VPS/self-hosted Supabase instance does not exist in this local
   workspace, so production signup, resend, recovery, remaining enabled Auth
   flows and real callback delivery require post-deploy verification. Resend DNS
