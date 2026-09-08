@@ -63,11 +63,18 @@ scope is explicitly verified.
   External OAuth linking/TOTP credential changes and real account erasure were
   not performed in this final smoke pass. Local Vector logging transport is an
   existing Docker-host limitation; core app/Supabase services are healthy.
-- Exact continuation: local repairs are integrated and verified as above.
-  Publish this final source/checkpoint update to the already-authorized GitHub
-  repository and confirm remote/local equality. Future production verification
-  belongs to the user's deployment; do not restart this audit from historical
-  UNREVIEWED/BLOCKED entries without a new concrete scope.
+- `VERIFIED`: Source commit `f2c1552477eeacf1d65fb955765749760f0e6e1f`
+  was pushed to ExperimentalSkid/PenPals `main`; remote/local IDs matched and
+  the worktree was clean. The 11 changed files were reviewed for credentials;
+  none found. The first scan matched `re_` inside ordinary SQL identifiers;
+  inspecting those matches and anchoring credential prefixes resolved the
+  false positives before publication. No secret was removed or exposed.
+- Exact continuation: local repairs are integrated, verified and published.
+  This documentation-only handoff follows the verified source commit above.
+  Future production verification belongs to the user's deployment; do not
+  request server access or restart from historical UNREVIEWED/BLOCKED entries
+  without a new concrete scope. The separate legacy mixed-suite limitations
+  remain explicit above; no unfiltered full-suite success is claimed.
 
 ## Historical pass log
 
