@@ -1,5 +1,9 @@
 # Database release gate
 
+For an operator-run self-hosted VPS release, use the
+[production migration steps](production-deployment.md#3-apply-application-migrations-without-demo-data).
+The `--local` commands below validate development/CI, not the production database.
+
 Penpal pins the Supabase CLI used by validation to **2.116.0**. The wrapper in
 `scripts/supabase-cli.mjs` always invokes that exact version through `pnpm dlx`,
 so contributors and CI run the same CLI without installing a global binary or

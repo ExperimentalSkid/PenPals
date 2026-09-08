@@ -126,6 +126,10 @@ Settings → Login methods can link Google to an already authenticated account u
 
 ### Production authentication email
 
+Start with the [first VPS deployment checklist](docs/production-deployment.md)
+for the app, database migrations, private environment, worker and live checks.
+A GitHub push publishes source; it does not provision or deploy the VPS.
+
 Production uses **self-hosted Supabase Auth with Resend custom SMTP**. Supabase continues to own tokens and every authentication flow; no Resend SDK or parallel application sender is used. Local `supabase/config.toml`, Mailpit, and `.env.local` remain unchanged.
 
 The VPS loads the existing Supabase Docker environment plus the secret values below. Use the real externally reachable self-hosted Supabase URL; the repository does not guess it:

@@ -37,7 +37,8 @@ and `API_EXTERNAL_URL`. The Next.js build/runtime must set
 publishable and secret/service credentials from that self-hosted stack; do not
 reuse local values.
 
-Apply application migrations through the documented database release process.
+Follow the [VPS deployment checklist](production-deployment.md) for app startup,
+scheduled jobs and the database migration release process.
 Do not run `supabase/seed.sql` on the VPS: it creates local demonstration
 accounts with known development passwords.
 

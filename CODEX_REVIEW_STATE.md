@@ -7,6 +7,38 @@ scope is explicitly verified.
 
 ## Current pass
 
+### Deployment-readiness follow-up (2026-09-08)
+
+- `VERIFIED`: documentation-only handoff for the user's self-hosted VPS.
+  Added `docs/production-deployment.md`, linked from README and email/DB guides.
+  It covers environment separation, migration dry-run/apply without demo seed,
+  supervised build/start, scheduled worker, backups and controlled live checks.
+  Clarified the service-key comment in `.env.example`; no values, application
+  code, behavior, migrations, local Mailpit or running development server changed.
+- `FIXED` / `VERIFIED`: the email guide's previously undocumented production
+  database release step now has an explicit pinned-CLI procedure. Command flags
+  were checked against Supabase 2.116.0 and installed Next 16.3.3 help. Seven
+  documentation links and four command/config paths resolve; credential
+  placeholders remain empty. This is not automatic GitHub-to-VPS deployment.
+- `VERIFIED`: a temporary local `next start` on loopback port 3001 served `/`,
+  `/sign-in`, `/robots.txt` and `/sitemap.xml` with HTTP 200; unauthenticated
+  `/app/discover` returned 307 to `/sign-in`. All 12 sampled production home
+  assets returned 200; sign-in retained private/no-store caching. No server
+  errors were logged. The temporary process was stopped and its listener gone.
+- `VERIFIED`: 28 email configuration/template/self-hosted-overlay/worker tests
+  pass, zero skips/failures; `pnpm schema:check` validates 244 migration names.
+  The wider 619-test/typecheck/lint/build/schema results below are from the
+  preceding source pass, not rerun or overstated for these documentation edits.
+- A first patch failed a README context check without writes; corrected using
+  the actual heading. Missing-path/search checks and a no-listener port probe
+  made no application or database changes. Normal Windows line-ending warnings
+  and the intentionally interrupted smoke-server exit are not validation defects.
+- Exact continuation: publish this verified documentation handoff and confirm
+  the branch matches GitHub. Application work is ready for a controlled test
+  deployment; follow `docs/production-deployment.md` on the user's server.
+  VPS configuration, DNS/inbox delivery and live callbacks remain operator-run
+  and unverified here. Do not request server access or restart the master audit.
+
 - State (2026-09-08): `VERIFIED` for the consolidated local audit/repair scope
   and the validation explicitly listed here. This does not declare the product
   finished, production deployed, or the unrestricted legacy test suite green.
