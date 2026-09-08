@@ -1,0 +1,121 @@
+import type { ReactNode } from "react";
+import { notFound, redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { isPrivateAvatarPath } from "@/lib/avatar";
+import { submitReport } from "@/app/app/reports/actions";
+import { safeAdminReturnTo } from "@/app/app/admin/investigation-context";
+import { deriveLanguageCompatibility, languageNameFromRelation, type LanguageCompatibilityEntry, type LanguageRelation } from "@/lib/language-compatibility";
+import { PROFILE_BADGE_DEFINITIONS, type ProfileBadgeKey } from "@/lib/profile-badges";
+import ProfileView from "./ProfileView";
+
+export const dynamic = "force-dynamic";
+
+type ProfileNavigation = { from?: string; conversation?: string; return_to?: string; error?: string; reported?: string };
+
+function compatibilityEntries(rows: unknown): LanguageCompatibilityEntry[] {
+  if (!Array.isArray(rows)) return [];
+  return rows.flatMap((row) => {
+    if (!row || typeof row !== "object") return [];
+    const record = row as { language_id?: unknown; languages?: LanguageRelation | LanguageRelation[] | null; proficiency?: unknown; purpose?: unknown };
+    const languageId = typeof record.language_id === "number" ? record.language_id : Number(record.language_id);
+    const name = languageNameFromRelation(record.languages);
+    if (!Number.isSafeInteger(languageId) || !name || name === "Language") return [];
+    return [{
+      language_id: languageId,
+      name,
+      proficiency: typeof record.proficiency === "string" ? record.proficiency : null,
+      purpose: typeof record.purpose === "string" ? record.purpose : null,
+    }];
+  });
+}
+
+function badgeKeys(rows: unknown): ProfileBadgeKey[] {
+  if (!Array.isArray(rows)) return [];
+  const seen = new Set<ProfileBadgeKey>();
+  const keys: ProfileBadgeKey[] = [];
+  for (const row of rows) {
+    if (!row || typeof row !== "object") continue;
+    const value = (row as { badge_key?: unknown }).badge_key;
+    if (typeof value !== "string" || !(value in PROFILE_BADGE_DEFINITIONS)) continue;
+    const key = value as ProfileBadgeKey;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    keys.push(key);
+  }
+  return keys;
+}
+
+export default async function ProfilePage({ params, searchParams }: { params: Promise<{ username: string }>; searchParams?: Promise<ProfileNavigation> }) {
+  const db = await createClient();
+  const { data: auth } = await db.auth.getClaims();
+  if (!auth?.claims?.sub) redirect("/sign-in");
+  const { username } = await params;
+  const navigation = searchParams ? await searchParams : {};
+  const adminReturnTo = safeAdminReturnTo(navigation.return_to);
+  const { data: profile } = await db.rpc("get_public_profile", { target_username: username });
+  if (!profile) notFound();
+
+  const { data: identityData } = await db.rpc("resolve_profile_identity", { target_user: profile.id });
+  const identity = Array.isArray(identityData) ? identityData[0] : identityData;
+  if (!identity) notFound();
+  const targetId = identity.id;
+  const [languageResult, interestResult, blockResult, photoAccess, communicationModeResult, personalityResult, friendshipDestinationResult, viewerLanguageResult, staffRoleResult, badgeResult] = await Promise.all([
+    targetId ? db.from("profile_languages").select("language_id, languages(name), proficiency, purpose").eq("profile_id", targetId) : Promise.resolve({ data: [] }),
+    targetId ? db.from("profile_interests").select("interest_id, interests(name)").eq("profile_id", targetId) : Promise.resolve({ data: [] }),
+    targetId ? db.from("profile_blocks").select("blocked_id").eq("blocker_id", auth.claims.sub).eq("blocked_id", targetId).maybeSingle() : Promise.resolve({ data: null }),
+    targetId ? db.rpc("can_view_profile_photo", { owner_user: targetId, viewer_user: auth.claims.sub }) : Promise.resolve({ data: false }),
+    targetId ? db.rpc("get_public_communication_mode", { target_user: targetId }) : Promise.resolve({ data: null }),
+    targetId ? db.rpc("get_public_personality_lifestyle", { target_user: targetId }) : Promise.resolve({ data: null }),
+    targetId ? db.rpc("get_public_friendship_destinations", { target_user: targetId }) : Promise.resolve({ data: [] }),
+    auth.claims.sub ? db.from("profile_languages").select("language_id, languages(name), proficiency, purpose").eq("profile_id", auth.claims.sub) : Promise.resolve({ data: [] }),
+    targetId ? db.rpc("get_public_staff_role", { target_user: targetId }) : Promise.resolve({ data: null }),
+    targetId ? db.rpc("get_profile_badges", { target_user: targetId }) : Promise.resolve({ data: [] }),
+  ]);
+  const isOwn = auth.claims.sub === targetId;
+  const languageCompatibility = isOwn
+    ? null
+    : deriveLanguageCompatibility(compatibilityEntries(viewerLanguageResult.data), compatibilityEntries(languageResult.data));
+  const reportControl: ReactNode = isOwn ? null : <details><summary className="cursor-pointer px-2 py-1 text-xs text-[#66717C]">Report this profile</summary><form action={submitReport} className="mt-2 space-y-2"><input type="hidden" name="target_type" value="profile" /><input type="hidden" name="target_id" value={targetId ?? ""} /><input type="hidden" name="return_to" value={`/app/profile/${encodeURIComponent(profile.username)}`} /><select name="reason" className="field w-full" aria-label="Report reason"><option value="spam">Spam</option><option value="scam/fraud">Scam or fraud</option><option value="harassment">Harassment</option><option value="sexual/inappropriate content">Sexual or inappropriate content</option><option value="hate/abuse">Hate or abuse</option><option value="fake profile/impersonation">Fake profile or impersonation</option><option value="underage concern">Underage concern</option><option value="other">Other</option></select><textarea name="details" aria-label="Report details" className="field w-full" placeholder="Tell us what happened (optional)" /><button className="underline">Submit profile report</button></form></details>;
+  const displayName = profile.display_name?.replace(/\b\w/g, (character: string) => character.toUpperCase()) ?? profile.username;
+  const age = typeof profile.age === "number" ? profile.age : (typeof identity.age === "number" ? identity.age : null);
+  let photo: string | null = null;
+  if (photoAccess.data && profile.avatar_path && isPrivateAvatarPath(profile.avatar_path, targetId)) {
+    photo = (await db.storage.from("avatars").createSignedUrl(profile.avatar_path, 3600)).data?.signedUrl ?? null;
+  }
+  const activity = profile.activity_status ?? null;
+  const viewProfile = {
+    ...profile,
+    role: staffRoleResult.data === "admin" || staffRoleResult.data === "moderator" ? staffRoleResult.data : null,
+    show_activity_status: activity !== null,
+    availability: activity === "Away" ? "away" : "available",
+  };
+  const backHref = adminReturnTo
+    ? adminReturnTo
+    : navigation.from === "conversation" && navigation.conversation
+      ? `/app/messages/${encodeURIComponent(navigation.conversation)}`
+    : navigation.from === "introductions"
+      ? "/app/introductions"
+      : navigation.from === "setup"
+        ? "/app/profile/setup"
+        : navigation.from === "admin"
+          ? "/app/admin"
+          : "/app/discover";
+  const backLabel = adminReturnTo
+    ? "Back to investigation"
+    : navigation.from === "conversation"
+      ? "Back to conversation"
+    : navigation.from === "introductions"
+      ? "Back to introductions"
+      : navigation.from === "setup"
+        ? "Back to profile editing"
+        : navigation.from === "admin"
+          ? "Back to Admin Center"
+          : "Back to discover";
+  const location = typeof profile.location_label === "string" && profile.location_label.trim()
+    ? profile.location_label.trim()
+    : typeof profile.country === "string" && profile.country.trim()
+      ? profile.country.trim()
+      : null;
+  const friendshipDestinations = Array.isArray(friendshipDestinationResult.data) ? friendshipDestinationResult.data : [];
+  return <ProfileView profile={viewProfile} displayName={displayName} age={age} location={location ?? ""} activity={activity} responseRate={profile.response_rate_label ?? null} photo={photo} languages={languageResult.data ?? []} interests={interestResult.data ?? []} friendshipDestinations={friendshipDestinations} personality={personalityResult.data ?? null} communicationPreference={communicationModeResult.data ?? null} languageCompatibility={languageCompatibility} badges={badgeKeys(badgeResult.data)} blocked={Boolean(blockResult.data)} targetId={targetId} username={profile.username} reportControl={reportControl} isOwn={isOwn} backHref={backHref} backLabel={backLabel} reportError={navigation.error ?? null} reportSubmitted={navigation.reported === "1"} />;
+}

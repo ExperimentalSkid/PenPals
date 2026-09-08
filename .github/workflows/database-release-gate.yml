@@ -1,0 +1,71 @@
+name: Database release gate
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "supabase/**"
+      - "scripts/check-migrations.mjs"
+      - "scripts/schema-lint.mjs"
+      - "scripts/supabase-cli.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/database-release-gate.yml"
+  push:
+    branches: [main]
+    paths:
+      - "supabase/**"
+      - "scripts/check-migrations.mjs"
+      - "scripts/schema-lint.mjs"
+      - "scripts/supabase-cli.mjs"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - ".github/workflows/database-release-gate.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-release-gate-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  database-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable pinned pnpm
+        shell: bash
+        run: corepack enable && corepack prepare pnpm@11.19.0 --activate
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate migration filenames and ordering
+        run: pnpm schema:check
+
+      # `supabase start` applies migrations to a clean local instance. A
+      # migration error stops this step; no reset or seed command is used.
+      - name: Start local Supabase
+        run: pnpm dlx --yes --package=supabase@2.116.0 supabase start --workdir .
+
+      - name: Apply pending migrations incrementally
+        run: pnpm dlx --yes --package=supabase@2.116.0 supabase migration up --local --workdir .
+
+      - name: Lint local database schema
+        run: pnpm schema:lint
+
+      - name: Verify local migration parity
+        run: pnpm schema:check:local
+
+      - name: Stop local Supabase
+        if: always()
+        run: pnpm dlx --yes --package=supabase@2.116.0 supabase stop --project-id Penpal --workdir .

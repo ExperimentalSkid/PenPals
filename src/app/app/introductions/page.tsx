@@ -1,0 +1,202 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+import Image from "next/image";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { isPrivateAvatarPath, isSignedAvatarUrl } from "@/lib/avatar";
+import { countryNameForCode } from "@/lib/countries";
+import CountryFlag from "@/app/components/CountryFlag";
+import IntroductionSort from "./IntroductionSort";
+import { replyToIntroduction, declineIntroduction } from "@/app/app/messages/actions";
+import { submitReport } from "@/app/app/reports/actions";
+
+type SearchValue = string | string[] | undefined;
+
+function first(value: SearchValue) {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
+
+type IntroIconName = "sprout" | "book" | "send" | "shield" | "sparkle" | "clock";
+
+function IntroIcon({ name }: { name: IntroIconName }) {
+  const common = { fill: "none", stroke: "currentColor", strokeWidth: 1.6, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+  return <svg aria-hidden="true" viewBox="0 0 24 24" className="h-5 w-5 shrink-0" {...common}>
+    {name === "sprout" && <><path d="M12 20V9" /><path d="M12 13c-4.5 0-7-2.3-7-6 4.7 0 7 2 7 6ZM12 10c0-4.2 2.6-6.8 7-7 0 4.4-2.7 7-7 7Z" /></>}
+    {name === "book" && <><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11v16H6.5A2.5 2.5 0 0 0 4 21.5v-16Z" /><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H13v16h4.5a2.5 2.5 0 0 1 2.5 2.5v-16Z" /></>}
+    {name === "send" && <><path d="m21 3-7.6 18-3.1-7.3L3 10.6 21 3Z" /><path d="m10.3 13.7 5.1-5.1" /></>}
+    {name === "shield" && <><path d="M12 3 20 6v5.5c0 4.7-3.1 7.8-8 9.5-4.9-1.7-8-4.8-8-9.5V6l8-3Z" /><path d="m8.5 12 2.2 2.2 4.8-5" /></>}
+    {name === "sparkle" && <><path d="m12 3 1.5 5.5L19 10l-5.5 1.5L12 17l-1.5-5.5L5 10l5.5-1.5L12 3Z" /><path d="m19 16 .7 2.3L22 19l-2.3.7L19 22l-.7-2.3L16 19l2.3-.7L19 16Z" /></>}
+    {name === "clock" && <><circle cx="12" cy="12" r="8.5" /><path d="M12 7v5l3.2 2" /></>}
+  </svg>;
+}
+
+function dateLabel(value: string) {
+  return new Date(value).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+}
+
+export default async function Introductions({ searchParams }: { searchParams?: Promise<Record<string, SearchValue>> }) {
+  const db = await createClient();
+  const { data } = await db.auth.getClaims();
+  const uid = data?.claims?.sub;
+  if (!uid) redirect("/sign-in");
+
+  const params = searchParams ? await searchParams : {};
+  const errorMessage = first(params.error);
+  const requestedStatus = first(params.status);
+  const activeStatus = ["pending", "replied"].includes(requestedStatus) ? requestedStatus : "all";
+  const requestedSort = first(params.sort);
+  const activeSort = requestedSort === "oldest" ? "oldest" : "newest";
+  const { data: rows } = await db.from("conversation_introductions")
+    .select("id,sender_id,recipient_id,icebreaker,created_at,status,conversation_id_legacy")
+    .or(`sender_id.eq.${uid},recipient_id.eq.${uid}`)
+    .order("created_at", { ascending: activeSort === "oldest" });
+  const allRows = rows ?? [];
+  const visibleRows = activeStatus === "all" ? allRows : allRows.filter((row: any) => row.status === activeStatus);
+  const pendingCount = allRows.filter((row: any) => row.status === "pending").length;
+  const repliedCount = allRows.filter((row: any) => row.status === "replied").length;
+  const personIds = [...new Set(allRows.map((row: any) => row.sender_id === uid ? row.recipient_id : row.sender_id))];
+
+  const visibleById = new Map<string, any>();
+  await Promise.all(personIds.map(async (personId) => {
+    const { data: identityRows } = await db.rpc("resolve_profile_identity", { target_user: personId });
+    const identity = Array.isArray(identityRows) ? identityRows[0] : identityRows;
+    if (!identity) return;
+
+    // The identity RPC remains the authorization boundary for photos. The
+    // public profile RPC supplies only the same already-public location data.
+    const { data: publicProfile } = identity.username
+      ? await db.rpc("get_public_profile", { target_username: identity.username })
+      : { data: null };
+    const avatarPath = identity.avatar_path ?? publicProfile?.avatar_path ?? null;
+    let photo: string | null = null;
+    if (avatarPath && isPrivateAvatarPath(avatarPath, identity.id)) {
+      photo = (await db.storage.from("avatars").createSignedUrl(avatarPath, 3600)).data?.signedUrl ?? null;
+    }
+    visibleById.set(identity.id, {
+      ...identity,
+      ...publicProfile,
+      photo,
+      country_code: publicProfile?.country_code ?? null,
+      country: publicProfile?.country ?? null,
+      location_label: typeof publicProfile?.location_label === "string" && publicProfile.location_label.trim()
+        ? publicProfile.location_label.trim()
+        : typeof publicProfile?.country === "string" && publicProfile.country.trim()
+          ? publicProfile.country.trim()
+          : null,
+    });
+  }));
+
+  const filterHref = (status: string) => {
+    const query = new URLSearchParams();
+    if (status !== "all") query.set("status", status);
+    if (activeSort !== "newest") query.set("sort", activeSort);
+    const value = query.toString();
+    return value ? `/app/introductions?${value}` : "/app/introductions";
+  };
+
+  return (
+    <main className="mx-auto min-h-full w-full max-w-[1580px] bg-[#f7f5ef] px-6 py-10 text-[#16251f] sm:px-8 sm:py-12 lg:px-10 lg:py-14 xl:px-12 2xl:px-16">
+      <header>
+        <p className="text-xs font-bold uppercase tracking-[.22em] text-[#087456]">Your inbox</p>
+        <h1 className="mt-4 font-serif text-[clamp(3.2rem,5vw,5.2rem)] leading-[.95] tracking-[-0.045em] text-[#10231d]">Introductions</h1>
+        <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">Thoughtful first notes, kept separate from your conversations.</p>
+      </header>
+      {errorMessage && <p role="alert" className="mt-6 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
+      {first(params.reported) === "1" && <p role="status" className="mt-4 border-l-2 border-[#087456] px-3 py-2 text-sm text-[#075d46]">Thanks for letting us know. We&apos;ll review your report.</p>}
+
+      <section aria-label="How introductions work" className="mt-10 grid gap-0 rounded-[22px] border border-[#eeebe3] bg-[#fbfaf7]/80 px-5 py-2 shadow-sm md:grid-cols-4 md:px-3 md:py-5">
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="sprout" /></span><div><p className="text-sm font-semibold text-[#20372d]">They wrote first</p><p className="mt-1 text-sm leading-6 text-black/60">They&apos;re kept separate until you choose to reply.</p></div></div>
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="book" /></span><div><p className="text-sm font-semibold text-[#20372d]">Read at your pace</p><p className="mt-1 text-sm leading-6 text-black/60">Open an intro when you&apos;re ready.</p></div></div>
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="send" /></span><div><p className="text-sm font-semibold text-[#20372d]">Start a conversation</p><p className="mt-1 text-sm leading-6 text-black/60">Reply to continue.</p></div></div>
+        <div className="flex items-start gap-4 px-2 py-4 md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="shield" /></span><div><p className="text-sm font-semibold text-[#20372d]">You&apos;re in control</p><p className="mt-1 text-sm leading-6 text-black/60">Report or ignore anything that feels wrong.</p></div></div>
+      </section>
+
+      <div className="mt-8 flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
+        <nav aria-label="Introduction filters" className="flex flex-wrap items-center gap-2 sm:gap-5">
+          <Link href={filterHref("all")} aria-current={activeStatus === "all" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeStatus === "all" ? "bg-[#fffdfa] text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>All ({allRows.length})</Link>
+          <Link href={filterHref("pending")} aria-current={activeStatus === "pending" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "pending" ? "bg-[#fffdfa] font-semibold text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>Pending ({pendingCount})</Link>
+          <Link href={filterHref("replied")} aria-current={activeStatus === "replied" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "replied" ? "bg-[#fffdfa] font-semibold text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>Replied ({repliedCount})</Link>
+        </nav>
+        <IntroductionSort activeSort={activeSort} activeStatus={activeStatus} />
+      </div>
+
+      <section aria-label="Introduction list" className="mt-6 space-y-5">
+        {visibleRows.map((row: any) => {
+          const pendingIntro = row.status === "pending";
+          const pending = row.recipient_id === uid && pendingIntro;
+          const replied = row.status === "replied";
+          const personId = row.sender_id === uid ? row.recipient_id : row.sender_id;
+          const person = visibleById.get(personId);
+          const displayName = person?.display_name || person?.username || (row.recipient_id === uid ? "New introduction" : "Introduction sent");
+          const ageLabel = typeof person?.age === "number" ? `, ${person.age}` : "";
+          const countryName = countryNameForCode(person?.country_code) ?? person?.country ?? null;
+          return (
+            <article key={row.id} className="grid overflow-hidden rounded-xl border border-[#e5e0d6] bg-[#fffdfa] shadow-[0_3px_14px_rgba(36,57,45,0.04)] lg:grid-cols-[minmax(0,1fr)_300px]">
+              <div className="min-w-0 p-5 sm:p-7">
+                <div className="flex min-w-0 items-start gap-5">
+                  <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-[#ded8cc] bg-[#e8ece4] sm:h-32 sm:w-32">
+                    {person?.photo ? <Image src={person.photo} alt={`${displayName} profile photo`} fill sizes="128px" unoptimized={isSignedAvatarUrl(person.photo)} className="object-cover" /> : <span role="img" aria-label={`${displayName} profile photo unavailable`} className="flex h-full items-center justify-center font-serif text-4xl text-[#557264]">{displayName.trim().charAt(0).toUpperCase() || "·"}</span>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline justify-between gap-3">
+                      <h2 className="min-w-0 font-serif text-[clamp(1.7rem,2.4vw,2.35rem)] leading-tight tracking-[-0.025em] text-[#10231d]">
+                        {person?.username ? <Link href={`/app/profile/${encodeURIComponent(person.username)}?from=introductions`} className="break-words hover:text-[#075d46] hover:underline">{displayName}{ageLabel}</Link> : <span>{displayName}{ageLabel}</span>}
+                      </h2>
+                      <time className="shrink-0 text-sm text-black/45" dateTime={row.created_at}>{dateLabel(row.created_at)}</time>
+                    </div>
+                    {person?.location_label && <p className="mt-2 flex items-center gap-2 text-sm text-black/60"><CountryFlag code={person.country_code} countryName={countryName} /><span>{person.location_label}</span></p>}
+                    <blockquote className="mt-6 whitespace-pre-wrap font-serif text-[clamp(1.25rem,1.8vw,1.6rem)] leading-8 tracking-[-0.01em] text-[#075d46]">“{row.icebreaker}”</blockquote>
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <span className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-[.11em] ${pendingIntro ? "bg-[#fae3b8] text-[#93621b]" : replied ? "bg-[#e6f0e7] text-[#276b50]" : "bg-[#eef0ea] text-black/50"}`}><span aria-hidden="true" className="text-sm">{pendingIntro ? "◷" : replied ? "✓" : "·"}</span>{row.status}</span>
+                      {replied && <span className="text-sm text-black/50">You replied{row.conversation_id_legacy ? ` on ${dateLabel(row.created_at)}` : ""}</span>}
+                    </div>
+                  </div>
+                </div>
+                <details className="mt-7 text-sm">
+                  <summary className="cursor-pointer list-none text-black/45 transition hover:text-black/70"><span aria-hidden="true" className="mr-2">▸</span>Report introduction</summary>
+                  <form action={submitReport} className="mt-4 max-w-lg space-y-3 border-l border-black/10 pl-4">
+                    <input type="hidden" name="target_type" value="introduction" />
+                    <input type="hidden" name="target_id" value={row.id} />
+                    <input type="hidden" name="return_to" value="/app/introductions" />
+                    <select name="reason" className="field w-full" aria-label="Report reason"><option value="spam">Spam</option><option value="scam/fraud">Scam or fraud</option><option value="harassment">Harassment</option><option value="sexual/inappropriate content">Sexual or inappropriate content</option><option value="hate/abuse">Hate or abuse</option><option value="fake profile/impersonation">Fake profile or impersonation</option><option value="underage concern">Underage concern</option><option value="other">Other</option></select>
+                    <textarea name="details" aria-label="Report details" className="field min-h-24 w-full" placeholder="Tell us what happened (optional)" />
+                    {pending && <label className="flex items-center gap-2 text-sm text-black/60"><input type="checkbox" name="decline_pending" /> Report and decline</label>}
+                    <button className="rounded-md border border-black/15 px-3 py-2 text-sm text-black/65 hover:bg-black/[0.04]">Submit introduction report</button>
+                  </form>
+                </details>
+              </div>
+
+              <aside className="flex flex-col justify-center border-t border-black/10 bg-[#fcfbf7] p-5 sm:p-7 lg:border-l lg:border-t-0">
+                {pending ? <>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-[#087456]"><IntroIcon name="sparkle" /></span><div><p className="font-semibold text-[#20372d]">First impression</p><p className="mt-1 text-sm leading-6 text-black/60">They&apos;re curious about connecting with you.</p></div></div>
+                  <details className="mt-7">
+                    <summary className="btn-primary flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md px-4 py-2.5 text-center text-sm font-medium">Open introduction</summary>
+                    <form action={replyToIntroduction} className="mt-3 space-y-2">
+                      <input type="hidden" name="introduction_id" value={row.id} />
+                      <label htmlFor={`reply-${row.id}`} className="sr-only">Reply to introduction</label>
+                      <textarea id={`reply-${row.id}`} name="reply" required className="field min-h-24 w-full text-sm" placeholder="Write a reply…" />
+                      <button className="btn-primary w-full px-4 py-2.5 text-sm">Reply to introduction</button>
+                    </form>
+                  </details>
+                  <form action={declineIntroduction} className="mt-3"><input type="hidden" name="introduction_id" value={row.id} /><button className="w-full px-4 py-2 text-sm text-black/55 hover:text-black/75">Not interested</button></form>
+                </> : pendingIntro ? <>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-[#087456]"><IntroIcon name="clock" /></span><div><p className="font-semibold text-[#20372d]">Waiting for a reply</p><p className="mt-1 text-sm leading-6 text-black/60">Your introduction is on its way to them.</p></div></div>
+                </> : replied && row.conversation_id_legacy ? <>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f0e8] text-[#087456]"><IntroIcon name="send" /></span><div><p className="font-semibold text-[#20372d]">Conversation started</p><p className="mt-1 text-sm leading-6 text-black/60">You replied. Continue the conversation.</p></div></div>
+                  <Link href={`/app/messages/${encodeURIComponent(row.conversation_id_legacy)}`} className="btn-secondary mt-7 inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm">Open conversation</Link>
+                  <span className="mt-3 text-center text-sm text-black/45">Not interested</span>
+                </> : <>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef0ea] text-[#557264]"><IntroIcon name="clock" /></span><div><p className="font-semibold text-[#20372d]">{row.status === "expired" ? "Introduction expired" : "Introduction closed"}</p><p className="mt-1 text-sm leading-6 text-black/60">This first note is no longer active.</p></div></div>
+                </>}
+              </aside>
+            </article>
+          );
+        })}
+        {!visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? "No pending introductions right now." : activeStatus === "replied" ? "No replied introductions yet." : "No introductions yet."}</p>}
+      </section>
+
+      <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-[#39745f]"><IntroIcon name="sprout" /></span>Kindness goes a long way. A thoughtful reply can be someone&apos;s favorite part of their day.</p></aside>
+    </main>
+  );
+}

@@ -1,0 +1,23 @@
+/* Pen-Pals.net badge asset tokens */
+:root {
+  --badge-bronze: #B46F4A;
+  --badge-silver: #89949E;
+  --badge-gold: #B88B2D;
+  --badge-platinum: #526F88;
+  --badge-verified: #0E5B85;
+  --badge-text: #103B61;
+}
+
+.penpal-achievement-badge {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: 58px;
+}
+
+.penpal-achievement-badge img,
+.penpal-achievement-badge svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}

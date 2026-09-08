@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Confirm your email — Pen-Pals</title>
+  </head>
+  <body style="margin:0; padding:0; background-color:#f7f5ef; color:#17243a; font-family:Arial, Helvetica, sans-serif;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f7f5ef;">
+      <tr>
+        <td align="center" style="padding:40px 20px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:560px; background-color:#fffdf7; border:1px solid #e5e1d7;">
+            <tr>
+              <td style="padding:36px 28px;">
+                <p style="margin:0 0 32px; color:#17243a; font-size:18px; font-weight:700; letter-spacing:1px;">Pen-Pals</p>
+                <h1 style="margin:0 0 20px; color:#17243a; font-size:28px; line-height:1.25;">Confirm your email</h1>
+                <p style="margin:0 0 28px; color:#455064; font-size:16px; line-height:1.6;">Welcome to Pen-Pals. Confirm your email address to continue setting up your account.</p>
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td bgcolor="#17243a" style="border-radius:4px;">
+                      <a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=signup" style="display:inline-block; padding:14px 22px; border:1px solid #17243a; border-radius:4px; color:#ffffff; font-size:16px; font-weight:700; line-height:1.4; text-decoration:none;">Confirm email address</a>
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin:28px 0 0; color:#626b79; font-size:14px; line-height:1.6;">If you didn't sign up for Pen-Pals, you can ignore this email.</p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

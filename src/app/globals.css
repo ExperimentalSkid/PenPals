@@ -1,0 +1,209 @@
+@import "country-flag-icons/3x2/flags.css";
+@import "tailwindcss";
+
+:root {
+  --background: #F8F5EE;
+  --foreground: #102A43;
+  --penpals-navy: #073A73;
+  --penpals-sky: #60A4E1;
+  --penpals-ivory: #F8F5EE;
+  --penpals-cream: #F1EBDF;
+  --penpals-mist: #E7F1FA;
+  --penpals-border: #D9D3C8;
+  --penpals-text: #102A43;
+  --penpals-muted: #66717C;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  min-height: 100vh;
+  background-image: radial-gradient(circle at 10% 0%, rgba(96,164,225,.12), transparent 28rem), radial-gradient(circle at 90% 20%, rgba(241,235,223,.55), transparent 30rem);
+}
+
+@keyframes front-page-bird-drift {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-1deg); }
+  50% { transform: translate3d(0, -5px, 0) rotate(1deg); }
+}
+
+@keyframes front-page-bird-trail-drift {
+  0%, 100% { stroke-dashoffset: 0; opacity: .58; }
+  50% { stroke-dashoffset: -18px; opacity: .76; }
+}
+
+@keyframes front-page-bird-letter-bob {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(0, -2px, 0) rotate(1deg); }
+}
+
+@keyframes front-page-hero-rise {
+  from { opacity: 0; transform: translate3d(0, 10px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes front-page-card-rise {
+  from { opacity: 0; transform: translate3d(0, 12px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.front-page-bird {
+  animation: front-page-bird-drift 8s ease-in-out infinite;
+  filter: drop-shadow(0 7px 8px rgba(7, 58, 115, .1));
+  will-change: transform;
+}
+
+.front-page-bird-trail {
+  animation: front-page-bird-trail-drift 12s ease-in-out infinite;
+  will-change: stroke-dashoffset, opacity;
+}
+
+.front-page-bird-letter {
+  animation: front-page-bird-letter-bob 5s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+  will-change: transform;
+}
+
+.front-page-hero-copy {
+  animation: front-page-hero-rise 700ms cubic-bezier(.22, .8, .32, 1) 80ms both;
+}
+
+.front-page-conversation-card {
+  animation: front-page-card-rise 800ms cubic-bezier(.22, .8, .32, 1) 180ms both;
+}
+
+@layer components {
+  .surface { @apply rounded-3xl border bg-white/85 shadow-[0_12px_40px_rgba(16,42,67,.06)] backdrop-blur; border-color: var(--penpals-border); }
+  .eyebrow { @apply text-xs font-bold uppercase tracking-[.18em]; color: var(--penpals-navy); }
+  .btn-primary { @apply rounded-xl px-5 py-3 font-semibold text-white shadow-sm transition; background-color: var(--penpals-navy); }
+  .btn-primary:hover { background-color: #052D59; }
+  .btn-secondary { @apply rounded-xl bg-white/70 px-5 py-3 font-semibold transition; border: 1px solid var(--penpals-border); color: var(--penpals-text); }
+  .btn-secondary:hover { background-color: #FFFFFF; }
+  .field { @apply rounded-xl bg-white px-4 py-3 outline-none transition; border: 1px solid var(--penpals-border); }
+  .field:focus { border-color: var(--penpals-navy); box-shadow: 0 0 0 3px var(--penpals-mist); }
+  .field-label { @apply block text-sm font-semibold; color: var(--penpals-text); }
+  .badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold; background-color: var(--penpals-mist); color: var(--penpals-navy); }
+
+  .app-sidebar { @apply hidden px-7 py-8 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col; border-right: 1px solid var(--penpals-border); background-color: var(--penpals-ivory); }
+  .app-sidebar-logo { @apply font-serif text-[2.2rem] leading-none tracking-[-0.055em]; color: var(--penpals-text); }
+  .app-sidebar-logo span, .app-mobile-logo span { color: var(--penpals-navy); }
+  .app-sidebar-nav { @apply mt-16 text-sm; }
+  .app-nav-label { @apply mb-3 px-3 text-[10px] font-bold uppercase tracking-[.16em]; color: var(--penpals-muted); }
+  .app-nav-label-staff { @apply mt-8 pt-7; border-top: 1px solid var(--penpals-border); }
+  .app-nav-item { @apply relative flex min-h-11 items-center gap-3 rounded-xl px-3 transition-colors; color: color-mix(in srgb, var(--penpals-text) 75%, transparent); }
+  .app-nav-item:hover, .app-nav-item:focus-visible { background-color: #FFFFFFCC; color: var(--penpals-navy); }
+  .app-nav-item-active { @apply font-semibold shadow-[0_1px_0_rgba(7,58,115,.05)]; background-color: var(--penpals-mist); color: var(--penpals-navy); }
+  .app-nav-item-active::before { content: ""; @apply absolute left-0 top-2 bottom-2 w-0.5 rounded-full; background-color: var(--penpals-navy); }
+  .app-nav-badge { @apply inline-flex min-w-6 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-4; background-color: var(--penpals-cream); color: var(--penpals-navy); }
+  .app-user-block { @apply mt-auto pt-5; border-top: 1px solid var(--penpals-border); }
+  .app-user-link { @apply flex min-w-0 items-center gap-3 rounded-xl px-2 py-2 transition-colors; }
+  .app-user-link:hover, .app-user-link:focus-visible { background-color: #FFFFFFB3; }
+  .app-user-avatar, .app-mobile-profile { @apply flex h-10 w-10 shrink-0 items-center justify-center rounded-full font-serif text-lg; background-color: var(--penpals-cream); color: var(--penpals-navy); }
+  .app-signout { @apply flex min-h-10 items-center gap-2 px-2 text-sm transition-colors; color: var(--penpals-muted); }
+  .app-signout:hover { color: #B42318; }
+  .app-mobile-header { @apply px-4 py-3 lg:hidden; border-bottom: 1px solid var(--penpals-border); background-color: var(--penpals-ivory); }
+  .app-mobile-logo { @apply font-serif text-2xl tracking-[-0.05em]; color: var(--penpals-text); }
+  .app-mobile-profile { @apply h-9 w-9 text-base; }
+  .app-mobile-nav { @apply mt-3 -mx-1 flex gap-1 overflow-x-auto pb-1; }
+  .app-nav-item-mobile { @apply min-h-11 shrink-0 rounded-lg px-3 text-xs; }
+  .app-nav-item-mobile svg { @apply h-[18px] w-[18px]; }
+
+  /* Admin workspace: compact operational presentation built on the Penpal palette. */
+  .admin-page { @apply min-h-screen w-full px-5 py-7 sm:px-8 sm:py-9 lg:px-12 lg:py-10; background-color: var(--penpals-ivory); color: var(--penpals-text); }
+  .admin-content { @apply mx-auto w-full max-w-[1400px]; }
+  .admin-back-link { @apply text-sm font-semibold transition-colors hover:underline; color: var(--penpals-navy); }
+  .admin-back-link:hover { color: #052D59; }
+  .admin-access-label { @apply text-[10px] font-bold uppercase tracking-[.18em]; color: var(--penpals-muted); }
+  .admin-eyebrow { @apply text-[11px] font-bold uppercase tracking-[.2em]; color: var(--penpals-navy); }
+  .admin-title { @apply mt-2 font-serif text-4xl tracking-[-0.025em] sm:text-5xl; color: var(--penpals-text); }
+  .admin-title, .admin-section-title { text-wrap: balance; }
+  .admin-description { @apply mt-2 max-w-3xl text-base leading-6 sm:text-lg; color: var(--penpals-muted); }
+  .admin-nav { @apply mt-8 overflow-x-auto py-2; border-top: 1px solid var(--penpals-border); border-bottom: 1px solid var(--penpals-border); }
+  .admin-nav-link { @apply inline-flex min-h-9 items-center rounded-md px-3 text-xs font-semibold transition-colors sm:text-sm; color: var(--penpals-muted); }
+  .admin-nav-link:hover { background-color: #FFFFFFB3; color: var(--penpals-navy); }
+  .admin-nav-link-active { background-color: var(--penpals-mist); color: var(--penpals-navy); }
+  .admin-toolbar { @apply mt-7 px-0 py-4; border-top: 1px solid var(--penpals-border); border-bottom: 1px solid var(--penpals-border); background-color: #FFFFFF40; }
+  .admin-section { @apply pt-7; border-top: 1px solid var(--penpals-border); }
+  .admin-section-title { @apply font-serif text-2xl; color: var(--penpals-text); }
+  .admin-table { @apply overflow-hidden; border-top: 1px solid var(--penpals-border); border-bottom: 1px solid var(--penpals-border); background-color: #FFFFFF66; }
+  .admin-table-head { @apply hidden px-4 py-2 text-[10px] font-bold uppercase tracking-[.14em] md:grid; border-bottom: 1px solid var(--penpals-border); color: var(--penpals-muted); }
+  .admin-row { @apply block px-4 py-4 transition-colors last:border-b-0 hover:bg-white/55; border-bottom: 1px solid var(--penpals-border); }
+  .admin-row:last-child { @apply border-b-0; }
+  .admin-status { @apply inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[.1em]; }
+  .admin-status-neutral { @apply bg-white/50; border-color: var(--penpals-border); color: var(--penpals-muted); }
+  .admin-status-good { @apply border-emerald-900/15 bg-emerald-50 text-emerald-800; }
+  .admin-status-warn { @apply border-amber-700/20 bg-amber-50 text-amber-800; }
+  .admin-status-danger { @apply border-red-700/15 bg-red-50 text-red-800; }
+}
+
+button, a, input, select, textarea { outline-offset: 3px; }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 3px solid var(--penpals-navy); }
+
+/*
+ * Palette bridge for legacy arbitrary utilities. Most page-level UI predates
+ * the shared tokens above and repeats these values in Tailwind class names.
+ * Remapping them here keeps the existing structure intact while bringing
+ * every surface into the blue/ivory identity. Semantic status colors (such as
+ * emerald success and red danger) are intentionally not remapped.
+ */
+[class~="text-[#087456]"], [class~="text-[#075d46]"], [class~="text-[#147d61]"],
+[class~="text-[#054d3d]"], [class~="text-[#08654d]"], [class~="text-[#16745a]"],
+[class~="text-[#39745f]"], [class~="text-[#123b2d]"] { color: var(--penpals-navy) !important; }
+[class~="text-[#10231d]"], [class~="text-[#16251f]"], [class~="text-[#1c2d26]"],
+[class~="text-[#20372d]"], [class~="text-[#263a33]"], [class~="text-[#263b33]"],
+[class~="text-[#33443e]"], [class~="text-[#3b5147]"] { color: var(--penpals-text) !important; }
+[class~="text-[#4d675a]"], [class~="text-[#557264]"], [class~="text-[#658273]"],
+[class~="text-[#6f806f]"], [class~="text-[#6f9a88]"], [class~="text-[#4f806e]"] { color: var(--penpals-muted) !important; }
+
+[class~="bg-[#087456]"], [class~="bg-[#075d46]"], [class~="bg-[#147d61]"],
+[class~="bg-[#054d3d]"], [class~="bg-[#08654d]"], [class~="bg-[#16745a]"],
+[class~="bg-[#2d735b]"] { background-color: var(--penpals-navy) !important; }
+[class~="bg-[#fbfaf7]"], [class~="bg-[#fbfaf6]"], [class~="bg-[#f7f5f0]"],
+[class~="bg-[#f7f5ef]"], [class~="bg-[#fcfbf7]"] { background-color: var(--penpals-ivory) !important; }
+[class~="bg-[#fffdfa]"] { background-color: #FFFFFF !important; }
+[class~="bg-[#e8eee5]"], [class~="bg-[#e8eee8]"], [class~="bg-[#e4ebe2]"],
+[class~="bg-[#e5ede3]"], [class~="bg-[#e7eee2]"], [class~="bg-[#e7eee8]"],
+[class~="bg-[#e5e9df]"], [class~="bg-[#e8eee4]"] { background-color: var(--penpals-mist) !important; }
+[class~="bg-[#f5f0e7]"], [class~="bg-[#f4f7f1]"], [class~="bg-[#f2f5ef]"],
+[class~="bg-[#f4f2ec]"], [class~="bg-[#f0f1e9]"], [class~="bg-[#f3f4ed]"] { background-color: var(--penpals-cream) !important; }
+
+[class~="border-[#087456]"], [class~="border-[#075d46]"], [class~="border-[#147d61]"],
+[class~="border-[#054d3d]"], [class~="border-[#08654d]"] { border-color: var(--penpals-navy) !important; }
+[class~="border-[#d7d0c3]"], [class~="border-[#d8d3c7]"], [class~="border-[#deded5]"],
+[class~="border-[#e3ddd2]"], [class~="border-[#e5e0d6]"], [class~="border-[#e8e2d6]"],
+[class~="border-[#e0e6dd]"] { border-color: var(--penpals-border) !important; }
+
+[class~="accent-[#087456]"], [class~="accent-[#075d46]"] { accent-color: var(--penpals-navy) !important; }
+[class~="outline-[#087456]"], [class~="outline-[#075d46]"] { outline-color: var(--penpals-navy) !important; }
+
+/* Preserve hover/focus semantics for legacy state-prefixed utilities. */
+[class*="hover:bg-[#087456]"]:hover, [class*="hover:bg-[#075d46]"]:hover { background-color: var(--penpals-navy) !important; }
+[class*="hover:text-[#087456]"]:hover, [class*="hover:text-[#075d46]"]:hover,
+[class*="hover:text-[#054d3d]"]:hover { color: var(--penpals-navy) !important; }
+[class*="focus-visible:outline-[#087456]"]:focus-visible,
+[class*="focus-visible:outline-[#075d46]"]:focus-visible { outline-color: var(--penpals-navy) !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+
+  .front-page-bird,
+  .front-page-bird-trail,
+  .front-page-bird-letter,
+  .front-page-hero-copy,
+  .front-page-conversation-card {
+    animation: none !important;
+  }
+}

@@ -1,0 +1,7 @@
+import test from "node:test"; import assert from "node:assert/strict"; import { readFile } from "node:fs/promises";
+const sql = await readFile(new URL("../supabase/migrations/20260901110000_add_privacy_notifications_accounts.sql", import.meta.url), "utf8");
+test("privacy settings and blocked/deactivated access controls exist", () => { assert.match(sql, /profile_visibility/); assert.match(sql, /show_city/); assert.match(sql, /deactivated_at is null/); assert.match(sql, /profile_blocks/); });
+test("notifications are private, owned, and deduplicated", () => { assert.match(sql, /Users read own notifications/); assert.match(sql, /Users update own notifications/); assert.match(sql, /unique \(user_id, type, related_id\)/); });
+test("notification triggers cover introductions and messages", () => { assert.match(sql, /new_introduction/); assert.match(sql, /introduction_replied/); assert.match(sql, /introduction_declined/); assert.match(sql, /new_message/); });
+test("account lifecycle and unread count functions exist", () => { assert.match(sql, /deactivate_account/); assert.match(sql, /reactivate_account/); assert.match(sql, /unread_notification_count/); });
+test("trigger functions are not callable by ordinary users", () => { assert.match(sql, /revoke all on function public\.notify_introduction\(\) from public/); assert.match(sql, /revoke all on function public\.notify_message\(\) from public/); });

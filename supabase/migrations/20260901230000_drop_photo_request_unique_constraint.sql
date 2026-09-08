@@ -1,0 +1,2 @@
+alter table public.profile_photo_access_requests
+  drop constraint if exists profile_photo_access_requests_requester_id_owner_id_convers_key;

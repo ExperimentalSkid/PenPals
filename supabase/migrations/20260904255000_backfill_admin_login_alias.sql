@@ -1,0 +1,4 @@
+-- Retained as an applied migration version. The pre-publication source audit
+-- removed a private owner email alias from distributable migration history.
+-- Fresh local installs use the documented seeded address admin@example.com or
+-- username admin; production aliases, if any, are private deployment data.

@@ -1,0 +1,18 @@
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+import { requireAdmin } from "../guard";
+import { upsertModerationDetectionRule } from "../actions";
+import { AdminHeader, AdminPage, StatusChip, toneForStatus } from "../AdminChrome";
+
+const categories = ["paid_adult_content", "pornography_service", "cam_service", "escort_or_prostitution", "sexual_service", "commercial_fetish_service", "adult_service_other", "commercial_solicitation", "creator_monetization", "bridge_link", "obfuscated_link"];
+
+export default async function ModerationRules({ searchParams }: { searchParams: Promise<{ error?: string; updated?: string }> }) {
+  const { db } = await requireAdmin();
+  const query = await searchParams;
+  const { data: rules, error } = await db.rpc("admin_list_moderation_detection_rules");
+  return <AdminPage><AdminHeader active="rules" eyebrow="Administrator only · Moderation" title="Detection rules" description="Maintain keyword and domain signals for moderation triage. Matches never make enforcement decisions." isAdmin />
+    {query.error && <p role="alert" className="mt-6 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">{query.error}</p>}{query.updated && <p role="status" className="mt-6 border-l-2 border-[#087456] px-3 py-2 text-sm text-[#075d46]">Rule saved.</p>}{error && <p role="alert" className="mt-6 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">Rules could not be loaded.</p>}
+    <form action={upsertModerationDetectionRule} className="admin-toolbar grid gap-4 md:grid-cols-2"><label className="text-sm text-black/65">Rule identifier<input name="rule_identifier" required pattern="[a-z0-9][a-z0-9._-]{0,79}" className="field mt-2 w-full" placeholder="adult-platform" /></label><label className="text-sm text-black/65">Term or domain<input name="term" required maxLength={160} className="field mt-2 w-full" placeholder="example.com" /></label><label className="text-sm text-black/65">Category<select name="category" className="field mt-2 w-full">{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label className="text-sm text-black/65">Match type<select name="match_type" className="field mt-2 w-full"><option value="word">Word</option><option value="contains">Contains</option><option value="domain">Domain</option></select></label><label className="flex items-center gap-2 text-sm text-black/65"><input type="checkbox" name="enabled" defaultChecked /> Enabled</label><label className="text-sm text-black/65 md:col-span-2">Change reason<input name="reason" required maxLength={500} className="field mt-2 w-full" placeholder="Why is this rule being added or changed?" /></label><button className="btn-primary w-fit px-4 py-2.5 text-sm">Save rule</button></form>
+    <section className="admin-section mt-8"><h2 className="admin-section-title">Configured rules</h2><div className="admin-table mt-4">{(rules ?? []).length ? rules.map((rule: any) => <div key={rule.id} className="admin-row flex flex-wrap items-center justify-between gap-4"><div><p className="font-medium">{rule.rule_identifier} <span className="font-normal text-black/45">· {rule.term}</span></p><p className="mt-1 text-xs text-black/45">{rule.category} · {rule.match_type} · {rule.signal_strength ?? "MEDIUM"}{rule.requires_context ? " · contextual" : ""}{rule.is_system_default ? " · SYSTEM DEFAULT" : ""}</p></div><StatusChip value={rule.enabled ? "enabled" : "disabled"} tone={toneForStatus(rule.enabled ? "enabled" : "disabled")} /></div>) : <p className="p-6 text-sm text-black/50">No detection rules configured.</p>}</div></section>
+  </AdminPage>;
+}

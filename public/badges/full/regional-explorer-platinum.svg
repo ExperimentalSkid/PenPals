@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="228" height="58" viewBox="0 0 228 58" role="img" aria-label="Regional Explorer Platinum">
+  <title>Regional Explorer · Platinum</title>
+  <rect x="1" y="1" width="226" height="56" rx="28" fill="#F1F5F8" stroke="#A9BBC9" stroke-width="1.5"/>
+  <g opacity="0.72" fill="none" stroke="#526F88" stroke-width="1.15" stroke-linecap="round">
+    <path d="M18 16c-5 4-6 11-3 18"/>
+    <path d="M54 16c5 4 6 11 3 18"/>
+    <path d="M16 19l-4-2M15 24l-4 0M15 29l-3 2M56 19l4-2M57 24l4 0M57 29l3 2"/>
+  </g>
+  <path d="M36 6l17 7v12c0 11-6.5 19-17 25-10.5-6-17-14-17-25V13z" fill="#526F88" opacity="0.96"/>
+  <path d="M36 9l14 5.7v10.1c0 8.8-5.3 15.7-14 21-8.7-5.3-14-12.2-14-21V14.7z" fill="none" stroke="white" stroke-opacity="0.42" stroke-width="1"/>
+  <g transform="translate(24,16) scale(1)" color="white"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 5l5-2 6 2 5-2v16l-5 2-6-2-5 2z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M9 3v16M15 5v16"/><circle fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" cx="15" cy="10" r="1.7"/></g>
+  <text x="68" y="27" font-family="Arial, Helvetica, sans-serif" font-size="13.3" font-weight="600" fill="#103B61">Regional Explorer</text>
+  <text x="68" y="43" font-family="Arial, Helvetica, sans-serif" font-size="10.4" font-weight="700" letter-spacing="1.5" fill="#526F88">PLATINUM</text>
+</svg>

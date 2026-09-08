@@ -1,0 +1,43 @@
+# Apply after the existing official Supabase Docker Compose file.
+# This overlay keeps the existing Auth image, database, API URL, and other settings.
+# Templates use the private HTTP service described in:
+# https://supabase.com/docs/guides/self-hosting/custom-email-templates
+services:
+  auth:
+    depends_on:
+      penpals-auth-templates:
+        condition: service_started
+    environment:
+      GOTRUE_SITE_URL: "${NEXT_PUBLIC_SITE_URL:?Set the production HTTPS site origin}"
+      GOTRUE_URI_ALLOW_LIST: "${SUPABASE_AUTH_URI_ALLOW_LIST:?Set the full production redirect allow-list}"
+      GOTRUE_MAILER_AUTOCONFIRM: "false"
+      GOTRUE_SMTP_ADMIN_EMAIL: "${SUPABASE_AUTH_SMTP_ADMIN_EMAIL:?Set a sender on the verified Resend domain}"
+      GOTRUE_SMTP_HOST: "smtp.resend.com"
+      GOTRUE_SMTP_PORT: "${SUPABASE_AUTH_SMTP_PORT:-465}"
+      GOTRUE_SMTP_USER: "resend"
+      GOTRUE_SMTP_PASS: "${RESEND_API_KEY:?Set the Resend API key in the VPS secret environment}"
+      GOTRUE_SMTP_SENDER_NAME: "${SUPABASE_AUTH_SMTP_SENDER_NAME:-Pen-Pals}"
+      GOTRUE_MAILER_TEMPLATES_CONFIRMATION: "http://penpals-auth-templates:8080/confirmation.html"
+      GOTRUE_MAILER_SUBJECTS_CONFIRMATION: "Confirm your Pen-Pals email"
+      GOTRUE_MAILER_TEMPLATES_RECOVERY: "http://penpals-auth-templates:8080/recovery.html"
+      GOTRUE_MAILER_SUBJECTS_RECOVERY: "Reset your Pen-Pals password"
+      GOTRUE_MAILER_TEMPLATES_INVITE: "http://penpals-auth-templates:8080/invite.html"
+      GOTRUE_MAILER_SUBJECTS_INVITE: "Your Pen-Pals invitation"
+      GOTRUE_MAILER_TEMPLATES_MAGIC_LINK: "http://penpals-auth-templates:8080/magic-link.html"
+      GOTRUE_MAILER_SUBJECTS_MAGIC_LINK: "Your Pen-Pals sign-in link"
+      GOTRUE_MAILER_TEMPLATES_EMAIL_CHANGE: "http://penpals-auth-templates:8080/email-change.html"
+      GOTRUE_MAILER_SUBJECTS_EMAIL_CHANGE: "Confirm your new Pen-Pals email"
+      GOTRUE_MAILER_TEMPLATES_REAUTHENTICATION: "http://penpals-auth-templates:8080/reauthentication.html"
+      GOTRUE_MAILER_SUBJECTS_REAUTHENTICATION: "Your Pen-Pals confirmation code"
+
+  penpals-auth-templates:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: ["caddy", "file-server", "--root", "/templates", "--listen", ":8080"]
+    volumes:
+      - type: bind
+        source: "${PENPALS_REPOSITORY_PATH:?Set the absolute VPS repository path}/supabase/templates/production"
+        target: /templates
+        read_only: true
+        bind:
+          create_host_path: false

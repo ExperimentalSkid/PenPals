@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="190" height="58" viewBox="0 0 190 58" role="img" aria-label="Mail Reader Silver">
+  <title>Mail Reader · Silver</title>
+  <rect x="1" y="1" width="188" height="56" rx="28" fill="#F5F7F8" stroke="#BCC4CB" stroke-width="1.5"/>
+  <g opacity="0.72" fill="none" stroke="#89949E" stroke-width="1.15" stroke-linecap="round">
+    <path d="M18 16c-5 4-6 11-3 18"/>
+    <path d="M54 16c5 4 6 11 3 18"/>
+    <path d="M16 19l-4-2M15 24l-4 0M15 29l-3 2M56 19l4-2M57 24l4 0M57 29l3 2"/>
+  </g>
+  <path d="M36 6l17 7v12c0 11-6.5 19-17 25-10.5-6-17-14-17-25V13z" fill="#89949E" opacity="0.96"/>
+  <path d="M36 9l14 5.7v10.1c0 8.8-5.3 15.7-14 21-8.7-5.3-14-12.2-14-21V14.7z" fill="none" stroke="white" stroke-opacity="0.42" stroke-width="1"/>
+  <g transform="translate(24,16) scale(1)" color="white"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 10l8-5 8 5v9H4z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 11l8 5 8-5"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 8h8"/></g>
+  <text x="68" y="27" font-family="Arial, Helvetica, sans-serif" font-size="13.3" font-weight="600" fill="#103B61">Mail Reader</text>
+  <text x="68" y="43" font-family="Arial, Helvetica, sans-serif" font-size="10.4" font-weight="700" letter-spacing="1.5" fill="#89949E">SILVER</text>
+</svg>

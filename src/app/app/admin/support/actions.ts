@@ -1,0 +1,80 @@
+"use server";
+
+import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
+import { requireStaff } from "../guard";
+import { safeAdminReturnTo } from "../investigation-context";
+
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const SUPPORT_STATUSES = new Set(["open", "waiting_staff", "waiting_user", "resolved"]);
+
+function ticketPath(ticketId: string, returnTo: string | null | undefined, params: Record<string, string> = {}) {
+  const safeReturn = safeAdminReturnTo(returnTo) ?? "/app/admin/support";
+  const query = new URLSearchParams({ return_to: safeReturn, ...params });
+  return `/app/admin/support/${encodeURIComponent(ticketId)}?${query.toString()}`;
+}
+
+function ticketError(ticketId: string, returnTo: string | null | undefined, message: string): never {
+  redirect(UUID_PATTERN.test(ticketId) ? ticketPath(ticketId, returnTo, { error: message }) : `/app/admin/support?error=${encodeURIComponent(message)}`);
+}
+
+function readTicket(formData: FormData) {
+  return {
+    ticketId: String(formData.get("ticket_id") ?? "").trim(),
+    returnTo: String(formData.get("return_to") ?? "").trim(),
+  };
+}
+
+export async function claimSupportTicket(formData: FormData) {
+  const { db } = await requireStaff();
+  const { ticketId, returnTo } = readTicket(formData);
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That support ticket could not be found.");
+  const { error } = await db.rpc("staff_claim_support_ticket", { ticket_uuid: ticketId });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "Support ticket could not be claimed.");
+  redirect(ticketPath(ticketId, returnTo, { updated: "claimed" }));
+}
+
+export async function releaseSupportTicket(formData: FormData) {
+  const { db } = await requireStaff();
+  const { ticketId, returnTo } = readTicket(formData);
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That support ticket could not be found.");
+  const { error } = await db.rpc("staff_release_support_ticket", { ticket_uuid: ticketId });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "Support ticket assignment could not be released.");
+  redirect(ticketPath(ticketId, returnTo, { updated: "released" }));
+}
+
+export async function staffReplyToSupportTicket(formData: FormData) {
+  const { db } = await requireStaff();
+  const { ticketId, returnTo } = readTicket(formData);
+  const body = String(formData.get("body") ?? "").trim();
+  const token = String(formData.get("submission_token") ?? "").trim();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That support ticket could not be found.");
+  if (body.length < 1 || body.length > 4000) ticketError(ticketId, returnTo, "A public reply must be between 1 and 4,000 characters.");
+  if (!UUID_PATTERN.test(token)) ticketError(ticketId, returnTo, "Please try sending your reply again.");
+  const { error } = await db.rpc("staff_reply_to_support_ticket", { ticket_uuid: ticketId, p_body: body, p_submission_token: token });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "Public reply could not be sent.");
+  redirect(ticketPath(ticketId, returnTo, { updated: "public_reply" }));
+}
+
+export async function addSupportInternalNote(formData: FormData) {
+  const { db } = await requireStaff();
+  const { ticketId, returnTo } = readTicket(formData);
+  const body = String(formData.get("body") ?? "").trim();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That support ticket could not be found.");
+  if (body.length < 1 || body.length > 4000) ticketError(ticketId, returnTo, "An internal note must be between 1 and 4,000 characters.");
+  const { error } = await db.rpc("staff_add_support_ticket_note", { ticket_uuid: ticketId, p_body: body });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "Internal note could not be saved.");
+  redirect(ticketPath(ticketId, returnTo, { updated: "internal_note" }));
+}
+
+export async function setSupportTicketStatus(formData: FormData) {
+  const { db } = await requireStaff();
+  const { ticketId, returnTo } = readTicket(formData);
+  const status = String(formData.get("status") ?? "").trim().toLowerCase();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That support ticket could not be found.");
+  if (!SUPPORT_STATUSES.has(status)) ticketError(ticketId, returnTo, "Choose a valid support ticket status.");
+  const { error } = await db.rpc("staff_set_support_ticket_status", { ticket_uuid: ticketId, new_status: status });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "Support ticket status could not be updated.");
+  revalidatePath("/app", "layout");
+  redirect(ticketPath(ticketId, returnTo, { updated: status === "open" ? "reopened" : "status" }));
+}

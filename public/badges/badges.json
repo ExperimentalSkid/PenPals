@@ -1,0 +1,766 @@
+{
+  "pack": "Pen-Pals.net achievement badges",
+  "version": 1,
+  "design": {
+    "full_badge_height_px": 58,
+    "grade_order": [
+      "bronze",
+      "silver",
+      "gold",
+      "platinum"
+    ],
+    "notes": "SVG is the source asset. PNG 1x and 2x are convenience exports. Full badges include text; icon-only SVGs are provided for component-driven rendering."
+  },
+  "badges": [
+    {
+      "key": "penpal-veteran",
+      "label": "Penpal Veteran",
+      "kind": "automatic-graded",
+      "metric": "Account tenure",
+      "icon": "veteran",
+      "grades": {
+        "bronze": {
+          "threshold": "3 months",
+          "svg": "svg/full/penpal-veteran-bronze.svg",
+          "png_1x": "png/1x/penpal-veteran-bronze.png",
+          "png_2x": "png/2x/penpal-veteran-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "6 months",
+          "svg": "svg/full/penpal-veteran-silver.svg",
+          "png_1x": "png/1x/penpal-veteran-silver.png",
+          "png_2x": "png/2x/penpal-veteran-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "1 year",
+          "svg": "svg/full/penpal-veteran-gold.svg",
+          "png_1x": "png/1x/penpal-veteran-gold.png",
+          "png_2x": "png/2x/penpal-veteran-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "3 years",
+          "svg": "svg/full/penpal-veteran-platinum.svg",
+          "png_1x": "png/1x/penpal-veteran-platinum.png",
+          "png_2x": "png/2x/penpal-veteran-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/penpal-veteran.svg"
+    },
+    {
+      "key": "profile-builder",
+      "label": "Profile Builder",
+      "kind": "automatic-graded",
+      "metric": "Profile completion",
+      "icon": "profile",
+      "grades": {
+        "bronze": {
+          "threshold": "Minimum profile complete",
+          "svg": "svg/full/profile-builder-bronze.svg",
+          "png_1x": "png/1x/profile-builder-bronze.png",
+          "png_2x": "png/2x/profile-builder-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "75%",
+          "svg": "svg/full/profile-builder-silver.svg",
+          "png_1x": "png/1x/profile-builder-silver.png",
+          "png_2x": "png/2x/profile-builder-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "90%",
+          "svg": "svg/full/profile-builder-gold.svg",
+          "png_1x": "png/1x/profile-builder-gold.png",
+          "png_2x": "png/2x/profile-builder-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "100%",
+          "svg": "svg/full/profile-builder-platinum.svg",
+          "png_1x": "png/1x/profile-builder-platinum.png",
+          "png_2x": "png/2x/profile-builder-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/profile-builder.svg"
+    },
+    {
+      "key": "active-penpal",
+      "label": "Active Penpal",
+      "kind": "automatic-graded",
+      "metric": "Recorded active days",
+      "icon": "active",
+      "grades": {
+        "bronze": {
+          "threshold": "30 active days",
+          "svg": "svg/full/active-penpal-bronze.svg",
+          "png_1x": "png/1x/active-penpal-bronze.png",
+          "png_2x": "png/2x/active-penpal-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "90 active days",
+          "svg": "svg/full/active-penpal-silver.svg",
+          "png_1x": "png/1x/active-penpal-silver.png",
+          "png_2x": "png/2x/active-penpal-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "365 active days",
+          "svg": "svg/full/active-penpal-gold.svg",
+          "png_1x": "png/1x/active-penpal-gold.png",
+          "png_2x": "png/2x/active-penpal-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "730 active days",
+          "svg": "svg/full/active-penpal-platinum.svg",
+          "png_1x": "png/1x/active-penpal-platinum.png",
+          "png_2x": "png/2x/active-penpal-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/active-penpal.svg"
+    },
+    {
+      "key": "correspondent",
+      "label": "Correspondent",
+      "kind": "automatic-graded",
+      "metric": "Accepted outgoing conversations",
+      "icon": "mail",
+      "grades": {
+        "bronze": {
+          "threshold": "10",
+          "svg": "svg/full/correspondent-bronze.svg",
+          "png_1x": "png/1x/correspondent-bronze.png",
+          "png_2x": "png/2x/correspondent-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "30",
+          "svg": "svg/full/correspondent-silver.svg",
+          "png_1x": "png/1x/correspondent-silver.png",
+          "png_2x": "png/2x/correspondent-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "150",
+          "svg": "svg/full/correspondent-gold.svg",
+          "png_1x": "png/1x/correspondent-gold.png",
+          "png_2x": "png/2x/correspondent-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "500",
+          "svg": "svg/full/correspondent-platinum.svg",
+          "png_1x": "png/1x/correspondent-platinum.png",
+          "png_2x": "png/2x/correspondent-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/correspondent.svg"
+    },
+    {
+      "key": "reliable-replier",
+      "label": "Reliable Replier",
+      "kind": "automatic-graded",
+      "metric": "Incoming first-response rate",
+      "icon": "reply",
+      "grades": {
+        "bronze": {
+          "threshold": "70%",
+          "svg": "svg/full/reliable-replier-bronze.svg",
+          "png_1x": "png/1x/reliable-replier-bronze.png",
+          "png_2x": "png/2x/reliable-replier-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "80%",
+          "svg": "svg/full/reliable-replier-silver.svg",
+          "png_1x": "png/1x/reliable-replier-silver.png",
+          "png_2x": "png/2x/reliable-replier-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "90%",
+          "svg": "svg/full/reliable-replier-gold.svg",
+          "png_1x": "png/1x/reliable-replier-gold.png",
+          "png_2x": "png/2x/reliable-replier-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "95%",
+          "svg": "svg/full/reliable-replier-platinum.svg",
+          "png_1x": "png/1x/reliable-replier-platinum.png",
+          "png_2x": "png/2x/reliable-replier-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/reliable-replier.svg"
+    },
+    {
+      "key": "connector",
+      "label": "Connector",
+      "kind": "automatic-graded",
+      "metric": "Distinct conversation contacts",
+      "icon": "connector",
+      "grades": {
+        "bronze": {
+          "threshold": "25",
+          "svg": "svg/full/connector-bronze.svg",
+          "png_1x": "png/1x/connector-bronze.png",
+          "png_2x": "png/2x/connector-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "75",
+          "svg": "svg/full/connector-silver.svg",
+          "png_1x": "png/1x/connector-silver.png",
+          "png_2x": "png/2x/connector-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "150",
+          "svg": "svg/full/connector-gold.svg",
+          "png_1x": "png/1x/connector-gold.png",
+          "png_2x": "png/2x/connector-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "300",
+          "svg": "svg/full/connector-platinum.svg",
+          "png_1x": "png/1x/connector-platinum.png",
+          "png_2x": "png/2x/connector-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/connector.svg"
+    },
+    {
+      "key": "snail-mailer",
+      "label": "Snail Mailer",
+      "kind": "automatic-graded",
+      "metric": "Delivered/read Snail Mail sent",
+      "icon": "stamp",
+      "grades": {
+        "bronze": {
+          "threshold": "15",
+          "svg": "svg/full/snail-mailer-bronze.svg",
+          "png_1x": "png/1x/snail-mailer-bronze.png",
+          "png_2x": "png/2x/snail-mailer-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "30",
+          "svg": "svg/full/snail-mailer-silver.svg",
+          "png_1x": "png/1x/snail-mailer-silver.png",
+          "png_2x": "png/2x/snail-mailer-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "100",
+          "svg": "svg/full/snail-mailer-gold.svg",
+          "png_1x": "png/1x/snail-mailer-gold.png",
+          "png_2x": "png/2x/snail-mailer-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "250",
+          "svg": "svg/full/snail-mailer-platinum.svg",
+          "png_1x": "png/1x/snail-mailer-platinum.png",
+          "png_2x": "png/2x/snail-mailer-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/snail-mailer.svg"
+    },
+    {
+      "key": "early-member",
+      "label": "Early Member",
+      "kind": "automatic-graded",
+      "metric": "Join date relative to launch",
+      "icon": "early",
+      "grades": {
+        "bronze": {
+          "threshold": "First 12 months",
+          "svg": "svg/full/early-member-bronze.svg",
+          "png_1x": "png/1x/early-member-bronze.png",
+          "png_2x": "png/2x/early-member-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "First 6 months",
+          "svg": "svg/full/early-member-silver.svg",
+          "png_1x": "png/1x/early-member-silver.png",
+          "png_2x": "png/2x/early-member-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "First 3 months",
+          "svg": "svg/full/early-member-gold.svg",
+          "png_1x": "png/1x/early-member-gold.png",
+          "png_2x": "png/2x/early-member-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "First 30 days",
+          "svg": "svg/full/early-member-platinum.svg",
+          "png_1x": "png/1x/early-member-platinum.png",
+          "png_2x": "png/2x/early-member-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/early-member.svg"
+    },
+    {
+      "key": "quick-replier",
+      "label": "Quick Replier",
+      "kind": "automatic-graded",
+      "metric": "First-response latency",
+      "icon": "clock",
+      "grades": {
+        "bronze": {
+          "threshold": "\u226472h",
+          "svg": "svg/full/quick-replier-bronze.svg",
+          "png_1x": "png/1x/quick-replier-bronze.png",
+          "png_2x": "png/2x/quick-replier-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "\u226424h",
+          "svg": "svg/full/quick-replier-silver.svg",
+          "png_1x": "png/1x/quick-replier-silver.png",
+          "png_2x": "png/2x/quick-replier-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "\u22648h",
+          "svg": "svg/full/quick-replier-gold.svg",
+          "png_1x": "png/1x/quick-replier-gold.png",
+          "png_2x": "png/2x/quick-replier-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "\u22642h",
+          "svg": "svg/full/quick-replier-platinum.svg",
+          "png_1x": "png/1x/quick-replier-platinum.png",
+          "png_2x": "png/2x/quick-replier-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/quick-replier.svg"
+    },
+    {
+      "key": "icebreaker",
+      "label": "Icebreaker",
+      "kind": "automatic-graded",
+      "metric": "Introductions sent",
+      "icon": "icebreaker",
+      "grades": {
+        "bronze": {
+          "threshold": "10",
+          "svg": "svg/full/icebreaker-bronze.svg",
+          "png_1x": "png/1x/icebreaker-bronze.png",
+          "png_2x": "png/2x/icebreaker-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "50",
+          "svg": "svg/full/icebreaker-silver.svg",
+          "png_1x": "png/1x/icebreaker-silver.png",
+          "png_2x": "png/2x/icebreaker-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "200",
+          "svg": "svg/full/icebreaker-gold.svg",
+          "png_1x": "png/1x/icebreaker-gold.png",
+          "png_2x": "png/2x/icebreaker-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "500",
+          "svg": "svg/full/icebreaker-platinum.svg",
+          "png_1x": "png/1x/icebreaker-platinum.png",
+          "png_2x": "png/2x/icebreaker-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/icebreaker.svg"
+    },
+    {
+      "key": "conversation-starter",
+      "label": "Conversation Starter",
+      "kind": "automatic-graded",
+      "metric": "Conversations started",
+      "icon": "chat",
+      "grades": {
+        "bronze": {
+          "threshold": "10",
+          "svg": "svg/full/conversation-starter-bronze.svg",
+          "png_1x": "png/1x/conversation-starter-bronze.png",
+          "png_2x": "png/2x/conversation-starter-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "50",
+          "svg": "svg/full/conversation-starter-silver.svg",
+          "png_1x": "png/1x/conversation-starter-silver.png",
+          "png_2x": "png/2x/conversation-starter-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "200",
+          "svg": "svg/full/conversation-starter-gold.svg",
+          "png_1x": "png/1x/conversation-starter-gold.png",
+          "png_2x": "png/2x/conversation-starter-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "500",
+          "svg": "svg/full/conversation-starter-platinum.svg",
+          "png_1x": "png/1x/conversation-starter-platinum.png",
+          "png_2x": "png/2x/conversation-starter-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/conversation-starter.svg"
+    },
+    {
+      "key": "letter-writer",
+      "label": "Letter Writer",
+      "kind": "automatic-graded",
+      "metric": "Messages sent",
+      "icon": "pen",
+      "grades": {
+        "bronze": {
+          "threshold": "100",
+          "svg": "svg/full/letter-writer-bronze.svg",
+          "png_1x": "png/1x/letter-writer-bronze.png",
+          "png_2x": "png/2x/letter-writer-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "500",
+          "svg": "svg/full/letter-writer-silver.svg",
+          "png_1x": "png/1x/letter-writer-silver.png",
+          "png_2x": "png/2x/letter-writer-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "2,500",
+          "svg": "svg/full/letter-writer-gold.svg",
+          "png_1x": "png/1x/letter-writer-gold.png",
+          "png_2x": "png/2x/letter-writer-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "10,000",
+          "svg": "svg/full/letter-writer-platinum.svg",
+          "png_1x": "png/1x/letter-writer-platinum.png",
+          "png_2x": "png/2x/letter-writer-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/letter-writer.svg"
+    },
+    {
+      "key": "steady-penpal",
+      "label": "Steady Penpal",
+      "kind": "automatic-graded",
+      "metric": "Distinct active months",
+      "icon": "calendar",
+      "grades": {
+        "bronze": {
+          "threshold": "3 months",
+          "svg": "svg/full/steady-penpal-bronze.svg",
+          "png_1x": "png/1x/steady-penpal-bronze.png",
+          "png_2x": "png/2x/steady-penpal-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "6 months",
+          "svg": "svg/full/steady-penpal-silver.svg",
+          "png_1x": "png/1x/steady-penpal-silver.png",
+          "png_2x": "png/2x/steady-penpal-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "12 months",
+          "svg": "svg/full/steady-penpal-gold.svg",
+          "png_1x": "png/1x/steady-penpal-gold.png",
+          "png_2x": "png/2x/steady-penpal-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "24 months",
+          "svg": "svg/full/steady-penpal-platinum.svg",
+          "png_1x": "png/1x/steady-penpal-platinum.png",
+          "png_2x": "png/2x/steady-penpal-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/steady-penpal.svg"
+    },
+    {
+      "key": "mystery-explorer",
+      "label": "Mystery Explorer",
+      "kind": "automatic-graded",
+      "metric": "Mystery Pick selections",
+      "icon": "compass",
+      "grades": {
+        "bronze": {
+          "threshold": "10",
+          "svg": "svg/full/mystery-explorer-bronze.svg",
+          "png_1x": "png/1x/mystery-explorer-bronze.png",
+          "png_2x": "png/2x/mystery-explorer-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "50",
+          "svg": "svg/full/mystery-explorer-silver.svg",
+          "png_1x": "png/1x/mystery-explorer-silver.png",
+          "png_2x": "png/2x/mystery-explorer-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "200",
+          "svg": "svg/full/mystery-explorer-gold.svg",
+          "png_1x": "png/1x/mystery-explorer-gold.png",
+          "png_2x": "png/2x/mystery-explorer-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "500",
+          "svg": "svg/full/mystery-explorer-platinum.svg",
+          "png_1x": "png/1x/mystery-explorer-platinum.png",
+          "png_2x": "png/2x/mystery-explorer-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/mystery-explorer.svg"
+    },
+    {
+      "key": "across-borders",
+      "label": "Across Borders",
+      "kind": "automatic-graded",
+      "metric": "Distinct countries reached via Snail Mail",
+      "icon": "globe",
+      "grades": {
+        "bronze": {
+          "threshold": "5",
+          "svg": "svg/full/across-borders-bronze.svg",
+          "png_1x": "png/1x/across-borders-bronze.png",
+          "png_2x": "png/2x/across-borders-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "15",
+          "svg": "svg/full/across-borders-silver.svg",
+          "png_1x": "png/1x/across-borders-silver.png",
+          "png_2x": "png/2x/across-borders-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "30",
+          "svg": "svg/full/across-borders-gold.svg",
+          "png_1x": "png/1x/across-borders-gold.png",
+          "png_2x": "png/2x/across-borders-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "60",
+          "svg": "svg/full/across-borders-platinum.svg",
+          "png_1x": "png/1x/across-borders-platinum.png",
+          "png_2x": "png/2x/across-borders-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/across-borders.svg"
+    },
+    {
+      "key": "regional-explorer",
+      "label": "Regional Explorer",
+      "kind": "automatic-graded",
+      "metric": "Distinct regions reached via Snail Mail",
+      "icon": "map",
+      "grades": {
+        "bronze": {
+          "threshold": "10",
+          "svg": "svg/full/regional-explorer-bronze.svg",
+          "png_1x": "png/1x/regional-explorer-bronze.png",
+          "png_2x": "png/2x/regional-explorer-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "30",
+          "svg": "svg/full/regional-explorer-silver.svg",
+          "png_1x": "png/1x/regional-explorer-silver.png",
+          "png_2x": "png/2x/regional-explorer-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "75",
+          "svg": "svg/full/regional-explorer-gold.svg",
+          "png_1x": "png/1x/regional-explorer-gold.png",
+          "png_2x": "png/2x/regional-explorer-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "150",
+          "svg": "svg/full/regional-explorer-platinum.svg",
+          "png_1x": "png/1x/regional-explorer-platinum.png",
+          "png_2x": "png/2x/regional-explorer-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/regional-explorer.svg"
+    },
+    {
+      "key": "mail-reader",
+      "label": "Mail Reader",
+      "kind": "automatic-graded",
+      "metric": "Incoming Snail Mail read",
+      "icon": "openmail",
+      "grades": {
+        "bronze": {
+          "threshold": "15",
+          "svg": "svg/full/mail-reader-bronze.svg",
+          "png_1x": "png/1x/mail-reader-bronze.png",
+          "png_2x": "png/2x/mail-reader-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "30",
+          "svg": "svg/full/mail-reader-silver.svg",
+          "png_1x": "png/1x/mail-reader-silver.png",
+          "png_2x": "png/2x/mail-reader-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "100",
+          "svg": "svg/full/mail-reader-gold.svg",
+          "png_1x": "png/1x/mail-reader-gold.png",
+          "png_2x": "png/2x/mail-reader-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "250",
+          "svg": "svg/full/mail-reader-platinum.svg",
+          "png_1x": "png/1x/mail-reader-platinum.png",
+          "png_2x": "png/2x/mail-reader-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/mail-reader.svg"
+    },
+    {
+      "key": "multilingual",
+      "label": "Multilingual",
+      "kind": "automatic-graded",
+      "metric": "Declared languages",
+      "icon": "languages",
+      "grades": {
+        "bronze": {
+          "threshold": "2",
+          "svg": "svg/full/multilingual-bronze.svg",
+          "png_1x": "png/1x/multilingual-bronze.png",
+          "png_2x": "png/2x/multilingual-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "3",
+          "svg": "svg/full/multilingual-silver.svg",
+          "png_1x": "png/1x/multilingual-silver.png",
+          "png_2x": "png/2x/multilingual-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "4",
+          "svg": "svg/full/multilingual-gold.svg",
+          "png_1x": "png/1x/multilingual-gold.png",
+          "png_2x": "png/2x/multilingual-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "5+",
+          "svg": "svg/full/multilingual-platinum.svg",
+          "png_1x": "png/1x/multilingual-platinum.png",
+          "png_2x": "png/2x/multilingual-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/multilingual.svg"
+    },
+    {
+      "key": "language-learner",
+      "label": "Language Learner",
+      "kind": "automatic-graded",
+      "metric": "Languages marked learning",
+      "icon": "learn",
+      "grades": {
+        "bronze": {
+          "threshold": "1",
+          "svg": "svg/full/language-learner-bronze.svg",
+          "png_1x": "png/1x/language-learner-bronze.png",
+          "png_2x": "png/2x/language-learner-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "2",
+          "svg": "svg/full/language-learner-silver.svg",
+          "png_1x": "png/1x/language-learner-silver.png",
+          "png_2x": "png/2x/language-learner-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "3",
+          "svg": "svg/full/language-learner-gold.svg",
+          "png_1x": "png/1x/language-learner-gold.png",
+          "png_2x": "png/2x/language-learner-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "4+",
+          "svg": "svg/full/language-learner-platinum.svg",
+          "png_1x": "png/1x/language-learner-platinum.png",
+          "png_2x": "png/2x/language-learner-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/language-learner.svg"
+    },
+    {
+      "key": "interest-explorer",
+      "label": "Interest Explorer",
+      "kind": "automatic-graded",
+      "metric": "Declared interests",
+      "icon": "interest",
+      "grades": {
+        "bronze": {
+          "threshold": "5",
+          "svg": "svg/full/interest-explorer-bronze.svg",
+          "png_1x": "png/1x/interest-explorer-bronze.png",
+          "png_2x": "png/2x/interest-explorer-bronze@2x.png"
+        },
+        "silver": {
+          "threshold": "10",
+          "svg": "svg/full/interest-explorer-silver.svg",
+          "png_1x": "png/1x/interest-explorer-silver.png",
+          "png_2x": "png/2x/interest-explorer-silver@2x.png"
+        },
+        "gold": {
+          "threshold": "20",
+          "svg": "svg/full/interest-explorer-gold.svg",
+          "png_1x": "png/1x/interest-explorer-gold.png",
+          "png_2x": "png/2x/interest-explorer-gold@2x.png"
+        },
+        "platinum": {
+          "threshold": "30",
+          "svg": "svg/full/interest-explorer-platinum.svg",
+          "png_1x": "png/1x/interest-explorer-platinum.png",
+          "png_2x": "png/2x/interest-explorer-platinum@2x.png"
+        }
+      },
+      "icon_svg": "svg/icons/interest-explorer.svg"
+    },
+    {
+      "key": "verified",
+      "label": "Verified",
+      "kind": "system",
+      "icon": "verified",
+      "svg": "svg/full/verified.svg",
+      "png_1x": "png/1x/verified.png",
+      "png_2x": "png/2x/verified@2x.png",
+      "icon_svg": "svg/icons/verified.svg"
+    },
+    {
+      "key": "helpful-penpal",
+      "label": "Helpful Penpal",
+      "kind": "manual",
+      "icon": "helpful",
+      "svg": "svg/full/helpful-penpal.svg",
+      "png_1x": "png/1x/helpful-penpal.png",
+      "png_2x": "png/2x/helpful-penpal@2x.png",
+      "icon_svg": "svg/icons/helpful-penpal.svg"
+    },
+    {
+      "key": "community-contributor",
+      "label": "Community Contributor",
+      "kind": "manual",
+      "icon": "community",
+      "svg": "svg/full/community-contributor.svg",
+      "png_1x": "png/1x/community-contributor.png",
+      "png_2x": "png/2x/community-contributor@2x.png",
+      "icon_svg": "svg/icons/community-contributor.svg"
+    },
+    {
+      "key": "language-exchange",
+      "label": "Language Exchange",
+      "kind": "manual",
+      "icon": "exchange",
+      "svg": "svg/full/language-exchange.svg",
+      "png_1x": "png/1x/language-exchange.png",
+      "png_2x": "png/2x/language-exchange@2x.png",
+      "icon_svg": "svg/icons/language-exchange.svg"
+    },
+    {
+      "key": "local-guide",
+      "label": "Local Guide",
+      "kind": "manual",
+      "icon": "guide",
+      "svg": "svg/full/local-guide.svg",
+      "png_1x": "png/1x/local-guide.png",
+      "png_2x": "png/2x/local-guide@2x.png",
+      "icon_svg": "svg/icons/local-guide.svg"
+    },
+    {
+      "key": "event-host",
+      "label": "Event Host",
+      "kind": "manual",
+      "icon": "event",
+      "svg": "svg/full/event-host.svg",
+      "png_1x": "png/1x/event-host.png",
+      "png_2x": "png/2x/event-host@2x.png",
+      "icon_svg": "svg/icons/event-host.svg"
+    },
+    {
+      "key": "kind-presence",
+      "label": "Kind Presence",
+      "kind": "manual",
+      "icon": "kind",
+      "svg": "svg/full/kind-presence.svg",
+      "png_1x": "png/1x/kind-presence.png",
+      "png_2x": "png/2x/kind-presence@2x.png",
+      "icon_svg": "svg/icons/kind-presence.svg"
+    }
+  ]
+}

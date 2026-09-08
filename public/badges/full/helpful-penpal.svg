@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="201" height="58" viewBox="0 0 201 58" role="img" aria-label="Helpful Penpal">
+  <title>Helpful Penpal</title>
+  <rect x="1" y="1" width="199" height="56" rx="28" fill="#F3F8FC" stroke="#AFCBE0" stroke-width="1.5"/>
+  <g opacity="0.72" fill="none" stroke="#356F9C" stroke-width="1.15" stroke-linecap="round">
+    <path d="M18 16c-5 4-6 11-3 18"/>
+    <path d="M54 16c5 4 6 11 3 18"/>
+    <path d="M16 19l-4-2M15 24l-4 0M15 29l-3 2M56 19l4-2M57 24l4 0M57 29l3 2"/>
+  </g>
+  <path d="M36 6l17 7v12c0 11-6.5 19-17 25-10.5-6-17-14-17-25V13z" fill="#356F9C" opacity="0.96"/>
+  <path d="M36 9l14 5.7v10.1c0 8.8-5.3 15.7-14 21-8.7-5.3-14-12.2-14-21V14.7z" fill="none" stroke="white" stroke-opacity="0.42" stroke-width="1"/>
+  <g transform="translate(24,16) scale(1)" color="white"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M12 20s-7-4.4-7-10a4 4 0 017-2.6A4 4 0 0119 10c0 5.6-7 10-7 10z"/><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M8 11h8"/></g>
+  <text x="68" y="34" font-family="Arial, Helvetica, sans-serif" font-size="13.3" font-weight="600" fill="#103B61">Helpful Penpal</text>
+  
+</svg>

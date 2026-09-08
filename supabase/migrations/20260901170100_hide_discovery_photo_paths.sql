@@ -1,0 +1,14 @@
+-- Discovery remains photo-free; do not expose storage paths through its RPC.
+create or replace function public.get_discover_profiles(viewer uuid default auth.uid())
+returns table (id uuid, username text, display_name text, birth_date date, gender text, country text, city text, avatar_path text, last_active_at timestamptz, quote text)
+language sql security definer set search_path = public as $$
+  select p.id, p.username, p.display_name, p.birth_date, p.gender, p.country,
+    case when p.show_city then p.city end,
+    null::text,
+    case when p.show_activity_status then p.last_active_at end,
+    p.quote
+  from public.profiles p
+  where p.id <> auth.uid() and p.deactivated_at is null and public.viewer_can_access_profile(p.id)
+$$;
+revoke execute on function public.get_discover_profiles(uuid) from public;
+grant execute on function public.get_discover_profiles(uuid) to authenticated;
