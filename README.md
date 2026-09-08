@@ -4,6 +4,9 @@ Penpal is a Next.js App Router foundation for international friendship and peopl
 
 ## Setup
 
+Use Node.js 24 (as in CI) and the pinned pnpm 11.19.0. The minimum supported
+Node.js version is 22.13.0; pnpm 11 cannot run on Node.js 20.
+
 1. Create a Supabase project and copy `.env.example` to `.env.local`.
 2. Fill in `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` from the Supabase dashboard.
 3. For local development, leave `NEXT_PUBLIC_SITE_URL` unset (the app uses `http://localhost:3000/auth/confirm`) or set it to the local origin explicitly.

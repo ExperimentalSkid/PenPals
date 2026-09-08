@@ -48,10 +48,17 @@ scope is explicitly verified.
   Git's whitespace check reports 34 pre-existing trailing-space/EOF warnings;
   these do not affect the build and were left unchanged. Local seeded accounts
   are development fixtures and must never be seeded on the VPS.
-- Exact publication continuation: re-stage the final documentation, commit the
-  source on the empty repository's `main` branch using the owner's GitHub
-  no-reply identity, push, and compare local and remote commit IDs. Record the
-  resulting publication state here. No commit or push is yet verified.
+- `VERIFIED`: Initial commit `1b208debf715ee4de8e46d058547ffc069a250f1`
+  was pushed to `main` at https://github.com/ExperimentalSkid/PenPals. Remote
+  and local commit IDs matched; GitHub uses `main` as its default branch.
+- `ISSUE FOUND` → `FIXED`, verification pending: first GitHub database CI run
+  34186140745 failed during dependency installation because Node 20 cannot run
+  pnpm 11 (`node:sqlite` unavailable). CI now selects Node 24, matching the
+  validated local runtime; package engines and deployment docs record the
+  minimum Node 22.13 requirement. No application dependency was changed.
+- Exact publication continuation: commit/push the CI runtime correction,
+  inspect the new database release-gate run, fix any verified publication
+  blocker, and record its final outcome here. The master audit remains open.
 - `BLOCKED`: The VPS/self-hosted Supabase instance does not exist in this local
   workspace, so production signup, resend, recovery, remaining enabled Auth
   flows and real callback delivery require post-deploy verification. Resend DNS

@@ -20,6 +20,9 @@ the VPS.
 
 ## GitHub to VPS
 
+Use Node.js 24 and the repository's pinned pnpm 11.19.0 for application
+installation, validation and builds. Node.js 20 cannot run this pnpm version.
+
 The VPS must already have the official self-hosted Supabase Docker stack and its
 private environment. Clone this repository to a stable absolute path, for
 example `/srv/penpals`. Copy the variables in
