@@ -7,6 +7,50 @@ scope is explicitly verified.
 
 ## Current pass
 
+### Public-launch follow-up (2026-09-08)
+
+- `VERIFIED`: repository-side launch preparation is complete and ready to
+  publish. Previous documentation commit `78511c1` remains the base; this
+  follow-up adds no product feature or VPS access.
+- `BLOCKED`: anonymous HTTPS GETs to `pen-pals.net` and `www.pen-pals.net`
+  both return the existing "Coming Soon" page, not the Pen-Pals application.
+  Deployment/switching the user's server remains outside available access.
+- `VERIFIED`: public DNS has Cloudflare nameservers, sender SPF/MX at
+  `send.pen-pals.net` and a DKIM key at `resend._domainkey.pen-pals.net`.
+  This does not establish Resend dashboard verification or inbox delivery.
+- `FIXED` / `VERIFIED`: added `pnpm check:production-app`, a read-only
+  production application/worker environment gate. It requires HTTPS nonlocal
+  site and API origins, separate public/service keys, rejects populated public
+  secret names, and validates optional Google-link and worker-size settings
+  without guessing self-hosted Supabase key formats. It is separate from the
+  Auth/SMTP environment checker, because SMTP secrets never belong in the app
+  process.
+- `FIXED` / `VERIFIED`: a fresh production database no longer relies on the
+  forbidden demo seed to obtain an administrator. `deploy/bootstrap-first-admin.sql`
+  is an operator-only, direct-PostgreSQL, interactive one-time bootstrap. It
+  requires a confirmed active owner profile, uses the existing role-change
+  advisory lock and transaction-local guard, refuses whenever any admin exists,
+  and creates no RPC, migration, public endpoint or reusable staff bypass.
+- `VERIFIED`: the 33 targeted app-config/email/worker/template tests pass with
+  zero skips/failures; first-admin SQL parsed and failed closed against the
+  existing local seeded administrator with no committed role mutation.
+  `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm schema:check`,
+  `pnpm audit --prod`, and `git diff --check` pass. The build still emits 13
+  static pages with dynamic application/SEO routes. The broader 619-test result
+  below remains the prior source-pass result and is not restated as a new run.
+- Exact continuation: publish this small deployment-hardening commit. The user
+  can then push/pull it to the VPS. Before public registration, the operator
+  must deploy the official self-hosted Supabase stack and app, configure actual
+  private values/Resend, apply migrations, use the one-time owner bootstrap,
+  replace the public Coming Soon origin, schedule the worker, and run live
+  email/onboarding/two-account checks. Do not request server access or treat
+  those external steps as verified locally.
+- Diagnostic limitations: web open returned a tool safety-resolution error;
+  a direct anonymous HTTPS/DNS check succeeded. A Windows search glob and two
+  guessed source paths failed without writes. A local CLI status command printed
+  only disposable local development credentials in tool output; no production
+  secret was used, recorded, or added to source.
+
 ### Deployment-readiness follow-up (2026-09-08)
 
 - `VERIFIED`: documentation-only handoff for the user's self-hosted VPS.

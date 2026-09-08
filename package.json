@@ -10,6 +10,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "check:production-app": "node scripts/validate-production-app-config.mjs",
     "check:production-email": "node scripts/validate-production-email-config.mjs",
     "jobs:run": "node scripts/run-background-jobs.mjs",
     "lint": "eslint",

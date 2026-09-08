@@ -44,6 +44,18 @@ credentials. Never reuse local `.env.local` or commit a populated file.
 with the production values; replacing runtime variables cannot repair a bundle
 built against localhost. Do not copy a local `.next` build to production.
 
+Before building, validate the **app/worker** environment without printing any
+credentials:
+
+```sh
+node --env-file=/etc/penpals/app.env scripts/validate-production-app-config.mjs
+```
+
+The app check requires the two public origins, a matching publishable key and
+the server-only service-role key. It rejects localhost origins, a public secret,
+or accidentally using the same key for browser and server. It intentionally
+does not assume a particular self-hosted Supabase key format.
+
 If Google login/linking is enabled, preserve its Auth provider settings and
 approved callback URLs, enable the existing manual-linking setting, and set
 the app's private `GOOGLE_LOGIN_STATE_SECRET` to a random value of at least 32
@@ -55,6 +67,8 @@ configure a self-hosted production Auth container.
 Configure Resend through [the email guide](production-email.md), using
 `Pen-Pals <no-reply@pen-pals.net>`. Rotate the key previously shared in chat.
 Only the Auth stack needs SMTP/Resend secrets, not the Next.js browser or worker.
+Validate the separate Auth/SMTP environment with
+`node --env-file=/etc/penpals/auth-email.env scripts/validate-production-email-config.mjs`.
 
 ## 3. Apply application migrations, without demo data
 
@@ -92,6 +106,26 @@ language and interest catalogues are already supplied by migrations.
 See [database validation](database-validation.md) for the existing local/CI gate.
 These production commands must be run by the operator; local parity is not
 evidence that they have run against the VPS.
+
+### Bootstrap the first administrator
+
+The production database intentionally has no demo administrator. After the
+migrations are applied, create and confirm your real owner account through the
+private app, complete enough setup to create its profile, then run this once
+from a direct **private database-admin** connection:
+
+```sh
+psql "$PENPALS_DATABASE_URL" --set=ON_ERROR_STOP=1 --file=deploy/bootstrap-first-admin.sql
+```
+
+The script prompts for the owner email rather than putting it in the command.
+It takes the same role-change lock as the admin tools, requires a confirmed and
+active profile, and refuses if *any* administrator profile already exists. Its
+temporary role-change setting expires with the transaction. It is not a
+migration, browser API or callable RPC. Do not run `supabase/seed.sql`, do not
+expose the database, and do not reuse this script to change staff roles. Sign
+out/in after it completes; later role changes belong in the authenticated admin
+area and retain the ordinary audit path.
 
 ## 4. Build and supervise the app and worker
 
