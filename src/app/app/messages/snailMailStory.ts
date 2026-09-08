@@ -31,6 +31,12 @@ export function isLostInTransit(letter: SnailMailStoryLetter | null | undefined)
   return letter?.letter_status === "lost_in_transit";
 }
 
+export function hasSnailMailArrived(letter: SnailMailStoryLetter & { deliver_at: string; delivered_at: string | null }, now: number) {
+  // The projection opens letters at their ETA, even before the worker records
+  // delivered_at. This is presentation only; lifecycle writes stay server-side.
+  return !isLostInTransit(letter) && Boolean(letter.delivered_at || new Date(letter.deliver_at).getTime() <= now);
+}
+
 export function lostInTransitCopy(letter: SnailMailStoryLetter) {
   const variants = LOST_IN_TRANSIT_COPY[letter.transport_mode ?? ""] ?? LOST_IN_TRANSIT_COPY.default;
   const numericVariant = Number(letter.story_variant ?? 0);

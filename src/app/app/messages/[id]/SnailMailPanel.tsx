@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { cancelSnailMail, markSnailMailRead, sendSnailMail } from "@/app/app/messages/actions";
-import { isLostInTransit, lostInTransitCopy } from "@/app/app/messages/snailMailStory";
+import { hasSnailMailArrived as hasArrived, isLostInTransit, lostInTransitCopy } from "@/app/app/messages/snailMailStory";
 
 export type SnailMailLetter = {
   id: string;
@@ -39,14 +39,14 @@ function progress(letter: SnailMailLetter, now: number) {
 
 function deliveryCopy(letter: SnailMailLetter, now: number) {
   if (isLostInTransit(letter)) return lostInTransitCopy(letter);
-  if (letter.transport_mode === "rare_pigeon" && !letter.delivered_at && new Date(letter.deliver_at).getTime() > now) {
+  if (letter.transport_mode === "rare_pigeon" && !hasArrived(letter, now)) {
     return "A very determined pigeon has accepted the assignment.";
   }
   if (letter.letter_status === "outgoing") {
-    if (letter.delivered_at || new Date(letter.deliver_at).getTime() <= now) return "Delivered";
+    if (hasArrived(letter, now)) return "Delivered";
     return letter.story_variant === 1 ? "Your letter is travelling quietly." : "Your letter is making its way there.";
   }
-  if (letter.delivered_at || new Date(letter.deliver_at).getTime() <= now) return "Your letter has arrived.";
+  if (hasArrived(letter, now)) return "Your letter has arrived.";
   return "A letter is on its way. The message opens when it arrives.";
 }
 
@@ -65,7 +65,7 @@ function transportLabel(mode: SnailMailLetter["transport_mode"]) {
 function milestone(letter: SnailMailLetter, now: number) {
   if (isLostInTransit(letter)) return "Lost in transit";
   const value = progress(letter, now);
-  if (value >= 100) return "Delivered";
+  if (hasArrived(letter, now)) return "Delivered";
   if (value < 12) return "Posted";
   if (value < 28) return "Sorting";
   if (value < 58) {
@@ -85,7 +85,7 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
     return () => window.clearInterval(interval);
   }, []);
   const outgoingLetterIsBlocking = letters.some((letter) => letter.sender_id === userId && !isLostInTransit(letter) && (!letter.delivered_at || !letter.recipient_read_at));
-  const localBlockedReason = letters.some((letter) => letter.sender_id === userId && !isLostInTransit(letter) && !letter.delivered_at)
+  const localBlockedReason = letters.some((letter) => letter.sender_id === userId && !isLostInTransit(letter) && !hasArrived(letter, currentNow))
     ? "Your last letter is still on its way. Please wait before sending another."
     : outgoingLetterIsBlocking
       ? "Your last delivered letter is waiting to be opened."
@@ -102,7 +102,7 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
     const latestLetter = [...letters].sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at))[0];
     const latestIsMine = latestLetter?.sender_id === userId;
     const latestCancelled = Boolean(latestLetter && isLostInTransit(latestLetter));
-    const latestInTransit = latestLetter && !latestCancelled && !latestLetter.delivered_at;
+    const latestInTransit = latestLetter && !latestCancelled && !hasArrived(latestLetter, currentNow);
     return (
       <section className="rounded-xl border border-[#deded5] bg-[#fbfaf6] p-5 sm:p-6" aria-labelledby="snail-mail-heading">
         <div className="flex items-center justify-between gap-3">
@@ -119,7 +119,7 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
           <p className="mt-1 text-xs text-black/40">{transportLabel(latestLetter.transport_mode)} · {milestone(latestLetter, currentNow)}</p>
           {!latestCancelled && <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#e4e8df]" role="progressbar" aria-valuenow={Math.round(progress(latestLetter, currentNow))} aria-valuemin={0} aria-valuemax={100} aria-label={`Letter delivery progress ${Math.round(progress(latestLetter, currentNow))} percent`}><span className="block h-full rounded-full bg-[#087456]" style={{ width: `${progress(latestLetter, currentNow)}%` }} /></div>}
           {latestLetter.body_available && latestLetter.body ? <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-[#075d46] underline underline-offset-2">Read letter</summary><p className="mt-3 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-3 text-sm leading-6 text-[#1c2d26]">{latestLetter.body}</p></details> : <p className="mt-4 text-xs italic text-black/45">{latestCancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
-          {!latestCancelled && !latestIsMine && latestLetter.body_available && latestLetter.unread && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
+          {!latestCancelled && !latestIsMine && latestLetter.body_available && !latestLetter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
           {latestIsMine && latestInTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">Cancel letter</SubmitButton></form>}
         </div> : <p className="mt-5 border-t border-black/10 pt-4 text-sm leading-6 text-black/50">No letters yet. Send one when you&apos;re ready.</p>}
         {!composing && canWriteLetter && <button type="button" onClick={openComposer} className="mt-5 w-full rounded-md border border-[#087456]/30 px-3 py-2.5 text-sm text-[#075d46] hover:bg-[#087456]/[0.06]">Write a letter</button>}
@@ -158,7 +158,7 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
         {letters.map((letter) => {
           const isMine = letter.sender_id === userId;
           const cancelled = isLostInTransit(letter);
-          const inTransit = !cancelled && !letter.delivered_at;
+          const inTransit = !cancelled && !hasArrived(letter, currentNow);
           const value = progress(letter, currentNow);
           return <article key={letter.id} className="border-t border-black/[0.08] pt-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
@@ -169,7 +169,7 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
             <p className="mt-1 text-xs text-black/40" aria-label="Delivery milestone">{transportLabel(letter.transport_mode)} · {milestone(letter, currentNow)}</p>
             {!cancelled && <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#e4e8df]" role="progressbar" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100} aria-label={`Letter delivery progress ${Math.round(value)} percent`}><span className="block h-full rounded-full bg-[#087456] transition-[width]" style={{ width: `${value}%` }} /></div>}
             {letter.body_available && letter.body ? <div className="mt-4 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-4 text-[15px] leading-7 text-[#1c2d26]">{letter.body}</div> : <p className="mt-4 text-sm italic text-black/45">{cancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
-            {!cancelled && !isMine && letter.body_available && letter.unread && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
+            {!cancelled && !isMine && letter.body_available && !letter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
             {isMine && inTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">Cancel letter</SubmitButton></form>}
           </article>;
         })}

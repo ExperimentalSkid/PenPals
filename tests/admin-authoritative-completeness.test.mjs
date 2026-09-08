@@ -35,7 +35,6 @@ declare
   incomplete_id uuid := gen_random_uuid();
   fixture_prefix text := 'ac_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
   region text;
-  actual boolean;
   payload jsonb;
   legacy_payload jsonb;
   n integer;
@@ -104,14 +103,12 @@ begin
     where b.badge_key like 'profile-builder-%' and b.badge_key = 'profile-builder-platinum';
   if n <> 1 then raise exception 'staff projection does not return the single Platinum badge'; end if;
 
-  -- Preserve the current precision-aware completion rule: region requires
-  -- its region code, locality requires a city, and country needs neither.
-  update public.profiles set location_precision = 'region', region_code = null where id = complete_id;
-  select u.profile_complete into actual from public.admin_list_users_page(fixture_prefix || '_full') u;
-  if actual is distinct from false then raise exception 'region without region code is complete'; end if;
+  -- Use a valid canonical region: the location-integrity trigger already
+  -- prevents saving region precision without a region code. Country needs
+  -- neither a region nor a city; locality completion still requires a city.
   select region_code into region from public.location_regions where country_code = 'NO' order by region_code limit 1;
   if region is null then raise exception 'canonical Norway region fixture unavailable'; end if;
-  update public.profiles set region_code = region where id = complete_id;
+  update public.profiles set location_precision = 'region', region_code = region where id = complete_id;
   if (public.admin_get_user_detail(complete_id) #>> '{profile,profile_complete}')::boolean is distinct from true then
     raise exception 'region precision unnecessarily requires a city';
   end if;

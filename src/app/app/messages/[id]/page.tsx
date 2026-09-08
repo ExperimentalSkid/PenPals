@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { markRead, requestPhotoAccess, revokePhotoAccess, grantPhotoAccess } from "@/app/app/messages/actions";
-import { isLostInTransit } from "@/app/app/messages/snailMailStory";
+import { hasSnailMailArrived, isLostInTransit } from "@/app/app/messages/snailMailStory";
 import { redirect, notFound } from "next/navigation";
 import { PresenceStatus } from "@/app/PresenceProvider";
 import BlockControl from "@/app/app/profile/BlockControl";
@@ -122,8 +122,8 @@ export default async function Conversation({ params, searchParams }: { params: P
   const lastOtherMessageAt = [...msgs].reverse().find((currentMessage: any) => currentMessage.sender_id !== uid)?.created_at ?? null;
   const messageStreak = msgs.filter((currentMessage: any) => currentMessage.sender_id === uid && (!lastOtherMessageAt || currentMessage.created_at > lastOtherMessageAt)).length;
   const outgoingLetters = snailMailLetters.filter((letter) => letter.sender_id === uid);
-  const hasLetterInTransit = outgoingLetters.some((letter) => !isLostInTransit(letter) && !letter.delivered_at);
-  const hasUnreadDeliveredLetter = outgoingLetters.some((letter) => !isLostInTransit(letter) && Boolean(letter.delivered_at) && !letter.recipient_read_at);
+  const hasLetterInTransit = outgoingLetters.some((letter) => !isLostInTransit(letter) && !hasSnailMailArrived(letter, now));
+  const hasUnreadDeliveredLetter = outgoingLetters.some((letter) => hasSnailMailArrived(letter, now) && !letter.recipient_read_at);
   const snailMailBlockedReason = pairBlocked
     ? "Snail Mail is unavailable because one of you blocked the other."
     : hasLetterInTransit

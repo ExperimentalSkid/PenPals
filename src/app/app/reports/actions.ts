@@ -42,6 +42,8 @@ export async function submitReport(formData: FormData) {
       : error.message;
     redirect(withReportState(returnPath, "error", message || "We couldn't submit that report."));
   }
-  if (declinePending) revalidatePath("/app", "layout");
+  // Reports can create moderation cases; refresh staff counts as well as any
+  // notification removed by the optional introduction decline.
+  revalidatePath("/app", "layout");
   redirect(withReportState(returnPath, "reported", "1"));
 }

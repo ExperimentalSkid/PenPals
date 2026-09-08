@@ -94,10 +94,13 @@ test("signed-out submissions still stop before the report RPC", async () => {
   assert.deepEqual(result.calls, []);
 });
 
-test("report-and-decline refreshes notification navigation only after a successful report", async () => {
+test("successful reports refresh moderation and notification navigation before returning", async () => {
   assert.deepEqual((await submit("/app/introductions", { declinePending: true })).events,
     ["report", "refresh:/app:layout", "redirect"]);
-  assert.deepEqual((await submit("/app/introductions")).events, ["report", "redirect"]);
+  assert.deepEqual((await submit("/app/introductions")).events,
+    ["report", "refresh:/app:layout", "redirect"]);
   assert.deepEqual((await submit("/app/introductions", { declinePending: true, error: { message: "Report could not be saved." } })).events,
+    ["report", "redirect"]);
+  assert.deepEqual((await submit("/app/introductions", { error: { message: "Report could not be saved." } })).events,
     ["report", "redirect"]);
 });

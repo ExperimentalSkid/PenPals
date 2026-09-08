@@ -58,3 +58,11 @@ test("moderation case headings use human-readable target labels", () => {
   assert.match(caseDetail, /function titleFor/);
   assert.match(caseDetail, /title=\{titleFor\(item\.primary_target_type\)\}/);
 });
+
+test("above-the-fold app wordmarks load eagerly without changing logo dimensions", async () => {
+  const layout = await read("src/app/app/layout.tsx");
+  const logo = await read("src/app/components/BrandLogo.tsx");
+  assert.equal((layout.match(/<BrandLogo variant="wordmark" loading="eager"/g) ?? []).length, 2);
+  assert.match(logo, /loading=\{loading\}/);
+  assert.match(logo, /width=\{asset\.width\} height=\{asset\.height\}/);
+});

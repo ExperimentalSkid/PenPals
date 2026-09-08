@@ -7,6 +7,134 @@ scope is explicitly verified.
 
 ## Current pass
 
+- State (2026-09-08): `VERIFIED` for the consolidated local audit/repair scope
+  and the validation explicitly listed here. This does not declare the product
+  finished, production deployed, or the unrestricted legacy test suite green.
+- Master-prompt phases 1-10 have been reconciled against the existing repository
+  map, prior specialist findings, current route/build inventory and final diff.
+  No unrelated design or product-policy changes, new features, schema resets,
+  or partially integrated refactors remain from this audit.
+
+### Consolidated coverage
+
+| Master scope | Completed inspection / repair / verification |
+| --- | --- |
+| Architecture / repository | Shared badge definitions and support viewer; removed confirmed dead Nav/activity helper/root proxy/old renderer; import graph checked. |
+| Backend / database | Authoritative admin completeness; atomic monotonic conversation timestamps; profile/relationship checks; 244-migration parity. |
+| Security / privacy | Defensive source and grants/RLS metadata review; preserved server-only projections; cookie/redirect/email confirmation repairs. Not a penetration-test claim. |
+| Frontend | Presence teardown/re-entry race handling, real pending states, reliable onboarding navigation, report feedback and count refresh. |
+| End-to-end wiring | Local registration/email confirmation/onboarding; profile/location/discovery; two-account messages and letters; support owner/staff lifecycle; badge assign/remove; reports and moderation. |
+| Visual consistency | Real screenshots of public/app/staff routes; no redesign or verification-badge relocation; fixed tooltip overflow and Settings autofocus. |
+| Responsive / accessibility | Desktop 1440px, laptop 1050px, tablet 768px, mobile 390px; no page overflow in final sample; keyboard-visible badge tooltip, labels/focus/errors checked. |
+| Bloat / performance | Removed verified unused paths; request-local profile/SEO fetch dedupe; isolated worker failures; eager app wordmark loading fixes observed LCP warning. |
+| Reliability | Confirmation replay/network failures, async cleanup, failure feedback, save/navigation refresh, read-letter persistence, successful logout/login. |
+| Consolidation / regression | Final source/diff inspection; 619 tests in 117 selected files pass, zero failures/skips; typecheck, ESLint, build and database checks pass. |
+
+### Final validation and limits
+
+- `VERIFIED`: Final 619-test run includes all 20 automatic badge families with
+  real rolled-back database calculations, authoritative admin completion and
+  atomic message timestamps, plus static/mocked application/configuration tests.
+  Snail Mail presentation has 11 targeted compact/full lifecycle checks.
+- `VERIFIED`: `pnpm typecheck`, `pnpm lint`, `pnpm build`,
+  `pnpm schema:verify`, `pnpm audit --prod`, and `git diff --check` passed.
+  Build generates 13 static pages; app/SEO data routes remain dynamic.
+  All 244 migrations match the local applied history. Schema lint reports zero
+  errors and the same three existing unused-variable/parameter extra warnings.
+- `VERIFIED`: Ordinary report submission now refreshes staff counts immediately;
+  case dismissal clears them. Both synthetic reports/cases created during final
+  QA were dismissed with explicit no-action reasons. No real-user moderation
+  or destructive account action was performed.
+- `VERIFIED`: Arrived Snail Mail now consistently follows its existing ETA
+  projection, can be marked read before the delivery worker has run, and keeps
+  read state after reload. Existing server lifecycle/permissions are unchanged.
+- `VERIFIED`: Completed-account logout -> home, bookmarked app route -> sign-in,
+  sign-in -> Discover. Final app-shell wordmarks are loaded with `loading=eager`;
+  fresh browser log inspection reports no warnings/errors after the correction.
+  Responsive override restored; local dev server remains running.
+- `BLOCKED` / not executed: 22 legacy mixed live-integration files were excluded
+  from this defensive/ordinary regression run; they mix adversarial scenarios,
+  destructive account fixtures, or hard-coded fixture dependencies. Their prior
+  failures below are historical, not silently fixed or newly verified. No test
+  file, rule, or assertion was disabled to produce the reported result.
+- `BLOCKED`: Live VPS deployment/Resend inbox and callback verification remains
+  operator-run using `docs/production-email.md`. The user explicitly declined
+  server access; do not request it. Never use the chat-exposed key in production.
+  External OAuth linking/TOTP credential changes and real account erasure were
+  not performed in this final smoke pass. Local Vector logging transport is an
+  existing Docker-host limitation; core app/Supabase services are healthy.
+- Exact continuation: local repairs are integrated and verified as above.
+  Publish this final source/checkpoint update to the already-authorized GitHub
+  repository and confirm remote/local equality. Future production verification
+  belongs to the user's deployment; do not restart this audit from historical
+  UNREVIEWED/BLOCKED entries without a new concrete scope.
+
+## Historical pass log
+
+The entries below preserve earlier checkpoints and interruptions. The Current
+pass above supersedes their continuation instructions and transient states.
+
+- Final browser checkpoint (2026-09-08): report-count refresh now `VERIFIED`:
+  a second synthetic report immediately showed Mod Inbox 1 without reload.
+  Case 63c621ab-ddbd-4a29-a20e-08048b8d6603 and report
+  6958e278-7215-4d1f-936c-02f407af1b57 were both dismissed without account action.
+  The earlier case/report were also dismissed. Read-letter state persisted
+  after opening and refresh. Browser logout, bookmarked route -> sign-in,
+  login -> Discover succeeded without reopening completed onboarding.
+- Final regression: 618 tests across 117 inspected static/mocked/ordinary DB
+  files passed with no skips; all 20 badge families included. Typecheck, lint,
+  build (13 static pages), 244-migration parity and schema lint passed. Schema
+  lint keeps its 3 existing extra warnings; production dependency audit clean.
+- Browser screenshots: 390px profile and keyboard badge tooltip (375px content),
+  768px Settings (753px content, entry scroll 0), 1050px Discover (1035px
+  content), 1440px admin profile (1440px content); no page overflow or badge
+  relocation. Viewport restored. A final LCP warning identified lazy-loaded
+  above-fold app wordmarks; eager loading added only to both app-shell logos,
+  retaining sizes/design and other logo callers. Affected verification pending.
+- Browser tab was closed during continuation; re-opened the isolated 127.0.0.1
+  QA session without changing the user's localhost session. One CDP click
+  timeout recovered in the new tab. No pending report mutations remain.
+- Next: verify wordmark loading/browser warning, rerun affected regression,
+  consolidate this historical checkpoint, inspect changes for secrets, push.
+
+- Resumed local audit checkpoint (2026-09-08): `IN PROGRESS`. Core local
+  Supabase services are healthy again; history parity confirms 244 applied
+  migrations with no drift. No database reset, reseed or Docker settings change.
+- `FIXED` -> `VERIFIED`: Admin completeness migration 20260905440000 reviewed:
+  directory, filtered directory and detail reuse authoritative completion,
+  preserving guards, projections and ACLs. Corrected its test's invalid region
+  fixture to set canonical precision/code together; all 3 real database tests
+  pass. The two inspection specialists reached usage limits; root continued.
+- `VERIFIED`: Browser admin login, Discover, Messages and synthetic report
+  submission. Report success notice renders correctly. Synthetic case
+  a14eef53-22ac-4321-9ac1-8f5873155a5b was claimed/dismissed without enforcement;
+  its Mod Inbox count cleared immediately. Related report still needs dismissal.
+- `ISSUE FOUND` -> `FIXED`, verification in progress: ordinary report submission
+  created a case but left the staff sidebar count stale until refresh. All
+  successful reports now refresh the app layout; failures remain unchanged.
+- `ISSUE FOUND` -> `FIXED`, verification in progress: Snail Mail ETA projection
+  exposes arrived letters before the worker records delivered_at, but the UI
+  still called them in transit and hid Open letter. Presentation now shares the
+  existing ETA rule; cancellation hides after arrival, unread arrived letters
+  can use the existing read action, and the sender still waits for reading.
+  Database lifecycle/authorization unchanged. First test run: 41/43 passed;
+  two harness whitespace assertions corrected, rerun pending.
+- Exact next point: finish synthetic report dismissal, verify these two repairs
+  in browser, final responsive/logout/login checks, coverage reconciliation,
+  then appropriate complete regression. Do not claim the master audit complete.
+- Inspection-only command errors: Windows rg wildcard path corrected to `-g`;
+  two browser locator text mismatches retried using observed accessible names.
+  No application state was changed by these failed lookups.
+
+- Master audit resumed (2026-09-08): `IN PROGRESS`. Publication/email work is
+  retained as completed scope below. Current work is pending admin-completeness
+  review, browser report/counter/login/responsive checks, coverage reconciliation
+  and final integrated regression. The user will operate their own VPS;
+  do not request server access or treat it as necessary for this local audit.
+- Environment at resume: local port 3000 and Supabase were stopped, and Docker's
+  Linux engine pipe was absent. The existing Next development server started
+  successfully. Docker status is being checked before any further startup
+  action; no database reset/reseed or Docker settings changes are authorized.
 - Current requested task (2026-09-08): `VERIFIED` — project source published
   to the public ExperimentalSkid/PenPals GitHub repository on `main` after
   production-email validation and a source-only secret/privacy review.

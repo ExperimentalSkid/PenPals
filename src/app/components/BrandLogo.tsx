@@ -4,6 +4,7 @@ type BrandLogoProps = {
   variant?: "wordmark" | "logo" | "icon";
   className?: string;
   priority?: boolean;
+  loading?: "eager" | "lazy";
 };
 
 const assets = {
@@ -27,7 +28,7 @@ const assets = {
   },
 } as const;
 
-export default function BrandLogo({ variant = "wordmark", className, priority = false }: BrandLogoProps) {
+export default function BrandLogo({ variant = "wordmark", className, priority = false, loading }: BrandLogoProps) {
   const asset = assets[variant];
-  return <Image src={asset.src} width={asset.width} height={asset.height} alt={asset.alt} priority={priority} className={className} />;
+  return <Image src={asset.src} width={asset.width} height={asset.height} alt={asset.alt} priority={priority} loading={loading} className={className} />;
 }
