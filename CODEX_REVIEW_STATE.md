@@ -7,6 +7,51 @@ scope is explicitly verified.
 
 ## Current pass
 
+### First-owner installation wizard (2026-09-08)
+
+- `VERIFIED`: added the explicit one-time `pnpm setup:owner` terminal wizard.
+  It refuses non-interactive/CI execution, validates the existing production
+  app configuration plus a private `PENPALS_DATABASE_URL`, checks that no
+  administrator exists, and only creates a previously unseen Auth owner through
+  Supabase's Admin API. It never echoes, stores in source, or accepts the owner
+  password through an environment variable.
+- `VERIFIED`: a new owner is marked confirmed only as the direct trusted
+  server-owner bootstrap exception. The wizard then requires the owner to sign
+  in through the normal browser flow and complete the real profile onboarding.
+  Before promotion, its direct private PostgreSQL transaction takes the current
+  admin advisory lock, rechecks that no admin exists, locks the profile, and
+  requires confirmed email, an active adult profile, and the server-side
+  `profile_entry_complete()` predicate. Existing accounts are never altered;
+  any existing administrator causes a fail-closed exit.
+- `FIXED` / `VERIFIED`: hardened the retained direct-PostgreSQL fallback with
+  the same adult and completed-onboarding requirements. It remains a controlled
+  recovery path, not an RPC, migration, browser endpoint, or reusable staff
+  role bypass.
+- `VERIFIED`: added focused owner/bootstrap tests plus existing Auth/onboarding,
+  Profile Builder, and production-config coverage: 24 tests pass with zero
+  skips/failures. The installer was also exercised in a non-TTY child process
+  and correctly refused before reading configuration or connecting to a
+  database. `pnpm typecheck`, `pnpm lint`, `pnpm build`,
+  `pnpm schema:check`, `pnpm audit --prod`, `pnpm check:production-app` with
+  synthetic safe values, source syntax checks, and `git diff --check` pass.
+- `BLOCKED`: actual interactive execution against a private VPS/Auth/database
+  stack cannot be performed here because no server access was provided. The
+  full local `pnpm test` run currently reports 708/719 passing with 11 unrelated
+  legacy/fixture/static-regression failures (including deactivation,
+  moderation-fixture, appeal-copy, and Snail-Mail wiring assertions). No
+  owner-bootstrap, production-config, onboarding, or Profile Builder test
+  failed; the broader failures require their own out-of-scope fixture/wiring
+  re-review rather than a workaround in the installer.
+- `RE-REVIEW REQUIRED`: after the operator deploys, run the command once from
+  the private server terminal with production values, complete onboarding in a
+  browser, and verify the fresh owner can sign out/in and open the admin area.
+  Then restore/repair the unrelated full-suite fixtures or assertions before
+  treating the repository-wide test command as green.
+- Exact continuation: inspect the final staged diff for secrets, commit and
+  push this source-only installer update. On the VPS, follow the documented
+  `owner-setup.env` flow after migrations and before public registration; do
+  not make the wizard a postinstall/build/deploy hook.
+
 ### Public-launch follow-up (2026-09-08)
 
 - `VERIFIED`: repository-side launch preparation is complete and ready to

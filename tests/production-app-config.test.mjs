@@ -81,6 +81,8 @@ test("the validator covers the environment used by browser, server, worker, and 
   assert.match(workerSource, /SUPABASE_SERVICE_ROLE_KEY/);
   assert.match(bootstrapSql, /\\prompt 'Confirmed owner account email: /);
   assert.match(bootstrapSql, /owner_confirmed_at is null/);
+  assert.match(bootstrapSql, /profile_entry_complete\(p\.id\)/);
+  assert.match(bootstrapSql, /is_adult_birth_date\(p\.birth_date\)/);
   assert.match(bootstrapSql, /exists \(select 1 from public\.profiles where role = 'admin'\)/);
   assert.match(bootstrapSql, /set_config\('app\.allow_role_change', '1', true\)/);
   assert.doesNotMatch(bootstrapSql, /grant execute|security definer|create function/i);

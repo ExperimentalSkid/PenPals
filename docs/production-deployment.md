@@ -39,6 +39,7 @@ credentials. Never reuse local `.env.local` or commit a populated file.
 | Next.js server | `SUPABASE_SERVICE_ROLE_KEY` from that stack for existing account-management/server-only operations; never use it as the public key. |
 | Background worker | `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. |
 | Supabase Auth | Its existing stack configuration plus the separate [production email overlay and variables](production-email.md). |
+| One-time owner setup | The same app values plus `SUPABASE_SERVICE_ROLE_KEY` and a private direct `PENPALS_DATABASE_URL`; this is only for the interactive terminal command below. |
 
 `NEXT_PUBLIC_` values are included in the browser bundle at build time. Build
 with the production values; replacing runtime variables cannot repair a bundle
@@ -107,25 +108,56 @@ See [database validation](database-validation.md) for the existing local/CI gate
 These production commands must be run by the operator; local parity is not
 evidence that they have run against the VPS.
 
-### Bootstrap the first administrator
+### Create the first administrator
 
 The production database intentionally has no demo administrator. After the
-migrations are applied, create and confirm your real owner account through the
-private app, complete enough setup to create its profile, then run this once
-from a direct **private database-admin** connection:
+migrations and the app/Auth service are live, run the one-time interactive
+owner setup from the private server terminal. It is deliberately **not** a
+`postinstall` or build hook: automated installs, CI, container rebuilds, and
+later deployments must never stop for credentials or create an administrator.
+
+Put the required values in a private, owner-setup-only environment file outside
+the checkout (including the direct private `PENPALS_DATABASE_URL`), then run:
+
+```sh
+node --env-file=/etc/penpals/owner-setup.env scripts/setup-first-admin.mjs
+```
+
+If your deployment panel already injects that private environment into the
+terminal session, the equivalent is:
+
+```sh
+pnpm setup:owner
+```
+
+The command refuses to run without an interactive terminal, asks for the owner
+email and—only for a previously unseen address—a hidden password twice. A new
+owner account is created through Supabase Auth's administrative API and marked
+confirmed as an explicit, local server-owner bootstrap exception; normal public
+sign-up, email confirmation, recovery, and onboarding flows are unchanged. No
+password is printed, stored in the project, or accepted through an environment
+variable.
+
+Next, sign in through the normal HTTPS site and complete the existing age and
+profile onboarding. Return to the same terminal and press Enter. The command
+rechecks the real database state, requiring a confirmed, active, adult profile
+that meets the server-side onboarding-entry predicate before it can grant the
+role. It takes the same advisory lock as existing admin tools, refuses if *any*
+administrator profile already exists, and its role-change setting expires with
+the transaction. Sign out/in after it completes; later role changes belong in
+the authenticated admin area and retain the ordinary audit path.
+
+For controlled recovery only, the older direct-PostgreSQL fallback remains
+available after the owner has registered, confirmed email, and completed normal
+onboarding:
 
 ```sh
 psql "$PENPALS_DATABASE_URL" --set=ON_ERROR_STOP=1 --file=deploy/bootstrap-first-admin.sql
 ```
 
-The script prompts for the owner email rather than putting it in the command.
-It takes the same role-change lock as the admin tools, requires a confirmed and
-active profile, and refuses if *any* administrator profile already exists. Its
-temporary role-change setting expires with the transaction. It is not a
-migration, browser API or callable RPC. Do not run `supabase/seed.sql`, do not
-expose the database, and do not reuse this script to change staff roles. Sign
-out/in after it completes; later role changes belong in the authenticated admin
-area and retain the ordinary audit path.
+Both paths are one-time operator-only tools, not migrations, browser APIs, or
+callable RPCs. Do not run `supabase/seed.sql`, do not expose the database, and
+do not reuse either bootstrap path to change staff roles.
 
 ## 4. Build and supervise the app and worker
 

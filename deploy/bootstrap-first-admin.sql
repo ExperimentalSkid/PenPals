@@ -1,7 +1,8 @@
 -- One-time production owner bootstrap.
 --
 -- Run only through a private direct PostgreSQL connection after migrations and
--- after the owner has registered, confirmed their email, and created a profile.
+-- after the owner has registered, confirmed their email, and completed normal
+-- profile onboarding.
 -- This is deliberately not a migration, RPC, browser action, or public API.
 -- It refuses to run if any administrator profile already exists.
 
@@ -18,6 +19,8 @@ declare
   owner_id uuid;
   owner_confirmed_at timestamptz;
   owner_deactivated_at timestamptz;
+  owner_entry_complete boolean;
+  owner_is_adult boolean;
   owner_email text := lower(trim(coalesce(current_setting('app.penpals_first_admin_email', true), '')));
 begin
   -- Match the existing privileged role-change lock so this cannot race a
@@ -32,8 +35,11 @@ begin
     raise exception 'An administrator profile already exists; use the authenticated admin tools instead';
   end if;
 
-  select p.id, u.email_confirmed_at, p.deactivated_at
-    into owner_id, owner_confirmed_at, owner_deactivated_at
+  select p.id, u.email_confirmed_at, p.deactivated_at,
+         public.profile_entry_complete(p.id),
+         public.is_adult_birth_date(p.birth_date)
+    into owner_id, owner_confirmed_at, owner_deactivated_at,
+         owner_entry_complete, owner_is_adult
   from public.profiles p
   join auth.users u on u.id = p.id
   where lower(u.email) = owner_email
@@ -47,6 +53,12 @@ begin
   end if;
   if owner_deactivated_at is not null then
     raise exception 'The supplied owner profile is deactivated';
+  end if;
+  if not coalesce(owner_is_adult, false) then
+    raise exception 'The supplied owner profile does not meet the age requirement';
+  end if;
+  if not coalesce(owner_entry_complete, false) then
+    raise exception 'The supplied owner profile has not completed required onboarding';
   end if;
 
   -- The role trigger permits this setting only for the current transaction.
