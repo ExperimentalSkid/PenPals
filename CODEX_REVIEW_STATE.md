@@ -7,6 +7,31 @@ scope is explicitly verified.
 
 ## Current pass
 
+### Full-suite regression repair (2026-09-09)
+
+- `VERIFIED`: repaired the nine concrete failures from the clean baseline
+  (`710/719` passing). Four assertions were stale after valid UI/proxy copy and
+  cookie-preserving redirect changes; they now assert the actual behavior.
+- `FIXED` / `VERIFIED`: added a forward-only migration that revokes the
+  accidentally re-granted, obsolete four-argument
+  `admin_list_audit_entries` RPC. The application uses the date-filtered
+  six-argument overload, so the correction restores the intended client
+  permission boundary without removing the active staff surface.
+- `FIXED` / `VERIFIED`: replaced deactivation, moderation, Snail Mail, and
+  dual-communication tests that depended on mutable local seed data with
+  isolated, transaction-rolled-back fixtures. Each now exercises a real row
+  and its intended authorization/lifecycle path rather than passing on a
+  zero-row update or failing when routine local data is absent.
+- `VERIFIED`: focused regression coverage passed (`29/29`), then the complete
+  `pnpm test` suite passed (`719/719`, zero skipped/failed/cancelled).
+  `pnpm typecheck`, `pnpm lint`, `pnpm build`, `pnpm schema:check`,
+  `pnpm schema:check:local` (245 applied migrations with no drift), and
+  `pnpm audit --prod` also pass. `pnpm schema:lint` passes with only the two
+  pre-existing unused-parameter warnings in activity-rank/Snail Mail helpers.
+- Exact continuation: inspect the staged diff once more, scan for secrets,
+  commit this verified repair, push it to GitHub `main`, and record the commit
+  hash here.
+
 ### First-owner installation wizard (2026-09-08)
 
 - `VERIFIED`: added the explicit one-time `pnpm setup:owner` terminal wizard.
@@ -35,18 +60,12 @@ scope is explicitly verified.
   `pnpm schema:check`, `pnpm audit --prod`, `pnpm check:production-app` with
   synthetic safe values, source syntax checks, and `git diff --check` pass.
 - `BLOCKED`: actual interactive execution against a private VPS/Auth/database
-  stack cannot be performed here because no server access was provided. The
-  full local `pnpm test` run currently reports 708/719 passing with 11 unrelated
-  legacy/fixture/static-regression failures (including deactivation,
-  moderation-fixture, appeal-copy, and Snail-Mail wiring assertions). No
-  owner-bootstrap, production-config, onboarding, or Profile Builder test
-  failed; the broader failures require their own out-of-scope fixture/wiring
-  re-review rather than a workaround in the installer.
+  stack cannot be performed here because no server access was provided. This
+  does not block repository verification: the complete local `pnpm test` suite
+  now passes (`719/719`), including the former unrelated fixture/wiring checks.
 - `RE-REVIEW REQUIRED`: after the operator deploys, run the command once from
   the private server terminal with production values, complete onboarding in a
   browser, and verify the fresh owner can sign out/in and open the admin area.
-  Then restore/repair the unrelated full-suite fixtures or assertions before
-  treating the repository-wide test command as green.
 - `VERIFIED`: source-only installer update was committed and pushed to GitHub
   `main` as `f06390900a1002d43132d2102e13097a8703f2e7` after a staged secret
   scan and frozen-lockfile install check.

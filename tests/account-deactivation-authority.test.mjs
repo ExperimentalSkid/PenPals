@@ -48,7 +48,7 @@ test("every app route rejects a deactivated profile before rendering app data", 
   assert.match(layout, /if \(p\?\.deactivated_at\) redirect\("\/reactivate"\)/);
   assert.match(layout, /unread_notification_count/);
   assert.match(proxy, /select\("deactivated_at"\)/);
-  assert.match(proxy, /profile\?\.deactivated_at\) return NextResponse\.redirect\(new URL\("\/reactivate"/);
+  assert.match(proxy, /lifecycleProfile\?\.deactivated_at\) return withSessionCookies\(NextResponse\.redirect\(new URL\("\/reactivate", request\.url\)\)\)/);
 });
 
 test("the existing self-reactivation path remains available outside /app", () => {
@@ -68,44 +68,69 @@ const hasLocalDatabase = (() => {
 })();
 
 test("live database guard blocks direct updates and affected-user reactivation", { skip: !hasLocalDatabase }, () => {
-  const sql = `begin;
-select set_config('request.jwt.claim.sub','7ede9653-34bf-4de4-a69b-184a6c35c0f0',true);
-select set_config('request.jwt.claim.role','authenticated',true);
+  // Create the subject in the transaction rather than assuming old, manually
+  // seeded UUIDs still exist. The test must exercise an actual profile row:
+  // UPDATE zero rows would otherwise make the sentinel look like a bypass.
+  const sql = String.raw`
+begin;
 do $$
+declare
+  target_user uuid := gen_random_uuid();
+  admin_user uuid := gen_random_uuid();
+  fixture_prefix text := 'd' || left(replace(target_user::text, '-', ''), 14);
 begin
+  insert into auth.users(id, email, email_confirmed_at)
+    values (target_user, target_user::text || '@example.test', now()),
+           (admin_user, admin_user::text || '@example.test', now());
+  insert into public.profiles(
+    id, username, display_name, birth_date, gender, country, country_code,
+    city, location_precision, bio, quote, looking_for
+  ) values (
+    target_user, fixture_prefix || '_t', 'Deactivation Fixture', '1990-01-01',
+    'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio.',
+    'Fixture quote.', 'friendship'
+  ), (
+    admin_user, fixture_prefix || '_a', 'Deactivation Admin', '1990-01-01',
+    'Not specified', 'NO', 'NO', '', 'country', 'Fixture admin bio.',
+    'Fixture admin quote.', 'friendship'
+  );
+  perform set_config('app.allow_role_change', '1', true);
+  update public.profiles set role = 'admin' where id = admin_user;
+
+  perform set_config('request.jwt.claim.sub', target_user::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   begin
     update public.profiles set deactivated_at = now() where id = auth.uid();
     raise exception 'direct profile UPDATE unexpectedly succeeded';
   exception when others then
     if sqlerrm = 'direct profile UPDATE unexpectedly succeeded' then raise; end if;
+    if sqlerrm not like '%Account status changes require the protected account status action%' then raise; end if;
   end;
-end
-$$;
-select set_config('request.jwt.claim.sub','21621151-e65d-4dda-a2ad-de562756df61',true);
-select public.admin_set_account_status('7ede9653-34bf-4de4-a69b-184a6c35c0f0', true, 'QA authority check');
-select set_config('request.jwt.claim.sub','7ede9653-34bf-4de4-a69b-184a6c35c0f0',true);
-do $$
-begin
+
+  perform set_config('request.jwt.claim.sub', admin_user::text, true);
+  perform public.admin_set_account_status(target_user, true, 'QA authority check');
+
+  perform set_config('request.jwt.claim.sub', target_user::text, true);
   begin
     perform public.reactivate_account();
     raise exception 'affected user unexpectedly reactivated';
   exception when others then
     if sqlerrm = 'affected user unexpectedly reactivated' then raise; end if;
+    if sqlerrm not like '%Account status is controlled by an administrator%' then raise; end if;
   end;
-end
-$$;
-do $$
-begin
   begin
-    perform public.admin_set_account_status('7ede9653-34bf-4de4-a69b-184a6c35c0f0', false, 'bypass');
+    perform public.admin_set_account_status(target_user, false, 'bypass');
     raise exception 'normal user unexpectedly changed account status';
   exception when others then
     if sqlerrm = 'normal user unexpectedly changed account status' then raise; end if;
+    if sqlerrm not like '%Administrator authorization required%' then raise; end if;
   end;
-end
+
+  perform set_config('request.jwt.claim.sub', admin_user::text, true);
+  perform public.admin_set_account_status(target_user, false, 'QA restore check');
+end;
 $$;
-select set_config('request.jwt.claim.sub','21621151-e65d-4dda-a2ad-de562756df61',true);
-select public.admin_set_account_status('7ede9653-34bf-4de4-a69b-184a6c35c0f0', false, 'QA restore check');
-rollback;`;
+rollback;
+`;
   execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });

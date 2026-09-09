@@ -22,7 +22,7 @@ test("deactivation is distinct, authoritative, and enforced at every app boundar
   assert.match(authorityMigration, /admin_deactivated_at/);
   assert.match(authorityMigration, /Account status changes require the protected account status action/);
   assert.match(layout, /if \(p\?\.deactivated_at\) redirect\("\/reactivate"\)/);
-  assert.match(proxy, /profile\?\.deactivated_at\) return NextResponse\.redirect\(new URL\("\/reactivate"/);
+  assert.match(proxy, /lifecycleProfile\?\.deactivated_at\) return withSessionCookies\(NextResponse\.redirect\(new URL\("\/reactivate", request\.url\)\)\)/);
   assert.match(adminGuard, /profile\?\.deactivated_at/);
   assert.match(callback, /if \(profile\?\.deactivated_at\) return destination\(request, "\/reactivate"/);
 });

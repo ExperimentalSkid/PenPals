@@ -34,51 +34,28 @@ test("live Both relationship establishes IM and can also send Snail Mail", { ski
 begin;
 do $$
 declare
-  user_a uuid;
-  user_b uuid;
+  user_a uuid := gen_random_uuid();
+  user_b uuid := gen_random_uuid();
   intro_id uuid;
   new_conversation_id uuid;
   mode text;
   message_count integer;
   letter_count integer;
+  fixture_prefix text := 'both_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
   intro_body text := 'A thoughtful hello about books, travel, and the small details that make conversations memorable.';
 begin
-  select p1.id, p2.id
-    into user_a, user_b
-    from public.profiles p1
-    join public.profiles p2 on p2.id <> p1.id
-   where p1.deactivated_at is null
-     and p2.deactivated_at is null
-     and not p1.inactive_mode
-     and not p2.inactive_mode
-     and not exists (
-       select 1 from public.direct_conversation_pairs d
-        where d.user_a = least(p1.id, p2.id)
-          and d.user_b = greatest(p1.id, p2.id)
-     )
-     and not exists (
-       select 1
-         from public.conversation_participants cp
-         join public.conversation_participants cp2 on cp2.conversation_id = cp.conversation_id
-        where cp.user_id = p1.id and cp2.user_id = p2.id
-     )
-     and not exists (
-       select 1 from public.conversation_introductions i
-        where i.sender_id = p1.id and i.recipient_id = p2.id and i.status = 'pending'
-     )
-     and not exists (
-       select 1 from public.snail_mail_letters l
-        where (l.sender_id = p1.id and l.recipient_id = p2.id)
-           or (l.sender_id = p2.id and l.recipient_id = p1.id)
-     )
-   limit 1;
-  if user_a is null then raise exception 'no isolated active profile pair available'; end if;
-
+  -- Use isolated, confirmed users so persistent conversations, letters, or
+  -- pending introductions in a developer database cannot exhaust the pair
+  -- selection before this authorization flow is reached.
+  insert into auth.users(id, email, email_confirmed_at)
+    values (user_a, user_a::text || '@example.test', now()),
+           (user_b, user_b::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for, allow_instant_messages, allow_snail_mail)
+    values
+      (user_a, fixture_prefix || '_a', 'Both Fixture A', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture sender bio.', 'A fixture quote.', 'friendship', true, true),
+      (user_b, fixture_prefix || '_b', 'Both Fixture B', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture recipient bio.', 'A fixture quote.', 'friendship', true, true);
   perform set_config('request.jwt.claim.sub', user_a::text, true);
-  update public.profiles
-     set allow_instant_messages = true,
-         allow_snail_mail = true
-   where id in (user_a, user_b);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   insert into public.conversation_introductions(
     sender_id, recipient_id, body, normalized_hash, icebreaker, expires_at, status
   ) values (

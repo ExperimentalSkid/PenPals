@@ -30,7 +30,7 @@ test("new accepted relationships select Snail Mail without creating an IM pair",
 test("Snail Mail-only conversations hide the IM composer and stay out of the IM inbox", () => {
   assert.match(conversationPage, /const conversationModeResult = await db\.from\("conversations"\)\.select\("communication_mode"\)/);
   assert.match(conversationPage, /conversationMode === "snail_mail"/);
-  assert.match(conversationPage, /Snail Mail relationship/);
+  assert.match(conversationPage, /Snail Mail exchange/);
   assert.match(conversationPage, /This exchange uses letters rather than instant messages/);
   assert.match(messagesPage, /const instantMemberships = memberships\.filter/);
   assert.match(messagesPage, /conversation\?\.communication_mode !== "snail_mail"/);

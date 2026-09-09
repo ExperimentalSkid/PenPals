@@ -167,36 +167,61 @@ rollback;`;
 });
 
 test("live unassigned moderator status mutation is denied", { skip: !hasLocalDatabase }, () => {
-  const moderatorId = scalar("select id from public.profiles where username = 'mika' and deactivated_at is null limit 1");
-  const adminId = scalar("select id from public.profiles where role = 'admin' and deactivated_at is null limit 1");
-  const caseId = scalar("select id from public.moderation_cases where status not in ('resolved','dismissed') order by updated_at limit 1");
-  assert.match(moderatorId, /^[0-9a-f-]{36}$/i, "a local moderator fixture is required");
-  assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");
-  assert.match(caseId, /^[0-9a-f-]{36}$/i, "a local open case fixture is required");
-  const sql = `
+  // The status boundary needs an open case, but no durable open case should
+  // be required in a developer database. Create the minimal real case and
+  // staff identities inside the rolled-back transaction.
+  const sql = String.raw`
 begin;
-select set_config('app.allow_role_change','1',true);
-select set_config('request.jwt.claim.sub','${adminId}',true);
-update public.profiles set role='moderator' where id='${moderatorId}';
-select set_config('request.jwt.claim.role','authenticated',true);
-select set_config('request.jwt.claim.sub','${moderatorId}',true);
-update public.moderation_cases set assigned_staff_id=null, claimed_at=null, claim_expires_at=null, status='new' where id='${caseId}';
 do $$
+declare
+  v_admin_id uuid := gen_random_uuid();
+  v_moderator_id uuid := gen_random_uuid();
+  v_subject_id uuid := gen_random_uuid();
+  v_case_id uuid;
+  fixture_prefix text := 'ms_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 begin
+  insert into auth.users(id, email, email_confirmed_at)
+    values (v_admin_id, v_admin_id::text || '@example.test', now()),
+           (v_moderator_id, v_moderator_id::text || '@example.test', now()),
+           (v_subject_id, v_subject_id::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (v_admin_id, fixture_prefix || '_a', 'Status Admin', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture admin bio.', 'A fixture quote.', 'friendship'),
+      (v_moderator_id, fixture_prefix || '_m', 'Status Moderator', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture moderator bio.', 'A fixture quote.', 'friendship'),
+      (v_subject_id, fixture_prefix || '_s', 'Status Subject', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture subject bio.', 'A fixture quote.', 'friendship');
+  perform set_config('app.allow_role_change', '1', true);
+  update public.profiles set role = 'admin' where id = v_admin_id;
+  update public.profiles set role = 'moderator' where id = v_moderator_id;
+  insert into public.moderation_cases(subject_user_id, primary_target_type, primary_target_id, status)
+    values (v_subject_id, 'profile', v_subject_id, 'new') returning id into v_case_id;
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config('request.jwt.claim.sub', v_moderator_id::text, true);
   begin
-    perform public.set_moderation_case_status('${caseId}','investigating',null,'Unassigned status mutation check');
+    perform public.set_moderation_case_status(v_case_id, 'investigating', null, 'Unassigned status mutation check');
     raise exception 'unassigned moderator changed case status';
   exception when others then
     if sqlerrm like '%unassigned moderator changed case status%' then raise; end if;
     if sqlerrm not like '%active moderation case assignment is required%' then raise; end if;
   end;
-  update public.moderation_cases set assigned_staff_id='${moderatorId}', claimed_at=now(), claim_expires_at=now()+interval '15 minutes', status='new' where id='${caseId}';
-  perform public.set_moderation_case_status('${caseId}','investigating',null,'Assigned status audit check');
-  if not exists (select 1 from public.moderation_audit_log where case_id='${caseId}' and action='case_status_change' and old_status='new' and new_status='investigating') then
+  update public.moderation_cases
+     set assigned_staff_id = v_moderator_id,
+         claimed_at = now(),
+         claim_expires_at = now() + interval '15 minutes',
+         status = 'new'
+   where id = v_case_id;
+  perform public.set_moderation_case_status(v_case_id, 'investigating', null, 'Assigned status audit check');
+  if not exists (
+    select 1 from public.moderation_audit_log a
+     where a.case_id = v_case_id
+       and a.action = 'case_status_change'
+       and a.old_status = 'new'
+       and a.new_status = 'investigating'
+  ) then
     raise exception 'case status audit did not preserve previous status';
   end if;
 end $$;
-rollback;`;
+rollback;
+`;
   execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });
 

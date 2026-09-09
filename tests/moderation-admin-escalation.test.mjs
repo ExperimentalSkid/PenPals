@@ -35,57 +35,88 @@ const hasLocalDatabase = (() => {
   }
 })();
 
-function scalar(sql) {
-  return execFileSync(
-    "docker",
-    ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
-    { encoding: "utf8" },
-  ).trim();
-}
-
 test("live escalation is staff-only, audited, and does not duplicate on retry", { skip: !hasLocalDatabase }, () => {
-  const moderatorId = scalar("select id from public.profiles where username = 'mika' and deactivated_at is null limit 1");
-  const adminId = scalar("select id from public.profiles where role = 'admin' and deactivated_at is null limit 1");
-  const ordinaryUserId = scalar("select id from public.profiles where role = 'user' and deactivated_at is null limit 1");
-  const caseId = scalar("select id from public.moderation_cases where status not in ('resolved','dismissed') order by created_at limit 1");
-  assert.match(moderatorId, /^[0-9a-f-]{36}$/i, "a local moderator fixture is required");
-  assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");
-  assert.match(ordinaryUserId, /^[0-9a-f-]{36}$/i, "a local ordinary-user fixture is required");
-  assert.match(caseId, /^[0-9a-f-]{36}$/i, "a local open case fixture is required");
-
-  const sql = `
+  // Build a real report-backed open case in this transaction. Local data may
+  // legitimately have no open moderation work, so an ambient case is not a
+  // valid authorization fixture.
+  const sql = String.raw`
 begin;
-select set_config('app.allow_role_change', '1', true);
-select set_config('request.jwt.claim.sub', '${adminId}', true);
-update public.profiles set role = 'moderator' where id = '${moderatorId}';
-select set_config('request.jwt.claim.role', 'authenticated', true);
-select set_config('request.jwt.claim.sub', '${ordinaryUserId}', true);
 do $$
+declare
+  v_admin_id uuid := gen_random_uuid();
+  v_moderator_id uuid := gen_random_uuid();
+  v_ordinary_user_id uuid := gen_random_uuid();
+  v_subject_id uuid := gen_random_uuid();
+  v_conversation_id uuid;
+  v_message_id uuid;
+  v_report_id uuid;
+  v_case_id uuid;
+  fixture_prefix text := 'ma_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 begin
-  perform public.request_admin_moderation_review('${caseId}', 'ordinary user bypass');
-  raise exception 'ordinary user unexpectedly escalated a case';
-exception when others then
-  if sqlerrm not like '%Moderator authorization required%' then raise; end if;
+  insert into auth.users(id, email, email_confirmed_at)
+    values (v_admin_id, v_admin_id::text || '@example.test', now()),
+           (v_moderator_id, v_moderator_id::text || '@example.test', now()),
+           (v_ordinary_user_id, v_ordinary_user_id::text || '@example.test', now()),
+           (v_subject_id, v_subject_id::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (v_admin_id, fixture_prefix || '_a', 'Escalation Admin', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture admin bio.', 'A fixture quote.', 'friendship'),
+      (v_moderator_id, fixture_prefix || '_m', 'Escalation Moderator', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture moderator bio.', 'A fixture quote.', 'friendship'),
+      (v_ordinary_user_id, fixture_prefix || '_o', 'Escalation User', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture user bio.', 'A fixture quote.', 'friendship'),
+      (v_subject_id, fixture_prefix || '_s', 'Escalation Subject', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture subject bio.', 'A fixture quote.', 'friendship');
+  perform set_config('app.allow_role_change', '1', true);
+  update public.profiles set role = 'admin' where id = v_admin_id;
+  update public.profiles set role = 'moderator' where id = v_moderator_id;
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  perform set_config('request.jwt.claim.sub', v_admin_id::text, true);
+  insert into public.conversations(communication_mode) values ('instant') returning id into v_conversation_id;
+  insert into public.conversation_participants(conversation_id, user_id)
+    values (v_conversation_id, v_admin_id), (v_conversation_id, v_subject_id);
+  insert into public.messages(conversation_id, sender_id, body)
+    values (v_conversation_id, v_subject_id, 'A clean temporary message for escalation authorization.')
+    returning id into v_message_id;
+  insert into public.reports(reporter_id, target_type, target_id, target_message_id, reason, details)
+    values (v_admin_id, 'message', v_message_id, v_message_id, 'other', 'Temporary escalation authorization fixture')
+    returning id into v_report_id;
+  select mcr.case_id into v_case_id
+    from public.moderation_case_reports mcr where mcr.report_id = v_report_id;
+  if v_case_id is null then raise exception 'temporary report did not link to a moderation case'; end if;
+
+  perform set_config('request.jwt.claim.sub', v_ordinary_user_id::text, true);
+  begin
+    perform public.request_admin_moderation_review(v_case_id, 'ordinary user bypass');
+    raise exception 'ordinary user unexpectedly escalated a case';
+  exception when others then
+    if sqlerrm like '%ordinary user unexpectedly escalated a case%' then raise; end if;
+    if sqlerrm not like '%Moderator authorization required%' then raise; end if;
+  end;
+
+  perform set_config('request.jwt.claim.sub', v_moderator_id::text, true);
+  update public.moderation_cases
+     set assigned_staff_id = v_moderator_id,
+         claimed_at = now(),
+         claim_expires_at = now() + interval '15 minutes',
+         status = 'investigating'
+   where id = v_case_id;
+  perform public.request_admin_moderation_review(v_case_id, 'Needs administrator review');
+  perform public.request_admin_moderation_review(v_case_id, 'Retry should be idempotent');
+  if (select count(*) from public.moderation_cases c where c.id = v_case_id and c.needs_admin_review) <> 1 then
+    raise exception 'admin-attention marker was not set';
+  end if;
+  if (select count(*) from public.moderation_audit_log a where a.case_id = v_case_id and a.action = 'case_admin_attention_requested') <> 1 then
+    raise exception 'escalation audit was duplicated or missing';
+  end if;
+
+  perform set_config('request.jwt.claim.sub', v_admin_id::text, true);
+  if not exists (
+    select 1 from public.admin_list_moderation_cases(null, null, 100, 0) q
+     where q.id = v_case_id and q.needs_admin_review
+  ) then
+    raise exception 'admin queue did not expose attention marker';
+  end if;
 end
 $$;
-select set_config('request.jwt.claim.sub', '${moderatorId}', true);
-update public.moderation_cases set needs_admin_review = false, admin_review_requested_at = null, admin_review_requested_by = null where id = '${caseId}';
-update public.moderation_cases set assigned_staff_id = '${moderatorId}', claimed_at = now(), claim_expires_at = now() + interval '15 minutes', status = 'investigating' where id = '${caseId}';
-delete from public.moderation_audit_log where case_id = '${caseId}' and action = 'case_admin_attention_requested';
-select public.request_admin_moderation_review('${caseId}', 'Needs administrator review');
-select public.request_admin_moderation_review('${caseId}', 'Retry should be idempotent');
-do $$
-begin
-  if (select count(*) from public.moderation_cases where id = '${caseId}' and needs_admin_review) <> 1 then raise exception 'admin-attention marker was not set'; end if;
-  if (select count(*) from public.moderation_audit_log where case_id = '${caseId}' and action = 'case_admin_attention_requested') <> 1 then raise exception 'escalation audit was duplicated or missing'; end if;
-end
-$$;
-select set_config('request.jwt.claim.sub', '${adminId}', true);
-do $$
-begin
-  if not exists (select 1 from public.admin_list_moderation_cases(null, null, 100, 0) where id = '${caseId}' and needs_admin_review) then raise exception 'admin queue did not expose attention marker'; end if;
-end
-$$;
-rollback;`;
+rollback;
+`;
   execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });

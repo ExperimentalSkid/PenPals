@@ -41,7 +41,7 @@ test("restricted verified identities remain outside the normal app but retain th
   assert.match(appLayout, /if \(ageRestricted\) redirect\("\/age-appeal"\)/);
   assert.match(appealPage, /authenticated && <form action=\{submitAgeAppeal\}/);
   assert.match(appealPage, /Sign in to the verified account linked to your request/);
-  assert.match(appealPage, /No normal profile is required/);
+  assert.match(appealPage, /without setting up a profile/);
   assert.doesNotMatch(appealPage, /name=\"email\"/);
   assert.match(appealAction, /submit_age_appeal/);
   assert.doesNotMatch(appealAction, /auth\.admin|createUser|signUp/);

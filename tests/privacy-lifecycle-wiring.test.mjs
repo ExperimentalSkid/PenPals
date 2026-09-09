@@ -98,25 +98,30 @@ rollback;
 });
 
 test("a paused recipient can open an existing delivered Snail Mail letter", { skip: !hasLocalDatabase }, () => {
+  // Do not depend on an incidental cancelled letter from another test or a
+  // developer's data. Build a delivered letter in a real temporary
+  // conversation, then exercise the recipient's paused read path.
   const sql = String.raw`
 begin;
 do $$
 declare
+  sender_user uuid := gen_random_uuid();
+  recipient_user uuid := gen_random_uuid();
   letter_id uuid;
-  sender_user uuid;
-  recipient_user uuid;
   conversation_id uuid;
   read_at timestamptz;
+  fixture_prefix text := 'pm_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 begin
-  select l.conversation_id,l.sender_id,l.recipient_id into conversation_id,sender_user,recipient_user
-    from public.snail_mail_letters l
-    join public.profiles sender_profile on sender_profile.id = l.sender_id
-    join public.profiles recipient_profile on recipient_profile.id = l.recipient_id
-   where l.cancelled_at is not null
-     and sender_profile.deactivated_at is null
-     and recipient_profile.deactivated_at is null
-   limit 1;
-  if conversation_id is null then raise exception 'conversation fixture unavailable'; end if;
+  insert into auth.users(id, email, email_confirmed_at)
+    values (sender_user, sender_user::text || '@example.test', now()),
+           (recipient_user, recipient_user::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (sender_user, fixture_prefix || '_s', 'Pause Mail Sender', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture sender bio.', 'A fixture quote.', 'friendship'),
+      (recipient_user, fixture_prefix || '_r', 'Pause Mail Recipient', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture recipient bio.', 'A fixture quote.', 'friendship');
+  insert into public.conversations(communication_mode) values ('instant') returning id into conversation_id;
+  insert into public.conversation_participants(conversation_id, user_id)
+    values (conversation_id, sender_user), (conversation_id, recipient_user);
   insert into public.snail_mail_letters(conversation_id,sender_id,recipient_id,body,sent_at,deliver_at,delivered_at,transport_mode,distance_band,base_delivery_hours,transport_multiplier,story_seed,story_variant)
     values (conversation_id,sender_user,recipient_user,'pause read test',now()-interval '2 hours',now()-interval '1 hour',now()-interval '30 minutes','standard','long_distance',96,1,123,0)
     returning id into letter_id;
