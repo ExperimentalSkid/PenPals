@@ -47,10 +47,14 @@ scope is explicitly verified.
   browser, and verify the fresh owner can sign out/in and open the admin area.
   Then restore/repair the unrelated full-suite fixtures or assertions before
   treating the repository-wide test command as green.
-- Exact continuation: inspect the final staged diff for secrets, commit and
-  push this source-only installer update. On the VPS, follow the documented
-  `owner-setup.env` flow after migrations and before public registration; do
-  not make the wizard a postinstall/build/deploy hook.
+- `VERIFIED`: source-only installer update was committed and pushed to GitHub
+  `main` as `f06390900a1002d43132d2102e13097a8703f2e7` after a staged secret
+  scan and frozen-lockfile install check.
+- Exact continuation: on the VPS, pull GitHub `main`, apply reviewed
+  migrations, create a private `owner-setup.env`, and run the documented
+  terminal wizard once before public registration. Complete onboarding in the
+  browser while it waits, then sign out/in to confirm the first owner reaches
+  the admin area. Do not make the wizard a postinstall/build/deploy hook.
 
 ### Public-launch follow-up (2026-09-08)
 
