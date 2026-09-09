@@ -28,9 +28,13 @@ scope is explicitly verified.
   `pnpm schema:check:local` (245 applied migrations with no drift), and
   `pnpm audit --prod` also pass. `pnpm schema:lint` passes with only the two
   pre-existing unused-parameter warnings in activity-rank/Snail Mail helpers.
-- Exact continuation: inspect the staged diff once more, scan for secrets,
-  commit this verified repair, push it to GitHub `main`, and record the commit
-  hash here.
+- `VERIFIED`: committed and pushed the full-suite repair to GitHub `main` as
+  `5482a09426d57032dd7a418866ea6fb6dfab8619` (`test: repair full-suite
+  regression coverage`). The remote branch was read back and matches the local
+  commit exactly.
+- Exact continuation: no regression-repair work remains pending. Start the
+  next requested task from clean `main`; preserve the now-green complete suite
+  as the baseline and rerun it after any cross-cutting change.
 
 ### First-owner installation wizard (2026-09-08)
 
