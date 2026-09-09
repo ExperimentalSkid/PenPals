@@ -33,18 +33,44 @@ function productionOrigin(value, name, errors) {
   }
 }
 
+function validEmailAddress(value) {
+  return /^[^\s<>@]+@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z]{2,}$/i.test(value);
+}
+
+function validateSenderIdentity(value, name, errors) {
+  if (!value) return;
+  if (value !== value.trim() || /[\r\n]/.test(value)) {
+    errors.push(`${name} must not contain leading/trailing whitespace or line breaks`);
+    return;
+  }
+  const clean = (value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))
+    ? value.slice(1, -1).trim()
+    : value;
+  const addressMatch = /^(.+?)\s*<([^<>]+)>$/.exec(clean);
+  const address = addressMatch ? addressMatch[2].trim() : clean;
+  if (!validEmailAddress(address)) {
+    errors.push(`${name} must be an email address or a friendly sender such as Pen-Pals <no-reply@pen-pals.net>`);
+  }
+}
+
 export function readProductionAppConfig(env = process.env) {
   const errors = [];
   const siteUrl = requiredValue(env, "NEXT_PUBLIC_SITE_URL", errors);
   const supabaseUrl = requiredValue(env, "NEXT_PUBLIC_SUPABASE_URL", errors);
   const publishableKey = requiredValue(env, "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", errors);
   const serviceRoleKey = requiredValue(env, "SUPABASE_SERVICE_ROLE_KEY", errors);
+  const resendApiKey = valueFrom(env, "RESEND_API_KEY");
 
   const site = siteUrl ? productionOrigin(siteUrl, "NEXT_PUBLIC_SITE_URL", errors) : null;
   const supabase = supabaseUrl ? productionOrigin(supabaseUrl, "NEXT_PUBLIC_SUPABASE_URL", errors) : null;
   if (publishableKey && serviceRoleKey && publishableKey === serviceRoleKey) {
     errors.push("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY and SUPABASE_SERVICE_ROLE_KEY must be distinct");
   }
+  if (resendApiKey && (resendApiKey !== resendApiKey.trim() || /[\r\n]/.test(resendApiKey) || !/^re_[A-Za-z0-9_]{20,}$/.test(resendApiKey))) {
+    errors.push("RESEND_API_KEY must have the expected Resend key format");
+  }
+  validateSenderIdentity(valueFrom(env, "SUPPORT_EMAIL_FROM"), "SUPPORT_EMAIL_FROM", errors);
+  validateSenderIdentity(valueFrom(env, "SUPPORT_EMAIL_REPLY_TO"), "SUPPORT_EMAIL_REPLY_TO", errors);
 
   for (const [name, rawValue] of Object.entries(env)) {
     if (!name.startsWith("NEXT_PUBLIC_") || !rawValue?.trim()) continue;

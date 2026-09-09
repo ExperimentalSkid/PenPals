@@ -136,7 +136,7 @@ account, waits for normal browser onboarding, then grants the first admin role
 once. It is intentionally not run by `pnpm install`, a build, CI, or a later
 deployment.
 
-Production uses **self-hosted Supabase Auth with Resend custom SMTP**. Supabase continues to own tokens and every authentication flow; no Resend SDK or parallel application sender is used. Local `supabase/config.toml`, Mailpit, and `.env.local` remain unchanged.
+Production uses **self-hosted Supabase Auth with Resend custom SMTP**. Supabase continues to own tokens and every authentication flow. The only app-level Resend send-email use is staff replies from the pre-login Contact Inbox; it reads the same server-only sending key at runtime and never reaches browser code. Local `supabase/config.toml`, Mailpit, and `.env.local` remain unchanged.
 
 The VPS loads the existing Supabase Docker environment plus the secret values below. Use the real externally reachable self-hosted Supabase URL; the repository does not guess it:
 
@@ -151,6 +151,8 @@ SUPABASE_AUTH_SMTP_USER=resend
 RESEND_API_KEY=<secret-from-Resend>
 SUPABASE_AUTH_SMTP_ADMIN_EMAIL=no-reply@pen-pals.net
 SUPABASE_AUTH_SMTP_SENDER_NAME=Pen-Pals
+SUPPORT_EMAIL_FROM="Pen-Pals <no-reply@pen-pals.net>"
+SUPPORT_EMAIL_REPLY_TO=
 PENPALS_REPOSITORY_PATH=/srv/penpals
 ```
 
@@ -159,6 +161,7 @@ The sender domain must be verified in Resend with link/open tracking disabled. U
 Validate the secret environment before deploying:
 
 ```bash
+pnpm check:production-app
 pnpm check:production-email
 ```
 
@@ -212,9 +215,13 @@ SEO history is private and aggregate-only. The existing background worker refres
 
 The **Mod Inbox** (`/app/admin/cases`) remains the shared moderator/admin case queue. A moderator can request administrator attention from an actively claimed case by submitting a reason; the existing case, preserved evidence, and audit history are retained and the request is idempotent. Administrators have an additional **Admin Inbox** (`/app/admin/inbox`) backed by the admin-only `admin_list_escalated_moderation_cases` projection. It lists open or resolved escalations with the recorded reason, requester, ownership, priority, and status, then links into the same case workstation for evidence review and resolution. Route guards and the database function both require administrator authorization.
 
-### Support Inbox
+### Support and Contact Inboxes
 
-The separate **Support Inbox** (`/app/admin/support`) is a staff-only queue for user support tickets. It uses the `support_tickets`, `support_ticket_messages`, and private `support_ticket_attachments` model with server-side status, category, assignment, search, sort, and pagination filters. Authenticated users can submit a general request at `/app/support`, receive an owner-scoped confirmation with a ticket ID, status, subject, submitted time, and request link, then review their own history at `/app/support/requests` and a dedicated request view at `/app/support/requests/[id]`. The history/detail RPCs enforce requester ownership, return chronological public messages and linked attachments, and filter internal notes before data reaches the user. Owners can append public replies to active requests through the owner-checked `reply_to_support_ticket` RPC; replies transition the request to **Waiting for staff** and use submission tokens for idempotent retries. Staff use separate claim, public-reply, internal-note, and status RPCs in `/app/admin/support/[id]`; public replies transition tickets to **Waiting for user**, internal notes remain staff-only, and resolved tickets can be reopened as **Open**. Support queue activity is delivered through the existing owner-scoped notification stream: staff are notified about new tickets and requester replies, while requesters receive public-reply, waiting-for-user, resolved, and reopened updates with links to the appropriate ticket view. Clicking a staff row opens the dedicated ticket workstation with the full conversation, secure attachment previews, assignment controls, and status actions. Attachment previews use short-lived signed URLs generated only after the appropriate owner/staff authorization check; the bucket is never public. Future intake types can be added without changing the moderation queues.
+The separate **Support Inbox** (`/app/admin/support`) is a staff-only queue for signed-in user support tickets. It uses the `support_tickets`, `support_ticket_messages`, and private `support_ticket_attachments` model with server-side status, category, assignment, search, sort, and pagination filters. Authenticated users can submit a general request at `/app/support`, receive an owner-scoped confirmation with a ticket ID, status, subject, submitted time, and request link, then review their own history at `/app/support/requests` and a dedicated request view at `/app/support/requests/[id]`. The history/detail RPCs enforce requester ownership, return chronological public messages and linked attachments, and filter internal notes before data reaches the user. Owners can append public replies to active requests through the owner-checked `reply_to_support_ticket` RPC; replies transition the request to **Waiting for staff** and use submission tokens for idempotent retries.
+
+The public **Contact** page (`/contact`) is for visitors who cannot sign in or need a pre-login privacy, safety, account, bug, feedback, or general channel. It writes a `public_contact` ticket through the anonymous-safe `submit_public_contact_ticket` RPC, stores only the submitted name/email/topic/subject/message plus a hashed rate-limit key, and never grants direct table access. Staff review these messages from the dedicated **Contact Inbox** (`/app/admin/contact`), which is backed by `staff_list_public_contact_tickets` and has its own open-count badge. The existing ticket workstation is reused for claim, internal notes, status, and public history, but the requester-visible action becomes an email reply sent by the Next.js server through Resend and then recorded on the ticket. Verified/authenticated user support replies continue to use in-app notifications; public contact tickets do not create requester notifications because there is no signed-in requester.
+
+Staff use separate claim, public-reply/email-reply, internal-note, and status RPCs in `/app/admin/support/[id]`; authenticated support replies transition tickets to **Waiting for user**, Contact Inbox email replies transition them to **Waiting for contact**, internal notes remain staff-only, and resolved tickets can be reopened as **Open**. Support queue activity is delivered through the existing owner-scoped notification stream: staff are notified about new signed-in support tickets, public contact tickets, and requester replies, while signed-in requesters receive public-reply, waiting-for-user, resolved, and reopened updates with links to the appropriate ticket view. Clicking a staff row opens the dedicated ticket workstation with the full conversation, secure attachment previews when present, assignment controls, and status actions. Attachment previews use short-lived signed URLs generated only after the appropriate owner/staff authorization check; the bucket is never public.
 
 ### Mystery Pick
 
@@ -224,8 +231,11 @@ Snail Mail letters are immutable after sending. A sender may cancel an undeliver
 
 ## Repository entry points
 
-The public front page is `src/app/page.tsx`; authenticated features live in
-`src/app/app`. Shared domain rules and database clients live in `src/lib`.
+The public front page is `src/app/page.tsx`; public FAQ, privacy/data-rights and
+contact pages live under `src/app/faq`, `src/app/privacy`, and
+`src/app/contact`; `/gdpr` redirects to the canonical privacy/data-rights page.
+Authenticated features live in `src/app/app`. Shared domain rules and database
+clients live in `src/lib`.
 `src/proxy.ts` is the single Next.js Proxy entry point beside `src/app`.
 Badge display metadata and the staff-assignment vocabulary live in
 `src/lib/profile-badges.ts`; the database remains authoritative for eligibility

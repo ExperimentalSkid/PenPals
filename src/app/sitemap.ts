@@ -7,10 +7,14 @@ import { loadPublicSeoSitemap, seoSiteOrigin, seoSurfacePath } from "@/lib/seo/p
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const origin = seoSiteOrigin();
   const routes = await loadPublicSeoSitemap();
-  return routes.map((route) => ({
-    url: `${seoSiteOrigin()}${seoSurfacePath(route.route_dimension, route.canonical_slug)}`,
-    lastModified: route.last_modified,
-  }));
+  const publicRoutes = ["/", "/faq", "/privacy", "/contact"];
+  return [
+    ...publicRoutes.map((path) => ({ url: `${origin}${path}`, lastModified: new Date() })),
+    ...routes.map((route) => ({
+      url: `${origin}${seoSurfacePath(route.route_dimension, route.canonical_slug)}`,
+      lastModified: route.last_modified,
+    })),
+  ];
 }
-

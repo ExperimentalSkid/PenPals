@@ -3,8 +3,9 @@
 Pen-Pals uses Resend as the SMTP transport for its self-hosted Supabase Auth
 service. Supabase—not application code—continues to create tokens and send
 signup, resend, recovery, invitation, email-change, magic-link and
-reauthentication messages. The Resend REST API was used only for a one-off
-provider delivery check; no Resend runtime package or parallel sender exists.
+reauthentication messages. The application also uses the Resend REST send-email
+API for one narrow non-auth purpose: staff replies from the Contact Inbox to
+visitors who contacted the site before signing in.
 
 ## Local and production separation
 
@@ -12,7 +13,7 @@ provider delivery check; no Resend runtime package or parallel sender exists.
 | --- | --- |
 | Local | Existing Supabase CLI configuration and Mailpit on port 54324. |
 | VPS | Existing official Supabase Docker stack plus `deploy/supabase/docker-compose.auth-email.yml`; Resend SMTP and a private template service. |
-| Next.js | Uses the public self-hosted Supabase URL and publishable key. SMTP and Resend secrets never reach browser code. |
+| Next.js | Uses the public self-hosted Supabase URL and publishable key. It also needs the server-only Resend key for Contact Inbox email replies. SMTP and Resend secrets never reach browser code. |
 
 The local `.env.local` and `supabase/config.toml` were deliberately not changed.
 Do not copy local JWTs, database passwords, localhost URLs or Mailpit settings to
@@ -32,10 +33,10 @@ only by the deployment account.
 
 The official Supabase environment must also set its real `SUPABASE_PUBLIC_URL`
 and `API_EXTERNAL_URL`. The Next.js build/runtime must set
-`NEXT_PUBLIC_SUPABASE_URL` to the corresponding public API gateway origin and
-`NEXT_PUBLIC_SITE_URL=https://pen-pals.net`. Use the generated production
-publishable and secret/service credentials from that self-hosted stack; do not
-reuse local values.
+`NEXT_PUBLIC_SUPABASE_URL` to the corresponding public API gateway origin,
+`NEXT_PUBLIC_SITE_URL=https://pen-pals.net`, the generated production
+publishable key, the service-role key, and `RESEND_API_KEY` for Contact Inbox
+outbound replies. Do not reuse local values.
 
 Follow the [VPS deployment checklist](production-deployment.md) for app startup,
 scheduled jobs and the database migration release process.
@@ -91,6 +92,8 @@ environment values.
 - `RESEND_API_KEY=<sending key>`
 - `SUPABASE_AUTH_SMTP_ADMIN_EMAIL=no-reply@pen-pals.net`
 - `SUPABASE_AUTH_SMTP_SENDER_NAME=Pen-Pals`
+- `SUPPORT_EMAIL_FROM="Pen-Pals <no-reply@pen-pals.net>"` for Contact Inbox replies from the Next.js server
+- optional `SUPPORT_EMAIL_REPLY_TO=<mailbox@pen-pals.net>` if replies should go to an external mailbox instead of the no-reply sender
 - `NEXT_PUBLIC_SITE_URL=https://pen-pals.net`
 - the exact full `SUPABASE_AUTH_URI_ALLOW_LIST` from the example, merged with any other reviewed production callbacks
 - `PENPALS_REPOSITORY_PATH=<absolute VPS checkout path>`
@@ -99,6 +102,10 @@ The sender therefore renders as `Pen-Pals <no-reply@pen-pals.net>`. Never name a
 secret with `NEXT_PUBLIC_`. `.env*` is ignored except for explicit placeholder
 examples, but the staged Git content must still be scanned before every push.
 Rotate any key exposed in chat before the final production deployment.
+
+`RESEND_API_KEY` is loaded in two private places in production: the Supabase Auth
+container as the SMTP password, and the Next.js server process for staff Contact
+Inbox replies. It must never be sent to the browser or committed to Git.
 
 ## Templates and preserved behavior
 
@@ -142,13 +149,17 @@ the HTTPS app and self-hosted Supabase are online:
 5. Exercise only the invitation, magic-link, email-change, reauthentication and
    security-notification flows that the deployed product already enables.
 6. Inspect links: no localhost, Mailpit or tracking redirect may appear.
-7. Confirm local signup still arrives in Mailpit after production deployment.
+7. Submit `/contact`, open `/app/admin/contact`, claim the message, send one
+   controlled reply, and confirm the email arrives from the configured sender.
+8. Confirm local signup still arrives in Mailpit after production deployment.
 
 The production email system is code-complete but cannot be called operational
-until the VPS exists and these real Auth delivery/callback checks pass.
+until the VPS exists and these real Auth delivery, callback, and Contact Inbox
+reply checks pass.
 
 Authoritative references: [Supabase self-hosting with Docker](https://supabase.com/docs/guides/self-hosting/docker),
 [Supabase self-hosted Auth configuration](https://supabase.com/docs/guides/self-hosting/auth/config),
 [Supabase self-hosted email templates](https://supabase.com/docs/guides/self-hosting/custom-email-templates),
-[Resend SMTP for Supabase](https://resend.com/docs/send-with-supabase-smtp), and
+[Resend SMTP for Supabase](https://resend.com/docs/send-with-supabase-smtp),
+[Resend send-email API](https://resend.com/docs/api-reference/emails/send-email), and
 [Resend Auth deliverability guidance](https://resend.com/docs/knowledge-base/how-do-i-maximize-deliverability-for-supabase-auth-emails).

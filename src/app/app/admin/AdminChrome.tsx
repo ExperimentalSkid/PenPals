@@ -1,12 +1,13 @@
 import Link from "next/link";
 
-export type AdminSection = "overview" | "cases" | "admin-inbox" | "support" | "analytics" | "reports" | "users" | "age-appeals" | "audit" | "rules";
+export type AdminSection = "overview" | "cases" | "admin-inbox" | "support" | "contact" | "analytics" | "reports" | "users" | "age-appeals" | "audit" | "rules";
 
 const links: Array<{ id: AdminSection; label: string; href: string }> = [
   { id: "overview", label: "Overview", href: "/app/admin" },
   { id: "cases", label: "Mod Inbox", href: "/app/admin/cases" },
   { id: "admin-inbox", label: "Admin Inbox", href: "/app/admin/inbox" },
   { id: "support", label: "Support Inbox", href: "/app/admin/support" },
+  { id: "contact", label: "Contact Inbox", href: "/app/admin/contact" },
   { id: "analytics", label: "Analytics", href: "/app/admin/analytics" },
   { id: "reports", label: "Reports", href: "/app/admin/reports" },
   { id: "users", label: "Users", href: "/app/admin/users" },
@@ -19,7 +20,7 @@ export function AdminNav({ active, showRules = true, isAdmin = showRules }: { ac
   // Queue pages are intentionally reached from the main app's staff workspace
   // links. Keeping them out of this secondary bar avoids two competing entry
   // points while retaining the queue routes themselves.
-  const inboxSections = new Set<AdminSection>(["cases", "admin-inbox", "support"]);
+  const inboxSections = new Set<AdminSection>(["cases", "admin-inbox", "support", "contact"]);
   return (
     <nav aria-label="Admin Center" className="admin-nav">
       <div className="flex min-w-max items-center gap-1">

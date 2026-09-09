@@ -82,6 +82,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: supportInboxCount } = role === "admin" || role === "moderator"
     ? await db.rpc("staff_support_open_count")
     : { data: null };
+  const { data: contactInboxCount } = role === "admin" || role === "moderator"
+    ? await db.rpc("staff_contact_open_count")
+    : { data: null };
   const modInboxCount = ["new_cases", "triage_cases", "investigating_cases", "waiting_cases"]
     .reduce((total, key) => total + Number(staffSummary?.[key] ?? 0), 0);
   const initial = (p?.display_name ?? p?.username ?? "P").trim().charAt(0).toUpperCase() || "P";
@@ -90,7 +93,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     <aside className="app-sidebar">
       <Link href="/app/discover" aria-label="pen-pals.net home" className="app-sidebar-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[9.5rem]" /></Link>
       {/* Staff routes remain deep-linkable: href="/app/admin/cases" is rendered by AppNavigation. */}
-      <AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} role={role} />
+      <AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} />
       <div className="app-user-block">
         <Link href="/app/profile/setup" className="app-user-link">
           <span className="app-user-avatar" aria-hidden="true">{initial}</span>
@@ -99,6 +102,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <form action={signOut} className="mt-3 border-t border-black/10 pt-3"><button className="app-signout" type="submit"><SignOutIcon /><span>Sign out</span></button></form>
       </div>
     </aside>
-    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label="pen-pals.net home" className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label="Open your profile">{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
+    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label="pen-pals.net home" className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label="Open your profile">{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
   </div></PresenceProvider>;
 }

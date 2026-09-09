@@ -18,8 +18,8 @@ const activeTypes = [
 
 test("desktop and mobile navigation receive the same server-authoritative count", () => {
   assert.match(layout, /rpc\("unread_notification_count"\)/);
-  assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} role=\{role\} \/>/);
-  assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} role=\{role\} mobile \/>/);
+  assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} contactInboxCount=\{Number\(contactInboxCount \?\? 0\)\} role=\{role\} \/>/);
+  assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} contactInboxCount=\{Number\(contactInboxCount \?\? 0\)\} role=\{role\} mobile \/>/);
   assert.match(navigation, /badge: unreadCount/);
   assert.match(navigation, /badgeLabel: "unread notifications"/);
 });

@@ -18,6 +18,11 @@ async function actionHarness(path, result = {}, signedIn = true) {
     "@/lib/supabase/server": { createClient: async () => db },
     "../guard": { requireStaff: async () => ({ db }) },
     "./guard": { requireStaff: async () => ({ db }) },
+    "@/lib/email/resend": {
+      sendPublicContactReplyEmail: async () => undefined,
+      SupportEmailConfigurationError: class SupportEmailConfigurationError extends Error {},
+      SupportEmailDeliveryError: class SupportEmailDeliveryError extends Error {},
+    },
     "@/lib/profile-badges": { isManualProfileBadgeKey: () => false },
     "../investigation-context": { safeAdminReturnTo: () => "/app/admin/support" },
     "next/navigation": { redirect: (path) => { events.push(["redirect", path]); throw Object.assign(new Error("redirect"), { path }); } },

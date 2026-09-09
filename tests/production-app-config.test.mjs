@@ -10,10 +10,12 @@ const scriptPath = fileURLToPath(script);
 const clientSource = await readFile(new URL("src/lib/supabase/client.ts", root), "utf8");
 const serverSource = await readFile(new URL("src/lib/supabase/server.ts", root), "utf8");
 const workerSource = await readFile(new URL("scripts/run-background-jobs.mjs", root), "utf8");
+const supportEmailSource = await readFile(new URL("src/lib/email/resend.ts", root), "utf8");
 const bootstrapSql = await readFile(new URL("deploy/bootstrap-first-admin.sql", root), "utf8");
 
 const publishableKey = `sb_publishable_${"p".repeat(30)}`;
 const serviceRoleKey = `sb_secret_${"s".repeat(30)}`;
+const resendKey = `re_${"r".repeat(28)}`;
 const validEnvironment = {
   NEXT_PUBLIC_SITE_URL: "https://penpals.example",
   NEXT_PUBLIC_SUPABASE_URL: "https://api.penpals.example",
@@ -29,11 +31,17 @@ function run(overrides = {}) {
 }
 
 test("production application config accepts separate HTTPS app and Supabase settings", () => {
-  const result = run({ GOOGLE_LOGIN_STATE_SECRET: "g".repeat(32), BACKGROUND_JOB_BATCH_SIZE: "100" });
+  const result = run({
+    GOOGLE_LOGIN_STATE_SECRET: "g".repeat(32),
+    BACKGROUND_JOB_BATCH_SIZE: "100",
+    RESEND_API_KEY: resendKey,
+    SUPPORT_EMAIL_FROM: "Pen-Pals <no-reply@pen-pals.net>",
+  });
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /configuration is valid/i);
   assert.ok(!`${result.stdout}\n${result.stderr}`.includes(publishableKey));
   assert.ok(!`${result.stdout}\n${result.stderr}`.includes(serviceRoleKey));
+  assert.ok(!`${result.stdout}\n${result.stderr}`.includes(resendKey));
 });
 
 test("production application config fails closed for missing core settings", () => {
@@ -72,6 +80,14 @@ test("production application config guards key separation and optional deploymen
   const invalidBatch = run({ BACKGROUND_JOB_BATCH_SIZE: "501" });
   assert.notEqual(invalidBatch.status, 0);
   assert.match(invalidBatch.stderr, /integer from 1 to 500/);
+
+  const invalidResend = run({ RESEND_API_KEY: "not-a-resend-key" });
+  assert.notEqual(invalidResend.status, 0);
+  assert.match(invalidResend.stderr, /expected Resend key format/);
+
+  const invalidSender = run({ SUPPORT_EMAIL_FROM: "Pen-Pals <not-an-email>" });
+  assert.notEqual(invalidSender.status, 0);
+  assert.match(invalidSender.stderr, /friendly sender/);
 });
 
 test("the validator covers the environment used by browser, server, worker, and first-admin bootstrap", () => {
@@ -79,6 +95,7 @@ test("the validator covers the environment used by browser, server, worker, and 
   assert.match(clientSource, /NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY/);
   assert.match(serverSource, /NEXT_PUBLIC_SUPABASE_URL/);
   assert.match(workerSource, /SUPABASE_SERVICE_ROLE_KEY/);
+  assert.match(supportEmailSource, /RESEND_API_KEY/);
   assert.match(bootstrapSql, /\\prompt 'Confirmed owner account email: /);
   assert.match(bootstrapSql, /owner_confirmed_at is null/);
   assert.match(bootstrapSql, /profile_entry_complete\(p\.id\)/);

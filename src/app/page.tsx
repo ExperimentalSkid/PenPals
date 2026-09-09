@@ -1,6 +1,7 @@
 import Link from "next/link";
 import BrandLogo from "./components/BrandLogo";
 import FrontPageBird from "./components/FrontPageBird";
+import PublicFooter from "./components/PublicFooter";
 
 export default function Home() {
   return (
@@ -53,6 +54,7 @@ export default function Home() {
           </div>
         </div>
       </section>
+      <PublicFooter />
     </main>
   );
 }
