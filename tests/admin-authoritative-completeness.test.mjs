@@ -2,11 +2,12 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const migration = await readFile(new URL("../supabase/migrations/20260905440000_admin_authoritative_profile_completeness.sql", import.meta.url), "utf8");
 const hasLocalDatabase = (() => {
   try {
-    return execFileSync("docker", ["inspect", "--format", "{{.State.Running}}", "supabase_db_Penpal"], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() === "true";
+    return execFileSync("docker", ["inspect", "--format", "{{.State.Running}}", LOCAL_DB_CONTAINER], { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim() === "true";
   } catch { return false; }
 })();
 
@@ -124,7 +125,7 @@ end;
 $$;
 rollback;
 `;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
   assert.match(output, /ROLLBACK/);
 });
 
@@ -141,7 +142,7 @@ select p.proname || '|' || p.prosecdef::text || '|' ||
    and p.proname in ('admin_list_users', 'admin_list_users_page', 'admin_get_user_detail', 'admin_get_user_detail_legacy')
  order by p.proname;
 `;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "admin_get_user_detail|true|false|true|true|true",
     "admin_get_user_detail_legacy|true|false|false|true|true",

@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905300000_early_member_badge.sql", root), "utf8");
 const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Early Member launch anchor and windows are centralized and system-derived", () => {
@@ -52,7 +53,7 @@ select 'exactly_30_days|' || coalesce(public.early_member_grade_for_created_at('
 select 'exactly_3_months|' || coalesce(public.early_member_grade_for_created_at('2026-12-01 00:00:00+00', '2026-09-01 00:00:00+00'), 'none');
 select 'exactly_6_months|' || coalesce(public.early_member_grade_for_created_at('2027-03-01 00:00:00+00', '2026-09-01 00:00:00+00'), 'none');
 select 'exactly_12_months|' || coalesce(public.early_member_grade_for_created_at('2027-09-01 00:00:00+00', '2026-09-01 00:00:00+00'), 'none');`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "inside_30_days|early-member-platinum",
     "after_30_inside_3_months|early-member-gold",

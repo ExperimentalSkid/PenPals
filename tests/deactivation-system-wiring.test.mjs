@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { HAS_LOCAL_DB, LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
@@ -50,16 +51,8 @@ test("administrator reactivation restores the target's pre-deactivation contact 
   assert.match(overrideMigration, /set_config\('app\.allow_account_status_change', '', true\)/);
 });
 
-const hasLocalDatabase = (() => {
-  try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-})();
 
-test("live deactivation denies direct contact bypasses and restores admin-managed state", { skip: !hasLocalDatabase }, () => {
+test("live deactivation denies direct contact bypasses and restores admin-managed state", { skip: !HAS_LOCAL_DB }, () => {
   const sql = String.raw`
 begin;
 do $$
@@ -165,5 +158,20 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+});
+
+
+test("reactivation and staff guard surface backend read failures instead of misclassifying account state", async () => {
+  const reactivate = await readFile(new URL("src/app/reactivate/page.tsx", root), "utf8");
+  assert.match(reactivate, /error: claimsError/);
+  assert.match(reactivate, /if \(claimsError\) throw claimsError/);
+  assert.match(reactivate, /error: userError/);
+  assert.match(reactivate, /if \(userError\) throw userError/);
+  assert.match(reactivate, /error: profileError/);
+  assert.match(reactivate, /if \(profileError\) throw profileError/);
+  assert.match(adminGuard, /error: claimsError/);
+  assert.match(adminGuard, /if \(claimsError\) throw claimsError/);
+  assert.match(adminGuard, /error: profileError/);
+  assert.match(adminGuard, /if \(profileError\) throw profileError/);
 });

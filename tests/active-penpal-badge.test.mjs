@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905250000_active_penpal_badge.sql", root), "utf8");
 const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Active Penpal thresholds are centralized and system-derived", () => {
@@ -64,15 +65,18 @@ select 'no_activity_account_age|' || coalesce((
 ), 'none');
 begin;
 create temp table active_badge_target (id uuid) on commit drop;
-insert into active_badge_target (id)
-select p.id
-  from public.profiles p
- where not exists (
-   select 1 from public.activity_rank_events e
-    where e.user_id = p.id and e.event_type = 'active_day'
- )
- order by p.id
- limit 1;
+with fixture as (
+  select gen_random_uuid() as id, 'ap_' || left(replace(gen_random_uuid()::text, '-', ''), 12) as prefix
+), auth_insert as (
+  insert into auth.users(id, email, email_confirmed_at)
+  select id, id::text || '@example.test', now() from fixture
+  returning id
+), profile_insert as (
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+  select id, prefix, 'Active Penpal Target', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio.', 'Fixture quote.', 'friendship' from fixture
+  returning id
+)
+insert into active_badge_target(id) select id from profile_insert;
 insert into public.activity_rank_events (user_id, event_key, event_type, occurred_at)
 select t.id, 'active-badge-test-' || g::text, 'active_day', (date '2020-01-01' + g)::timestamptz
   from active_badge_target t
@@ -93,7 +97,7 @@ select 'projected_30|' || (
    where badges.badge_key like 'active-penpal-%'
 );
 rollback;`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "below_bronze|none",
     "exactly_bronze|active-penpal-bronze",

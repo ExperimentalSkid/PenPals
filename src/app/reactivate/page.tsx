@@ -10,12 +10,15 @@ export const dynamic = "force-dynamic";
 
 export default async function ReactivatePage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   const db = await createClient();
-  const { data: claimsData } = await db.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await db.auth.getClaims();
+  if (claimsError) throw claimsError;
   const uid = claimsData?.claims?.sub;
   if (!uid) redirect("/sign-in");
-  const { data: userData } = await db.auth.getUser();
+  const { data: userData, error: userError } = await db.auth.getUser();
+  if (userError) throw userError;
   if (!userData.user?.email_confirmed_at) redirect("/check-email");
-  const { data: profile } = await db.from("profiles").select("deactivated_at").eq("id", uid).maybeSingle();
+  const { data: profile, error: profileError } = await db.from("profiles").select("deactivated_at").eq("id", uid).maybeSingle();
+  if (profileError) throw profileError;
   if (!profile?.deactivated_at) redirect("/app");
 
   const [params, { locale, t }] = await Promise.all([searchParams, getPageI18n()]);

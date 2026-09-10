@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 import { randomUUID } from "node:crypto";
 
 const root = new URL("../", import.meta.url);
@@ -15,7 +16,7 @@ const caseDetail = await read("src/app/app/admin/cases/[id]/page.tsx");
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -25,7 +26,7 @@ const hasLocalDatabase = (() => {
 function runSql(sql) {
   return execFileSync(
     "docker",
-    ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"],
+    ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"],
     { input: sql, encoding: "utf8" },
   );
 }
@@ -59,7 +60,7 @@ test("live profile signal creates one review case with preserved evidence and no
   const content = "Please visit onlyfans.com";
   const adminId = execFileSync(
     "docker",
-    ["exec", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-c", "select id from public.profiles where role = 'admin' and deactivated_at is null limit 1"],
+    ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-At", "-c", "select id from public.profiles where role = 'admin' and deactivated_at is null limit 1"],
     { encoding: "utf8" },
   ).trim();
   assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");

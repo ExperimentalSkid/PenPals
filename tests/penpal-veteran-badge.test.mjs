@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905230000_penpal_veteran_badge.sql", root), "utf8");
@@ -9,7 +10,7 @@ const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root)
 const adminBadgeActions = await readFile(new URL("src/app/app/admin/users/[id]/AdminProfileBadgeActions.tsx", root), "utf8");
 const publicProjection = await readFile(new URL("supabase/migrations/20260905221000_profile_badge_order.sql", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Penpal Veteran definitions keep tenure thresholds centralized and system-derived", () => {
@@ -52,7 +53,7 @@ select 'exactly_6_months|' || coalesce(public.penpal_veteran_grade('2026-03-05 0
 select 'exactly_1_year|' || coalesce(public.penpal_veteran_grade('2025-09-05 00:00:00+00', '2026-09-05 00:00:00+00'), 'none');
 select 'exactly_3_years|' || coalesce(public.penpal_veteran_grade('2023-09-05 00:00:00+00', '2026-09-05 00:00:00+00'), 'none');
 select 'above_platinum|' || coalesce(public.penpal_veteran_grade('2020-01-01 00:00:00+00', '2026-09-05 00:00:00+00'), 'none');`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "below_3_months|none",
     "exactly_3_months|penpal-veteran-bronze",

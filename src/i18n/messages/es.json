@@ -938,6 +938,7 @@
       "justNow": "Ahora mismo",
       "yesterday": "Ayer",
       "deletedUser": "Usuario eliminado",
+      "memberUnavailable": "Detalles del miembro no disponibles",
       "newSupport": "Nueva solicitud de soporte",
       "newSupportContext": "Hay una solicitud de soporte de usuario lista en la bandeja de soporte.",
       "openSupportInbox": "Abrir bandeja de soporte",

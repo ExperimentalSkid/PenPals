@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 import { createClient } from "@supabase/supabase-js";
 
 const root = new URL("../", import.meta.url);
@@ -30,23 +31,19 @@ test("direct viewer authorization is not an authenticated client RPC", { skip: !
   const { error: anonError } = await anon.rpc("realtime_presence_viewer", { target: crypto.randomUUID() });
   assert.ok(anonError, "anonymous caller unexpectedly invoked the viewer helper");
 
-  const user = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const { error: signInError } = await user.auth.signInWithPassword({ email: "mika@example.local", password: process.env.PENPAL_LOCAL_TEST_PASSWORD || "demo" });
-  if (signInError?.code === "invalid_credentials") { t.skip("local mika fixture is not seeded"); return; }
-  assert.equal(signInError, null, signInError?.message || "fixture sign-in failed");
-  const { error: userError } = await user.rpc("realtime_presence_viewer", { target: crypto.randomUUID() });
-  assert.ok(userError, "authenticated caller unexpectedly invoked the viewer helper");
-  await user.auth.signOut();
+  if (!hasDocker()) { t.skip("local database container is unavailable"); return; }
+  const authenticatedCanExecute = execFileSync("docker", ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select has_function_privilege('authenticated', 'public.realtime_presence_viewer(uuid)', 'execute')"], { encoding: "utf8" }).trim();
+  assert.equal(authenticatedCanExecute, "f", "authenticated role unexpectedly retained viewer-helper EXECUTE");
 });
 
 test("revoking the viewer RPC does not break the RLS policy path", { skip: !hasDocker() }, () => {
   const sql = "begin; revoke execute on function public.realtime_presence_viewer(uuid) from authenticated; set local role authenticated; select count(*) from realtime.messages; rollback;";
-  execFileSync("docker", ["exec", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", sql], { stdio: "pipe" });
+  execFileSync("docker", ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", sql], { stdio: "pipe" });
 });
 
 function hasDocker() {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;

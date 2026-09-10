@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905340000_letter_writer_badge.sql", root), "utf8");
 const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Letter Writer thresholds are centralized and system-derived", () => {
@@ -59,31 +60,26 @@ select 'below_platinum|' || coalesce(public.letter_writer_grade_for_count(9999),
 select 'exactly_platinum|' || coalesce(public.letter_writer_grade_for_count(10000), 'none');
 begin;
 create temp table letter_writer_badge_target (id uuid, recipient_id uuid, conversation_id uuid) on commit drop;
-with selected as (
-  select target.id, recipient.id as recipient_id
-    from public.profiles target
-   cross join lateral (
-     select p.id
-       from public.profiles p
-      where p.id <> target.id
-        and p.deactivated_at is null
-        and p.inactive_mode = false
-      order by p.id
-      limit 1
-   ) recipient
-   where target.deactivated_at is null
-     and target.inactive_mode = false
-     and not exists (select 1 from public.messages m where m.sender_id = target.id)
-   order by target.id
-   limit 1
+with fixture as (
+  select gen_random_uuid() as id, gen_random_uuid() as recipient_id,
+         'letter_' || left(replace(gen_random_uuid()::text, '-', ''), 10) as prefix
+), users as (
+  insert into auth.users(id, email, email_confirmed_at)
+  select id, id::text || '@example.test', now() from fixture
+  union all select recipient_id, recipient_id::text || '@example.test', now() from fixture
+  returning id
+), profiles as (
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+  select id, prefix || '_s', 'Letter Writer Sender', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Letter Writer fixture bio.', 'A fixture quote.', 'friendship' from fixture
+  union all select recipient_id, prefix || '_r', 'Letter Writer Recipient', date '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Letter Writer fixture bio.', 'A fixture quote.', 'friendship' from fixture
+  returning id
 ), created as (
   insert into public.conversations(communication_mode)
-  select 'instant' from selected
+  values ('instant')
   returning id
 )
 insert into letter_writer_badge_target (id, recipient_id, conversation_id)
-select selected.id, selected.recipient_id, created.id
-  from selected cross join created;
+select fixture.id, fixture.recipient_id, created.id from fixture cross join created;
 insert into public.conversation_participants(conversation_id, user_id, last_read_at)
 select conversation_id, id, now() from letter_writer_badge_target
 union all
@@ -117,7 +113,7 @@ update public.messages
  where id = (select id from public.messages where sender_id = (select id from letter_writer_badge_target) order by id limit 1);
 select 'after_sender_redaction|' || (select public.letter_writer_message_count(id)::text from letter_writer_badge_target);
 rollback;`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "below_bronze|none",
     "exactly_bronze|letter-writer-bronze",

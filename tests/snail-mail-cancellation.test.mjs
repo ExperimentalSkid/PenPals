@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903180000_cancel_snail_mail.sql", root), "utf8");
@@ -15,7 +16,7 @@ const story = await readFile(new URL("src/app/app/messages/snailMailStory.ts", r
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -154,5 +155,5 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });

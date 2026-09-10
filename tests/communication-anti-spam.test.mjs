@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const migration = await readFile(new URL("../supabase/migrations/20260903150000_communication_anti_spam_guards.sql", import.meta.url), "utf8");
 const timestampFix = await readFile(new URL("../supabase/migrations/20260903151000_fix_message_antispam_same_timestamp.sql", import.meta.url), "utf8");
@@ -13,7 +14,7 @@ const actions = await readFile(new URL("../src/app/app/messages/actions.ts", imp
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -79,37 +80,25 @@ test("live database guards allow three messages, reset on reply, and isolate Sna
 begin;
 do $$
 declare
-  sender uuid;
-  recipient uuid;
-  other_recipient uuid;
+  sender uuid := gen_random_uuid();
+  recipient uuid := gen_random_uuid();
+  other_recipient uuid := gen_random_uuid();
   conversation uuid;
   first_letter uuid;
   idem uuid := gen_random_uuid();
+  fixture_prefix text := 'spam_' || left(replace(gen_random_uuid()::text, '-', ''), 10);
 begin
-  select p1.id, p2.id, p3.id
-    into sender, recipient, other_recipient
-    from public.profiles p1
-    join public.profiles p2 on p2.id <> p1.id
-    join public.profiles p3 on p3.id <> p1.id and p3.id <> p2.id
-   where p1.deactivated_at is null and p2.deactivated_at is null and p3.deactivated_at is null
-     and coalesce(p1.inactive_mode, false) = false
-     and coalesce(p2.inactive_mode, false) = false
-     and coalesce(p3.inactive_mode, false) = false
-     and coalesce(p1.allow_snail_mail, true)
-     and coalesce(p2.allow_snail_mail, true)
-     and coalesce(p3.allow_snail_mail, true)
-     and not exists (
-       select 1 from public.profile_blocks b
-        where (b.blocker_id = p1.id and b.blocked_id in (p2.id, p3.id))
-           or (b.blocker_id in (p2.id, p3.id) and b.blocked_id = p1.id)
-     )
-     and not exists (
-       select 1 from public.snail_mail_letters l
-        where l.sender_id = p1.id and l.recipient_id in (p2.id, p3.id)
-     )
-   limit 1;
-  if sender is null then raise exception 'no isolated active profile fixture available'; end if;
-
+  insert into auth.users(id, email, email_confirmed_at)
+    values
+      (sender, sender::text || '@example.test', now()),
+      (recipient, recipient::text || '@example.test', now()),
+      (other_recipient, other_recipient::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (sender, fixture_prefix || '_s', 'Spam Fixture Sender', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture sender bio.', 'A fixture quote.', 'friendship'),
+      (recipient, fixture_prefix || '_r', 'Spam Fixture Recipient', '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Fixture recipient bio.', 'A fixture quote.', 'friendship'),
+      (other_recipient, fixture_prefix || '_o', 'Spam Fixture Other', '1990-01-01', 'Not specified', 'ES', 'ES', '', 'country', 'Fixture other recipient bio.', 'A fixture quote.', 'friendship');
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   perform set_config('request.jwt.claim.sub', sender::text, true);
   insert into public.conversations default values returning id into conversation;
   insert into public.conversation_participants(conversation_id, user_id)
@@ -164,5 +153,5 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });

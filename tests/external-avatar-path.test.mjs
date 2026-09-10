@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
-import { createClient } from "@supabase/supabase-js";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903130000_harden_avatar_path_compatibility.sql", root), "utf8");
@@ -11,15 +11,8 @@ const profilePage = await readFile(new URL("src/app/app/profile/[username]/page.
 const blockedPage = await readFile(new URL("src/app/app/settings/blocked/page.tsx", root));
 const profileActions = await readFile(new URL("src/app/app/profile/actions.ts", root));
 
-const envText = await readFile(new URL(".env.local", root), "utf8").catch(() => "");
-function envValue(name) {
-  const line = envText.split(/\r?\n/).find((entry) => entry.startsWith(`${name}=`));
-  return process.env[name] || line?.slice(name.length + 1).trim() || "";
-}
-const supabaseUrl = envValue("NEXT_PUBLIC_SUPABASE_URL");
-const publishableKey = envValue("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("legacy avatar values are quarantined, preserved, and rejected by the profile trigger", () => {
@@ -34,29 +27,50 @@ test("legacy avatar values are quarantined, preserved, and rejected by the profi
   assert.match(profileActions.toString(), /isPrivateAvatarPath\(profile\.avatar_path, uid\)/);
 });
 
-test("direct external avatar writes are rejected by the live database", { skip: !hasLocalDatabase || !supabaseUrl || !publishableKey }, async () => {
-  const db = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const { data: signIn, error: signInError } = await db.auth.signInWithPassword({ email: "mika@example.local", password: process.env.PENPAL_LOCAL_TEST_PASSWORD || "demo" });
-  assert.equal(signInError, null);
-  const userId = signIn.user?.id;
-  assert.ok(userId);
-  const { data: before, error: beforeError } = await db.from("profiles").select("avatar_path").eq("id", userId).single();
-  assert.equal(beforeError, null);
-  const { error: writeError } = await db.from("profiles").update({ avatar_path: "https://example.invalid/avatar.jpg" }).eq("id", userId);
-  assert.ok(writeError, "external avatar path write unexpectedly succeeded");
-  const { data: after, error: afterError } = await db.from("profiles").select("avatar_path").eq("id", userId).single();
-  assert.equal(afterError, null);
-  assert.equal(after?.avatar_path, before?.avatar_path);
-  await db.auth.signOut();
+test("direct external avatar writes are rejected by the live database", { skip: !hasLocalDatabase }, () => {
+  const sql = String.raw`
+begin;
+do $$
+declare
+  owner_user uuid := gen_random_uuid();
+  viewer_user uuid := gen_random_uuid();
+  owner_username text := 'avatar_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
+  before_path text;
+  after_path text;
+  public_row jsonb;
+  allowed boolean;
+begin
+  insert into auth.users(id,email,email_confirmed_at)
+    values (owner_user, owner_user::text || '@example.test', now()),
+           (viewer_user, viewer_user::text || '@example.test', now());
+  insert into public.profiles(id,username,display_name,birth_date,gender,country,country_code,city,location_precision,bio,quote,looking_for,avatar_path)
+    values
+      (owner_user, owner_username, 'Avatar Owner', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture owner bio.', 'Fixture quote.', 'friendship', null),
+      (viewer_user, 'viewer_' || left(viewer_user::text, 8), 'Avatar Viewer', date '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Fixture viewer bio.', 'Fixture quote.', 'friendship', null);
 
-  const viewer = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const { error: viewerSignInError } = await viewer.auth.signInWithPassword({ email: "yuna@example.local", password: process.env.PENPAL_LOCAL_TEST_PASSWORD || "demo" });
-  assert.equal(viewerSignInError, null);
-  const { data: viewerPhotoAllowed, error: viewerPhotoError } = await viewer.rpc("can_view_profile_photo", { owner_user: userId, viewer_user: userId });
-  assert.equal(viewerPhotoError, null);
-  assert.equal(viewerPhotoAllowed, false, "legacy external avatar was treated as a private photo");
-  const { data: publicProfile, error: publicProfileError } = await viewer.rpc("get_public_profile", { target_username: "mika" });
-  assert.equal(publicProfileError, null);
-  assert.equal(publicProfile?.avatar_path ?? null, null, "legacy external avatar leaked through the public profile projection");
-  await viewer.auth.signOut();
+  select avatar_path into before_path from public.profiles where id = owner_user;
+  perform set_config('request.jwt.claim.sub', owner_user::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  set local role authenticated;
+  begin
+    update public.profiles set avatar_path = 'https://example.invalid/avatar.jpg' where id = owner_user;
+    raise exception 'external avatar path write unexpectedly succeeded';
+  exception when others then
+    if sqlerrm = 'external avatar path write unexpectedly succeeded' then raise; end if;
+  end;
+  reset role;
+  select avatar_path into after_path from public.profiles where id = owner_user;
+  if after_path is distinct from before_path then raise exception 'rejected avatar write changed stored path'; end if;
+
+  perform set_config('request.jwt.claim.sub', viewer_user::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  set local role authenticated;
+  select public.can_view_profile_photo(owner_user, viewer_user) into allowed;
+  if allowed then raise exception 'external/absent avatar treated as private photo'; end if;
+  select public.get_public_profile(owner_username) into public_row;
+  if coalesce(public_row->>'avatar_path', '') <> '' then raise exception 'avatar path leaked through public projection'; end if;
+end;
+$$;
+rollback;`;
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });

@@ -15,9 +15,9 @@ test("every active notification type has an actionable destination", () => {
 });
 
 test("notification actions resolve introductions and photo requests to real destinations", () => {
-  assert.match(page, /redirect\(introduction\?\.conversation_id_legacy \? `\/app\/messages\/\$\{introduction\.conversation_id_legacy\}` : "\/app\/introductions"\)/);
+  assert.match(page, /destination = introduction\?\.conversation_id_legacy \? `\/app\/messages\/\$\{introduction\.conversation_id_legacy\}` : "\/app\/introductions"/);
   assert.match(page, /from\("profile_photo_access_requests"\)/);
-  assert.match(page, /redirect\(request\?\.conversation_id \? `\/app\/messages\/\$\{request\.conversation_id\}`/);
+  assert.match(page, /destination = request\?\.conversation_id \? `\/app\/messages\/\$\{request\.conversation_id\}`/);
 });
 
 test("opening an action marks only the owned unread row and exposes failures", () => {
@@ -36,4 +36,23 @@ test("message notifications remain excluded from this action surface", () => {
   assert.match(page, /if \(!ACTIVE_TYPES\.includes\(notification\.type\)\) redirect/);
   assert.doesNotMatch(page, /notification\.type === "new_message"/);
   assert.match(page, /\.in\("type", ACTIVE_TYPES\)/);
+});
+
+
+test("notification action routing surfaces authorization and destination lookup failures", () => {
+  assert.match(page, /error: staffCheckError/);
+  assert.match(page, /if \(staffCheckError\) throw staffCheckError/);
+  assert.match(page, /error: requestError/);
+  assert.match(page, /if \(requestError\) throw requestError/);
+  assert.match(page, /error: introductionLookupError/);
+  assert.match(page, /if \(introductionLookupError\) throw introductionLookupError/);
+});
+
+
+test("notification destinations are resolved before the notification is consumed", () => {
+  const lookup = page.indexOf('const { data: request, error: requestError }');
+  const readBlock = page.indexOf('const { error: readError }', page.indexOf('async function openNotification'));
+  assert.ok(lookup >= 0 && readBlock > lookup);
+  assert.match(page, /let destination = "\/app\/notifications"/);
+  assert.match(page, /redirect\(destination\)/);
 });

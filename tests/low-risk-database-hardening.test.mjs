@@ -2,22 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
-import { createClient } from "@supabase/supabase-js";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903142000_harden_low_risk_database_functions.sql", root), "utf8");
-const envText = await readFile(new URL(".env.local", root), "utf8").catch(() => "");
-
-function envValue(name) {
-  const line = envText.split(/\r?\n/).find((entry) => entry.startsWith(`${name}=`));
-  return process.env[name] || line?.slice(name.length + 1).trim() || "";
-}
-
-const supabaseUrl = envValue("NEXT_PUBLIC_SUPABASE_URL");
-const publishableKey = envValue("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -31,29 +22,37 @@ test("low-risk hardening keeps trigger execution internal and public profiles na
   assert.match(migration, /grant execute on function public\.get_public_profile\(text\) to authenticated/);
 });
 
-test("low-risk hardening preserves authenticated profile reads while denying anonymous trigger RPC access", { skip: !hasLocalDatabase || !supabaseUrl || !publishableKey }, async () => {
-  const db = createClient(supabaseUrl, publishableKey, { auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false } });
-  const { data: signIn, error: signInError } = await db.auth.signInWithPassword({
-    email: "mika@example.local",
-    password: process.env.PENPAL_LOCAL_TEST_PASSWORD || "demo",
-  });
-  assert.equal(signInError, null);
-  assert.ok(signIn.session);
-
-  const { data: profile, error: profileError } = await db.rpc("get_public_profile", { target_username: "sofia" });
-  assert.equal(profileError, null);
-  assert.ok(profile);
-  assert.equal(typeof profile.display_name, "string");
-  assert.equal("role" in profile, false);
-  assert.equal("deactivated_at" in profile, false);
-
-  const sql = `
+test("low-risk hardening preserves authenticated profile reads while denying anonymous trigger RPC access", { skip: !hasLocalDatabase }, () => {
+  const sql = String.raw`
+begin;
+do $$
+declare
+  viewer uuid := gen_random_uuid();
+  target uuid := gen_random_uuid();
+  target_username text := 'lowrisk_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
+  public_row jsonb;
+begin
+  insert into auth.users(id,email,email_confirmed_at)
+    values (viewer, viewer::text || '@example.test', now()),
+           (target, target::text || '@example.test', now());
+  insert into public.profiles(id,username,display_name,birth_date,gender,country,country_code,city,location_precision,bio,quote,looking_for)
+    values
+      (viewer, 'viewer_' || left(viewer::text, 8), 'Low Risk Viewer', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture viewer bio.', 'Fixture quote.', 'friendship'),
+      (target, target_username, 'Low Risk Target', date '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Fixture target bio.', 'Fixture quote.', 'friendship');
+  perform set_config('request.jwt.claim.sub', viewer::text, true);
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
+  set local role authenticated;
+  select public.get_public_profile(target_username) into public_row;
+  if public_row is null then raise exception 'authenticated public profile read failed'; end if;
+  if public_row ? 'role' or public_row ? 'deactivated_at' then raise exception 'private profile fields leaked'; end if;
+end;
+$$;
+reset role;
 select
-  has_function_privilege('anon', 'public.set_updated_at()', 'execute') as anon_can_call,
-  has_function_privilege('authenticated', 'public.set_updated_at()', 'execute') as authenticated_can_trigger,
-  pg_get_functiondef('public.get_public_profile(text)'::regprocedure) like '%p0.*%' as has_whole_row_projection;
-`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-Atc", sql], { encoding: "utf8" }).trim();
-  assert.equal(output, "f|t|f");
-  await db.auth.signOut();
+  has_function_privilege('anon', 'public.set_updated_at()', 'execute')::text || '|' ||
+  has_function_privilege('authenticated', 'public.set_updated_at()', 'execute')::text || '|' ||
+  (pg_get_functiondef('public.get_public_profile(text)'::regprocedure) like '%p0.*%')::text;
+rollback;`;
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim();
+  assert.equal(output, "false|true|false");
 });

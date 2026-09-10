@@ -25,7 +25,8 @@ function first(value: SearchValue) {
 async function openNotification(notificationId: string) {
   "use server";
   const db = await createClient();
-  const { data: claimsData } = await db.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await db.auth.getClaims();
+  if (claimsError) throw claimsError;
   const uid = claimsData?.claims?.sub;
   if (!uid) redirect("/sign-in");
 
@@ -36,20 +37,18 @@ async function openNotification(notificationId: string) {
     .eq("user_id", uid)
     .maybeSingle();
   if (notificationError || !notification) redirect("/app/notifications?error=Notification%20is%20no%20longer%20available");
-  // Legacy rows (including new_message) remain in the database for migration
-  // compatibility, but are intentionally not part of this action surface.
   if (!ACTIVE_TYPES.includes(notification.type)) redirect("/app/notifications?error=That%20notification%20is%20no%20longer%20available");
 
-  // A new-introduction notification is only actionable while the introduction
-  // is still pending. Replying to or declining an introduction handles the
-  // request, so an older unread notification must not remain actionable.
+  let destination = "/app/notifications";
+
   if (notification.type === "new_introduction") {
     const { data: introduction, error: introductionError } = await db
       .from("conversation_introductions")
-      .select("status,recipient_id")
+      .select("status,recipient_id,conversation_id_legacy")
       .eq("id", notification.related_id)
       .maybeSingle();
-    if (introductionError || !introduction || introduction.recipient_id !== uid || introduction.status !== "pending") {
+    if (introductionError) throw introductionError;
+    if (!introduction || introduction.recipient_id !== uid || introduction.status !== "pending") {
       const { error: staleReadError } = await db
         .from("notifications")
         .update({ read_at: new Date().toISOString() })
@@ -60,6 +59,32 @@ async function openNotification(notificationId: string) {
       revalidatePath("/app", "layout");
       redirect("/app/notifications");
     }
+    destination = introduction.conversation_id_legacy ? `/app/messages/${introduction.conversation_id_legacy}` : "/app/introductions";
+  } else if (STAFF_SUPPORT_TYPES.includes(notification.type)) {
+    const { data: isStaff, error: staffCheckError } = await db.rpc("is_moderator");
+    if (staffCheckError) throw staffCheckError;
+    if (!isStaff) redirect("/app/notifications?error=That%20notification%20is%20no%20longer%20available");
+    destination = `/app/admin/support/${notification.related_id}?return_to=%2Fapp%2Fadmin%2Fsupport`;
+  } else if (notification.type === "profile_verification_reverify") {
+    destination = "/app/settings#verification";
+  } else if (notification.type.startsWith("support_ticket_")) {
+    destination = `/app/support/requests/${notification.related_id}`;
+  } else if (notification.type === "photo_access_request" || notification.type === "photo_access_granted") {
+    const { data: request, error: requestError } = await db
+      .from("profile_photo_access_requests")
+      .select("conversation_id")
+      .eq("id", notification.related_id)
+      .maybeSingle();
+    if (requestError) throw requestError;
+    destination = request?.conversation_id ? `/app/messages/${request.conversation_id}` : "/app/notifications";
+  } else {
+    const { data: introduction, error: introductionLookupError } = await db
+      .from("conversation_introductions")
+      .select("conversation_id_legacy")
+      .eq("id", notification.related_id)
+      .maybeSingle();
+    if (introductionLookupError) throw introductionLookupError;
+    destination = introduction?.conversation_id_legacy ? `/app/messages/${introduction.conversation_id_legacy}` : "/app/introductions";
   }
 
   const { error: readError } = await db
@@ -70,40 +95,8 @@ async function openNotification(notificationId: string) {
     .is("read_at", null);
   if (readError) redirect("/app/notifications?error=We%20couldn't%20mark%20that%20notification%20as%20read");
 
-  if (STAFF_SUPPORT_TYPES.includes(notification.type)) {
-    const { data: isStaff } = await db.rpc("is_moderator");
-    if (!isStaff) redirect("/app/notifications?error=That%20notification%20is%20no%20longer%20available");
-    revalidatePath("/app", "layout");
-    redirect(`/app/admin/support/${notification.related_id}?return_to=%2Fapp%2Fadmin%2Fsupport`);
-  }
-
-  if (notification.type === "profile_verification_reverify") {
-    revalidatePath("/app", "layout");
-    redirect("/app/settings#verification");
-  }
-
-  if (notification.type.startsWith("support_ticket_")) {
-    revalidatePath("/app", "layout");
-    redirect(`/app/support/requests/${notification.related_id}`);
-  }
-
-  if (notification.type === "photo_access_request" || notification.type === "photo_access_granted") {
-    const { data: request } = await db
-      .from("profile_photo_access_requests")
-      .select("conversation_id")
-      .eq("id", notification.related_id)
-      .maybeSingle();
-    revalidatePath("/app", "layout");
-    redirect(request?.conversation_id ? `/app/messages/${request.conversation_id}` : "/app/notifications");
-  }
-
-  const { data: introduction } = await db
-    .from("conversation_introductions")
-    .select("conversation_id_legacy")
-    .eq("id", notification.related_id)
-    .maybeSingle();
   revalidatePath("/app", "layout");
-  redirect(introduction?.conversation_id_legacy ? `/app/messages/${introduction.conversation_id_legacy}` : "/app/introductions");
+  redirect(destination);
 }
 
 function relativeTime(value: string, locale: string, t: (key: string, values?: Record<string, string | number>) => string) {
@@ -138,7 +131,8 @@ function relation(value: any) {
 export default async function Notifications({ searchParams }: { searchParams?: Promise<Record<string, SearchValue>> }) {
   const { locale, t } = await getPageI18n();
   const db = await createClient();
-  const { data: claimsData } = await db.auth.getClaims();
+  const { data: claimsData, error: claimsError } = await db.auth.getClaims();
+  if (claimsError) throw claimsError;
   const uid = claimsData?.claims?.sub;
   if (!uid) redirect("/sign-in");
 
@@ -160,13 +154,13 @@ export default async function Notifications({ searchParams }: { searchParams?: P
   const introductionIds = rawNotifications
     .filter((row: any) => ["new_introduction", "introduction_replied", "introduction_declined"].includes(row.type))
     .map((row: any) => row.related_id);
-  const { data: relatedIntroductions } = introductionIds.length
+  const { data: relatedIntroductions, error: relatedIntroductionsError } = introductionIds.length
     ? await db.from("conversation_introductions").select("id,sender_id,recipient_id,icebreaker,conversation_id_legacy,status").in("id", introductionIds)
-    : { data: [] };
+    : { data: [], error: null };
   const introductionsById = new Map((relatedIntroductions ?? []).map((intro: any) => [intro.id, intro]));
   // Keep handled introduction requests out of the notification stream even
   // when an older row was created before the database trigger cleared it.
-  const notifications = rawNotifications.filter((row: any) => {
+  const notifications = relatedIntroductionsError ? rawNotifications : rawNotifications.filter((row: any) => {
     if (row.type !== "new_introduction") return true;
     const introduction = introductionsById.get(row.related_id);
     return introduction?.status === "pending" && introduction.recipient_id === uid;
@@ -181,9 +175,9 @@ export default async function Notifications({ searchParams }: { searchParams?: P
       : notifications;
 
   const photoRequestIds = notifications.filter((row: any) => row.type === "photo_access_request" || row.type === "photo_access_granted").map((row: any) => row.related_id);
-  const { data: relatedPhotoRequests } = photoRequestIds.length
+  const { data: relatedPhotoRequests, error: relatedPhotoRequestsError } = photoRequestIds.length
     ? await db.from("profile_photo_access_requests").select("id,requester_id,owner_id,conversation_id").in("id", photoRequestIds)
-    : { data: [] };
+    : { data: [], error: null };
 
   const photoRequestsById = new Map((relatedPhotoRequests ?? []).map((request: any) => [request.id, request]));
   const personIds = [...new Set([
@@ -192,8 +186,10 @@ export default async function Notifications({ searchParams }: { searchParams?: P
   ].filter((personId: string) => personId && personId !== uid))];
 
   const profilesById = new Map<string, any>();
+  const profileLookupFailures = new Set<string>();
   await Promise.all(personIds.map(async (personId) => {
     const identityResult = await db.rpc("resolve_profile_identity", { target_user: personId });
+    if (identityResult.error) { profileLookupFailures.add(personId); return; }
     const identity = relation(identityResult.data);
     if (!identity) return;
     let photo: string | null = null;
@@ -203,6 +199,8 @@ export default async function Notifications({ searchParams }: { searchParams?: P
     }
     profilesById.set(personId, { ...identity, photo });
   }));
+
+  const relatedDataLoadFailed = Boolean(relatedIntroductionsError || relatedPhotoRequestsError || profileLookupFailures.size);
 
   const eventFor = (notification: any) => {
     if (notification.type === "support_ticket_created") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.newSupport"), context: t("app.notifications.newSupportContext"), action: t("app.notifications.openSupportInbox") };
@@ -222,7 +220,15 @@ export default async function Notifications({ searchParams }: { searchParams?: P
           ? photoRequest?.owner_id
           : intro?.recipient_id;
     const person = personId ? profilesById.get(personId) : null;
-    const personName = person?.display_name ?? person?.username ?? t("app.notifications.deletedUser");
+    const relationLookupFailed = notification.type.startsWith("introduction_") || notification.type === "new_introduction"
+      ? Boolean(relatedIntroductionsError)
+      : notification.type === "photo_access_request" || notification.type === "photo_access_granted"
+        ? Boolean(relatedPhotoRequestsError)
+        : false;
+    const personLookupFailed = Boolean(personId && profileLookupFailures.has(personId));
+    const personName = relationLookupFailed || personLookupFailed
+      ? t("app.notifications.memberUnavailable")
+      : person?.display_name ?? person?.username ?? t("app.notifications.deletedUser");
     if (notification.type === "new_introduction") return { kind: "person", icon: "introduction" as const, person, personName, title: t("app.notifications.newIntro", { name: personName }), context: intro?.icebreaker ? `“${intro.icebreaker}”` : t("app.notifications.readIntro"), action: t("app.notifications.openIntro") };
     if (notification.type === "introduction_replied") return { kind: "person", icon: "message" as const, person, personName, title: t("app.notifications.replied", { name: personName }), context: t("app.notifications.repliedContext"), action: intro?.conversation_id_legacy ? t("app.notifications.openConversation") : t("app.notifications.openIntroductions") };
     if (notification.type === "photo_access_request") return { kind: "person", icon: "photo" as const, person, personName, title: t("app.notifications.photoRequest", { name: personName }), context: t("app.notifications.photoRequestContext"), action: t("app.notifications.reviewRequest") };
@@ -249,7 +255,7 @@ export default async function Notifications({ searchParams }: { searchParams?: P
         </header>
 
         {errorMessage && <p role="alert" className="notice notice-error mt-7">{errorMessage}</p>}
-        {notificationsError && <p role="alert" className="notice notice-error mt-7">{t("app.notifications.loadError")}</p>}
+        {(notificationsError || relatedDataLoadFailed) && <p role="alert" className="notice notice-error mt-7">{t("app.notifications.loadError")}</p>}
 
         <div className="mt-9 flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
           <nav aria-label={t("app.notifications.filters")} className="flex flex-wrap items-center gap-2 sm:gap-3">

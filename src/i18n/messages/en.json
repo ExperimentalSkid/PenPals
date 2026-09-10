@@ -938,6 +938,7 @@
       "justNow": "Just now",
       "yesterday": "Yesterday",
       "deletedUser": "Deleted user",
+      "memberUnavailable": "Member details unavailable",
       "newSupport": "New support request",
       "newSupportContext": "A user support request is ready in the Support Inbox.",
       "openSupportInbox": "Open Support Inbox",

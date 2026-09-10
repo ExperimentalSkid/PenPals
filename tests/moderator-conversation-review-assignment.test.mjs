@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
@@ -78,7 +79,7 @@ test("case controls explain the claim requirement before showing moderator actio
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -88,19 +89,17 @@ const hasLocalDatabase = (() => {
 function scalar(sql) {
   return execFileSync(
     "docker",
-    ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
+    ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1", "-c", sql],
     { encoding: "utf8" },
   ).trim();
 }
 
 test("live moderator review is limited to the assigned, unexpired case and remains audited", { skip: !hasLocalDatabase }, () => {
-  const moderatorId = scalar("select id from public.profiles where username = 'mika' limit 1");
+  const moderatorId = scalar("select id from public.profiles where role = 'user' and deactivated_at is null limit 1");
   const adminId = scalar("select id from public.profiles where role = 'admin' and deactivated_at is null limit 1");
-  const ordinaryUserId = scalar("select id from public.profiles where role = 'user' and deactivated_at is null limit 1");
   const messageRow = scalar("select id::text || '|' || conversation_id::text from public.messages order by created_at, id limit 1");
   assert.match(moderatorId, /^[0-9a-f-]{36}$/i, "a local moderator fixture is required");
   assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");
-  assert.match(ordinaryUserId, /^[0-9a-f-]{36}$/i, "a local ordinary-user fixture is required");
   const [messageId, conversationId] = messageRow.split("|");
   assert.match(messageId, /^[0-9a-f-]{36}$/i, "a local message fixture is required");
   assert.match(conversationId, /^[0-9a-f-]{36}$/i, "a local conversation fixture is required");
@@ -116,7 +115,12 @@ do $$
 declare
   v_report_id uuid;
   v_case_id uuid;
+  v_ordinary_user_id uuid := gen_random_uuid();
+  v_prefix text := 'mr_' || left(replace(gen_random_uuid()::text, '-', ''), 10);
 begin
+  insert into auth.users(id, email, email_confirmed_at) values (v_ordinary_user_id, v_ordinary_user_id::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+  values (v_ordinary_user_id, v_prefix, 'Moderator Review Ordinary', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio.', 'Fixture quote.', 'friendship');
   select r.id into v_report_id from public.reports r where r.reporter_id = '${adminId}' and r.target_message_id = '${messageId}' order by r.created_at desc limit 1;
   select mcr.case_id into v_case_id from public.moderation_case_reports mcr where mcr.report_id = v_report_id;
   if v_report_id is null or v_case_id is null then raise exception 'temporary report did not link to a moderation case'; end if;
@@ -153,7 +157,7 @@ begin
   perform set_config('request.jwt.claim.sub', '${adminId}', true);
   if public.admin_get_conversation_review('${conversationId}', null, v_report_id, 'Review reported message context') is null then raise exception 'admin lost existing report-context access'; end if;
 
-  perform set_config('request.jwt.claim.sub', '${ordinaryUserId}', true);
+  perform set_config('request.jwt.claim.sub', v_ordinary_user_id::text, true);
   begin
     perform public.admin_get_conversation_review('${conversationId}', null, v_report_id, 'Review reported message context');
     raise exception 'ordinary user unexpectedly received conversation access';
@@ -163,7 +167,7 @@ begin
 end
 $$;
 rollback;`;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });
 
 test("live unassigned moderator status mutation is denied", { skip: !hasLocalDatabase }, () => {
@@ -222,11 +226,11 @@ begin
 end $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });
 
 test("live moderator case flags omit protected detector terms", { skip: !hasLocalDatabase }, () => {
-  const moderatorId = scalar("select id from public.profiles where username = 'mika' and deactivated_at is null limit 1");
+  const moderatorId = scalar("select id from public.profiles where role = 'user' and deactivated_at is null limit 1");
   const adminId = scalar("select id from public.profiles where role = 'admin' and deactivated_at is null limit 1");
   assert.match(moderatorId, /^[0-9a-f-]{36}$/i, "a local moderator fixture is required");
   assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");
@@ -261,11 +265,11 @@ begin
   end if;
 end $$;
 rollback;`;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });
 
 test("live moderator mutations require the claimed case and preserve assigned actions", { skip: !hasLocalDatabase }, () => {
-  const moderatorId = scalar("select id from public.profiles where username = 'mika' and deactivated_at is null limit 1");
+  const moderatorId = scalar("select id from public.profiles where role = 'user' and deactivated_at is null limit 1");
   const adminId = scalar("select id from public.profiles where role = 'admin' and deactivated_at is null limit 1");
   assert.match(moderatorId, /^[0-9a-f-]{36}$/i, "a local moderator fixture is required");
   assert.match(adminId, /^[0-9a-f-]{36}$/i, "a local admin fixture is required");
@@ -323,5 +327,5 @@ begin
   perform public.resolve_moderation_content_flag(flag_id,'cleared','Assigned action check');
 end $$;
 rollback;`;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" });
 });

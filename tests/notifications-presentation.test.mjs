@@ -46,3 +46,13 @@ test("notification presentation stays responsive and privacy-safe", () => {
   assert.match(page, /profile photo unavailable/);
   assert.match(page, /app\.notifications\.deletedUser/);
 });
+
+
+test("notification enrichment failures stay visible and do not impersonate account deletion", () => {
+  assert.match(page, /error: relatedIntroductionsError/);
+  assert.match(page, /error: relatedPhotoRequestsError/);
+  assert.match(page, /profileLookupFailures/);
+  assert.match(page, /memberUnavailable/);
+  assert.match(page, /relatedIntroductionsError \? rawNotifications/);
+  assert.match(page, /notificationsError \|\| relatedDataLoadFailed/);
+});

@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903060000_remove_public_dob_exposure.sql", root), "utf8");
@@ -64,8 +65,8 @@ test("live authenticated projections omit exact DOB and expose derived age", () 
   let viewerId;
   let adminId;
   try {
-    viewerId = execFileSync("docker", ["exec", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users where email = 'mika@example.local' limit 1"], { encoding: "utf8" }).trim();
-    adminId = execFileSync("docker", ["exec", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users where email = 'admin@example.com' limit 1"], { encoding: "utf8" }).trim();
+    viewerId = execFileSync("docker", ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users where email = 'mika@example.local' limit 1"], { encoding: "utf8" }).trim();
+    adminId = execFileSync("docker", ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users where email = 'admin@example.com' limit 1"], { encoding: "utf8" }).trim();
   } catch {
     return;
   }
@@ -131,5 +132,5 @@ begin
 end
 $$;
 rollback;`;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-Atc", sql], { encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-Atc", sql], { encoding: "utf8" });
 });

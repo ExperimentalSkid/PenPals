@@ -48,5 +48,6 @@ test("the existing introduction notification trigger announces acceptance to the
   assert.match(notifications, /elsif new\.status = 'replied'/);
   assert.match(notifications, /values \(new\.sender_id,'introduction_replied',new\.id\)/);
   assert.match(notificationPage, /select\("conversation_id_legacy"\)/);
-  assert.match(notificationPage, /redirect\(introduction\?\.conversation_id_legacy \? `\/app\/messages\/\$\{introduction\.conversation_id_legacy\}`/);
+  assert.match(notificationPage, /destination = introduction\?\.conversation_id_legacy \? `\/app\/messages\/\$\{introduction\.conversation_id_legacy\}`/);
+  assert.match(notificationPage, /redirect\(destination\)/);
 });

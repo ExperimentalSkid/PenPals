@@ -2,12 +2,13 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905270000_connector_badge.sql", root), "utf8");
 const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Connector thresholds are centralized and system-derived", () => {
@@ -59,43 +60,24 @@ select 'below_platinum|' || coalesce(public.connector_grade_for_count(299), 'non
 select 'exactly_platinum|' || coalesce(public.connector_grade_for_count(300), 'none');
 begin;
 create temp table connector_badge_target (id uuid, contact_a uuid, contact_b uuid) on commit drop;
+with fixture as (
+  select gen_random_uuid() as id, gen_random_uuid() as contact_a, gen_random_uuid() as contact_b,
+         'connector_' || left(replace(gen_random_uuid()::text, '-', ''), 10) as prefix
+), users as (
+  insert into auth.users(id, email, email_confirmed_at)
+  select id, id::text || '@example.test', now() from fixture
+  union all select contact_a, contact_a::text || '@example.test', now() from fixture
+  union all select contact_b, contact_b::text || '@example.test', now() from fixture
+  returning id
+), profiles as (
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+  select id, prefix || '_t', 'Connector Target', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Connector fixture bio.', 'A fixture quote.', 'friendship' from fixture
+  union all select contact_a, prefix || '_a', 'Connector Contact A', date '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Connector fixture bio.', 'A fixture quote.', 'friendship' from fixture
+  union all select contact_b, prefix || '_b', 'Connector Contact B', date '1990-01-01', 'Not specified', 'ES', 'ES', '', 'country', 'Connector fixture bio.', 'A fixture quote.', 'friendship' from fixture
+  returning id
+)
 insert into connector_badge_target (id, contact_a, contact_b)
-select target.id, first_contact.id, second_contact.id
-  from public.profiles target
-  cross join lateral (
-    select p.id
-      from public.profiles p
-     where p.id <> target.id
-       and p.deactivated_at is null
-       and p.inactive_mode = false
-       and not exists (
-         select 1 from public.conversation_participants cp
-          where cp.user_id = p.id
-       )
-     order by p.id
-     limit 1
-  ) first_contact
-  cross join lateral (
-    select p.id
-      from public.profiles p
-     where p.id not in (target.id, first_contact.id)
-       and p.deactivated_at is null
-       and p.inactive_mode = false
-       and not exists (
-         select 1 from public.conversation_participants cp
-          where cp.user_id = p.id
-       )
-     order by p.id
-     limit 1
-  ) second_contact
- where target.deactivated_at is null
-   and target.inactive_mode = false
-   and not exists (
-     select 1 from public.conversation_participants cp
-      where cp.user_id = target.id
-   )
- order by target.id
- limit 1;
+select id, contact_a, contact_b from fixture;
 with created as (insert into public.conversations default values returning id)
 insert into public.conversation_participants(conversation_id, user_id)
 select c.id, t.id from created c cross join connector_badge_target t
@@ -116,7 +98,7 @@ select c.id, t.contact_b from created c cross join connector_badge_target t;
 select 'two_contacts|' || (select public.connector_unique_contact_count(id)::text from connector_badge_target);
 select 'actual_grade|' || coalesce((select public.connector_grade(id) from connector_badge_target), 'none');
 rollback;`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "below_bronze|none",
     "exactly_bronze|connector-bronze",

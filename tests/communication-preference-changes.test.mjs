@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const preferencesMigration = await readFile(new URL("supabase/migrations/20260903120000_communication_mode_preferences.sql", root), "utf8");
@@ -10,7 +11,7 @@ const conversationPage = await readFile(new URL("src/app/app/messages/[id]/page.
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -31,10 +32,10 @@ test("live preference changes preserve IM history and letters without reopening 
 begin;
 do $$
 declare
-  user_a uuid;
-  user_b uuid;
-  user_c uuid;
-  user_d uuid;
+  user_a uuid := gen_random_uuid();
+  user_b uuid := gen_random_uuid();
+  user_c uuid := gen_random_uuid();
+  user_d uuid := gen_random_uuid();
   intro_im uuid;
   intro_mail uuid;
   conversation_im uuid;
@@ -45,44 +46,21 @@ declare
   preserved_body text;
   intro_body text := 'A thoughtful hello about books, travel, and the small details that make conversations memorable.';
   letter_body text := 'A letter sent before the communication preference changed.';
+  fixture_prefix text := 'pref_' || left(replace(gen_random_uuid()::text, '-', ''), 10);
 begin
-  -- Find two isolated pairs so this test only creates temporary records.
-  select p1.id, p2.id, p3.id, p4.id
-    into user_a, user_b, user_c, user_d
-    from public.profiles p1
-    join public.profiles p2 on p2.id <> p1.id
-    join public.profiles p3 on p3.id not in (p1.id, p2.id)
-    join public.profiles p4 on p4.id not in (p1.id, p2.id, p3.id)
-   where p1.deactivated_at is null and p2.deactivated_at is null
-     and p1.birth_date <= (current_date - interval '18 years')::date
-     and p2.birth_date <= (current_date - interval '18 years')::date
-     and p3.birth_date <= (current_date - interval '18 years')::date
-     and p4.birth_date <= (current_date - interval '18 years')::date
-     and p3.deactivated_at is null and p4.deactivated_at is null
-     and not p1.inactive_mode and not p2.inactive_mode
-     and not p3.inactive_mode and not p4.inactive_mode
-     and not exists (
-       select 1 from public.conversation_participants cp
-       join public.conversation_participants cp2 on cp2.conversation_id = cp.conversation_id
-       where cp.user_id = p1.id and cp2.user_id = p2.id
-     )
-     and not exists (
-       select 1 from public.conversation_participants cp
-       join public.conversation_participants cp2 on cp2.conversation_id = cp.conversation_id
-       where cp.user_id = p3.id and cp2.user_id = p4.id
-     )
-     and not exists (
-       select 1 from public.snail_mail_letters l
-       where (l.sender_id = p1.id and l.recipient_id = p2.id)
-          or (l.sender_id = p2.id and l.recipient_id = p1.id)
-          or (l.sender_id = p3.id and l.recipient_id = p4.id)
-          or (l.sender_id = p4.id and l.recipient_id = p3.id)
-     )
-     and not exists (select 1 from public.direct_conversation_pairs d where d.user_a = least(p1.id, p2.id) and d.user_b = greatest(p1.id, p2.id))
-     and not exists (select 1 from public.direct_conversation_pairs d where d.user_a = least(p3.id, p4.id) and d.user_b = greatest(p3.id, p4.id))
-   limit 1;
-  if user_a is null then raise exception 'no isolated active profile pairs available'; end if;
-
+  insert into auth.users(id, email, email_confirmed_at)
+    values
+      (user_a, user_a::text || '@example.test', now()),
+      (user_b, user_b::text || '@example.test', now()),
+      (user_c, user_c::text || '@example.test', now()),
+      (user_d, user_d::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (user_a, fixture_prefix || '_a', 'Preference Fixture A', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio for preference testing.', 'A fixture quote.', 'friendship'),
+      (user_b, fixture_prefix || '_b', 'Preference Fixture B', '1990-01-01', 'Not specified', 'SE', 'SE', '', 'country', 'Fixture bio for preference testing.', 'A fixture quote.', 'friendship'),
+      (user_c, fixture_prefix || '_c', 'Preference Fixture C', '1990-01-01', 'Not specified', 'ES', 'ES', '', 'country', 'Fixture bio for preference testing.', 'A fixture quote.', 'friendship'),
+      (user_d, fixture_prefix || '_d', 'Preference Fixture D', '1990-01-01', 'Not specified', 'DE', 'DE', '', 'country', 'Fixture bio for preference testing.', 'A fixture quote.', 'friendship');
+  perform set_config('request.jwt.claim.role', 'authenticated', true);
   -- Establish an IM relationship while both modes are enabled, then post a
   -- letter so both kinds of existing history can be checked after the edit.
   perform set_config('request.jwt.claim.sub', user_a::text, true);
@@ -162,5 +140,5 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });

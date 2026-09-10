@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("..", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903050000_email_verification_enforcement.sql", root), "utf8");
@@ -52,7 +53,7 @@ test("legacy privacy overload is a verified wrapper around the current overload"
 test("live database rejects an unverified session on each audited RPC and direct read policy", () => {
   let adminId;
   try {
-    adminId = execFileSync("docker", ["exec", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users order by created_at limit 1"], { encoding: "utf8" }).trim();
+    adminId = execFileSync("docker", ["exec", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-Atc", "select id from auth.users order by created_at limit 1"], { encoding: "utf8" }).trim();
   } catch {
     return;
   }
@@ -82,5 +83,5 @@ do $$begin
   begin if public.users_are_blocked('${adminId}', '${adminId}') then raise exception 'block helper leaked'; end if; end;
 end$$;
 rollback;`;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-Atc", sql], { encoding: "utf8" });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-Atc", sql], { encoding: "utf8" });
 });

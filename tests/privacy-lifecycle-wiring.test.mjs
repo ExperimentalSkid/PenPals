@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { readFile } from "node:fs/promises";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260904160000_close_deactivated_photo_viewer_bypass.sql", root), "utf8");
@@ -29,7 +30,7 @@ test("deactivation closes direct block-list mutations without conflating Pause",
 
 const hasLocalDatabase = (() => {
   try {
-    execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" });
+    execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" });
     return true;
   } catch {
     return false;
@@ -41,32 +42,20 @@ test("a deactivated viewer cannot bypass private-photo access through the RPC", 
 begin;
 do $$
 declare
-  owner_user uuid;
-  viewer_user uuid;
+  owner_user uuid := gen_random_uuid();
+  viewer_user uuid := gen_random_uuid();
   owner_path text;
   active_result boolean;
   deactivated_result boolean;
+  fixture_prefix text := 'privacy_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 begin
-  select p.id into owner_user
-    from public.profiles p
-   where p.role = 'user'
-     and p.deactivated_at is null
-     and not p.inactive_mode
-     and exists (select 1 from auth.users u where u.id = p.id and u.email_confirmed_at is not null)
-   order by p.created_at
-   limit 1;
-  select p.id into viewer_user
-    from public.profiles p
-   where p.role = 'user'
-     and p.id <> owner_user
-     and p.deactivated_at is null
-     and not p.inactive_mode
-     and exists (select 1 from auth.users u where u.id = p.id and u.email_confirmed_at is not null)
-   order by p.created_at
-   limit 1;
-  if owner_user is null or viewer_user is null then
-    raise exception 'verified user fixtures unavailable';
-  end if;
+  insert into auth.users(id, email, email_confirmed_at)
+    values (owner_user, owner_user::text || '@example.test', now()),
+           (viewer_user, viewer_user::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (owner_user, fixture_prefix || '_o', 'Privacy Owner', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture owner bio.', 'A fixture quote.', 'friendship'),
+      (viewer_user, fixture_prefix || '_v', 'Privacy Viewer', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture viewer bio.', 'A fixture quote.', 'friendship');
 
   owner_path := owner_user::text || '/lifecycle-photo-test.png';
   perform set_config('app.allow_account_status_change', '1', true);
@@ -94,7 +83,7 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });
 
 test("a paused recipient can open an existing delivered Snail Mail letter", { skip: !hasLocalDatabase }, () => {
@@ -136,7 +125,7 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });
 
 test("a deactivated user cannot mutate profile blocks through direct table access", { skip: !hasLocalDatabase }, () => {
@@ -144,26 +133,17 @@ test("a deactivated user cannot mutate profile blocks through direct table acces
 begin;
 do $$
 declare
-  blocker_user uuid;
-  blocked_user uuid;
+  blocker_user uuid := gen_random_uuid();
+  blocked_user uuid := gen_random_uuid();
+  fixture_prefix text := 'blocks_' || left(replace(gen_random_uuid()::text, '-', ''), 12);
 begin
-  select p.id into blocker_user
-    from public.profiles p
-   where p.role = 'user'
-     and p.deactivated_at is null
-     and not p.inactive_mode
-     and exists (select 1 from auth.users u where u.id = p.id and u.email_confirmed_at is not null)
-   order by p.created_at
-   limit 1;
-  select p.id into blocked_user
-    from public.profiles p
-   where p.role = 'user'
-     and p.id <> blocker_user
-     and p.deactivated_at is null
-     and exists (select 1 from auth.users u where u.id = p.id and u.email_confirmed_at is not null)
-   order by p.created_at
-   limit 1;
-  if blocker_user is null or blocked_user is null then raise exception 'verified user fixtures unavailable'; end if;
+  insert into auth.users(id, email, email_confirmed_at)
+    values (blocker_user, blocker_user::text || '@example.test', now()),
+           (blocked_user, blocked_user::text || '@example.test', now());
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+    values
+      (blocker_user, fixture_prefix || '_b', 'Blocker Fixture', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture blocker bio.', 'A fixture quote.', 'friendship'),
+      (blocked_user, fixture_prefix || '_t', 'Blocked Fixture', '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture blocked bio.', 'A fixture quote.', 'friendship');
 
   perform set_config('app.allow_account_status_change','1',true);
   perform set_config('request.jwt.claim.sub',blocker_user::text,true);
@@ -181,5 +161,5 @@ end;
 $$;
 rollback;
 `;
-  execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "ignore", "pipe"] });
 });

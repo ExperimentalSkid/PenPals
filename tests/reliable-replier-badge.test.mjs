@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260905290000_reliable_replier_badge.sql", root), "utf8");
@@ -9,7 +10,7 @@ const responseStats = await readFile(new URL("supabase/migrations/20260902130000
 const responseWindow = await readFile(new URL("supabase/migrations/20260901040000_add_response_rate.sql", root), "utf8");
 const badgeComponent = await readFile(new URL("src/lib/profile-badges.ts", root), "utf8");
 const hasLocalDatabase = (() => {
-  try { execFileSync("docker", ["inspect", "supabase_db_Penpal"], { stdio: "ignore" }); return true; } catch { return false; }
+  try { execFileSync("docker", ["inspect", LOCAL_DB_CONTAINER], { stdio: "ignore" }); return true; } catch { return false; }
 })();
 
 test("Reliable Replier thresholds are centralized and system-derived", () => {
@@ -63,31 +64,33 @@ select 'above_platinum|' || coalesce(public.reliable_replier_grade_for_values(5,
 select 'below_sample|' || coalesce(public.reliable_replier_grade_for_values(4, 100), 'none');
 begin;
 create temp table reliable_replier_badge_target (id uuid) on commit drop;
-insert into reliable_replier_badge_target (id)
-select p.id
-  from public.profiles p
- where p.show_response_rate
-   and p.deactivated_at is null
-   and p.inactive_mode = false
-   and not exists (select 1 from public.conversation_introductions i where i.recipient_id = p.id)
- order by p.id
- limit 1;
+create temp table reliable_replier_senders (id uuid) on commit drop;
+with fixture as (
+  select gen_random_uuid() as id, 'rr_' || left(replace(gen_random_uuid()::text, '-', ''), 10) as prefix
+), auth_insert as (
+  insert into auth.users(id, email, email_confirmed_at)
+  select id, id::text || '@example.test', now() from fixture returning id
+), profile_insert as (
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for, show_response_rate)
+  select id, prefix || '_target', 'Reliable Replier Target', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio.', 'Fixture quote.', 'friendship', true from fixture returning id
+)
+insert into reliable_replier_badge_target(id) select id from profile_insert;
+with fixtures as (
+  select gen_random_uuid() as id, 'rrs_' || left(replace(gen_random_uuid()::text, '-', ''), 8) || '_' || g::text as username from generate_series(1,5) g
+), auth_insert as (
+  insert into auth.users(id, email, email_confirmed_at) select id, id::text || '@example.test', now() from fixtures returning id
+), profile_insert as (
+  insert into public.profiles(id, username, display_name, birth_date, gender, country, country_code, city, location_precision, bio, quote, looking_for)
+  select id, username, 'Reliable Sender', date '1990-01-01', 'Not specified', 'NO', 'NO', '', 'country', 'Fixture bio.', 'Fixture quote.', 'friendship' from fixtures returning id
+)
+insert into reliable_replier_senders(id) select id from profile_insert;
 insert into public.conversation_introductions(sender_id, recipient_id, body, normalized_hash, created_at, expires_at, status, handled_at)
 select sender.id, target.id, 'reliable replier fixture ' || row_number() over (), md5(sender.id::text || target.id::text || random()::text),
        now() - interval '10 days', now() - interval '3 days',
        case when row_number() over () <= 4 then 'replied' else 'expired' end,
        case when row_number() over () <= 4 then now() - interval '9 days' else null end
   from reliable_replier_badge_target target
- cross join lateral (
-    select p.id
-      from public.profiles p
-     where p.id <> target.id
-       and p.deactivated_at is null
-       and p.inactive_mode = false
-       and not exists (select 1 from public.conversation_introductions i where i.sender_id = p.id and i.recipient_id = target.id)
-     order by p.id
-     limit 5
- ) sender;
+ cross join reliable_replier_senders sender;
 with configured as (
   select id,
          set_config('request.jwt.claim.sub', id::text, false),
@@ -115,7 +118,7 @@ select 'projected_grade_count|' || (
    where badges.badge_key like 'reliable-replier-%'
 );
 rollback;`;
-  const output = execFileSync("docker", ["exec", "-i", "supabase_db_Penpal", "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
+  const output = execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-q", "-U", "postgres", "-d", "postgres", "-At", "-v", "ON_ERROR_STOP=1"], { input: sql, encoding: "utf8" }).trim().split(/\r?\n/);
   assert.deepEqual(output, [
     "below_bronze|none",
     "exactly_bronze|reliable-replier-bronze",
