@@ -25,7 +25,6 @@ function first(value: SearchValue) {
 
 async function openNotification(notificationId: string) {
   "use server";
-  const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data: claimsData } = await db.auth.getClaims();
   const uid = claimsData?.claims?.sub;
@@ -138,6 +137,7 @@ function relation(value: any) {
 }
 
 export default async function Notifications({ searchParams }: { searchParams?: Promise<Record<string, SearchValue>> }) {
+  const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data: claimsData } = await db.auth.getClaims();
   const uid = claimsData?.claims?.sub;

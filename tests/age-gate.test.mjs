@@ -13,7 +13,6 @@ const profileActions = await readFile(new URL("../src/app/app/profile/actions.ts
 const profileSetup = await readFile(new URL("../src/app/app/profile/setup/page.tsx", import.meta.url), "utf8");
 const appealPage = await readFile(new URL("../src/app/age-appeal/page.tsx", import.meta.url), "utf8");
 const appealAction = await readFile(new URL("../src/app/age-appeal/actions.ts", import.meta.url), "utf8");
-const adminPage = await readFile(new URL("../src/app/app/admin/age-appeals/page.tsx", import.meta.url), "utf8");
 const adminDecision = await readFile(new URL("../src/app/app/admin/age-appeals/AgeAppealDecision.tsx", import.meta.url), "utf8");
 const adminAction = await readFile(new URL("../src/app/app/admin/age-appeals/actions.ts", import.meta.url), "utf8");
 const contactHardening = await readFile(new URL("../supabase/migrations/20260902182000_block_underage_contact_paths.sql", import.meta.url), "utf8");

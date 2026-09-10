@@ -22,7 +22,7 @@ const links: Array<{ id: AdminSection; label: string; href: string }> = [
   { id: "rules", label: "Rules", href: "/app/admin/moderation-rules" },
 ];
 
-export function AdminNav({ active, showRules = true, isAdmin = showRules }: { active: AdminSection; showRules?: boolean; isAdmin?: boolean }) {
+export function AdminNav({ active, showRules = true }: { active: AdminSection; showRules?: boolean }) {
   return (
     <nav aria-label="Admin Center" className="admin-nav">
       <div className="flex min-w-max items-center gap-1">
@@ -83,7 +83,7 @@ export function AdminHeader({
         </div>
         {children ? <div className="shrink-0">{children}</div> : null}
       </div>
-      {showNav ? <AdminNav active={active} showRules={isAdmin} isAdmin={isAdmin} /> : null}
+      {showNav ? <AdminNav active={active} showRules={isAdmin} /> : null}
     </>
   );
 }

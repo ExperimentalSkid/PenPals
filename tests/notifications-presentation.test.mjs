@@ -5,6 +5,12 @@ import { readFile } from "node:fs/promises";
 const page = await readFile(new URL("../src/app/app/notifications/page.tsx", import.meta.url), "utf8");
 const sort = await readFile(new URL("../src/app/app/notifications/NotificationSort.tsx", import.meta.url), "utf8");
 
+test("Notifications binds localized copy in the page renderer rather than the action", () => {
+  assert.match(page, /export default async function Notifications[\s\S]*const \{ locale, t \} = await getPageI18n\(\)/);
+  const actionBlock = page.slice(page.indexOf("async function openNotification"), page.indexOf("function relativeTime"));
+  assert.doesNotMatch(actionBlock, /const \{ locale, t \} = await getPageI18n\(\)/);
+});
+
 test("Notifications presents the approved updates hierarchy and filters", () => {
   assert.match(page, /app\.notifications\.title/);
   assert.match(page, /app\.notifications\.intro/);

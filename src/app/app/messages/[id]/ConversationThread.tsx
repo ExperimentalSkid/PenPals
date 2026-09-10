@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import Link from "next/link";
 import { sendMessage, respondPhotoAccess } from "@/app/app/messages/actions";
@@ -236,7 +236,7 @@ export default function ConversationThread({ conversationId, userId, messages, h
     previousCount.current = liveMessages.length;
   }, [liveMessages.length, nearBottom]);
 
-  const loadOlderMessages = async () => {
+  const loadOlderMessages = useCallback(async () => {
     if (!hasOlder || loadingOlderRef.current) return;
     const node = scrollRef.current;
     const oldest = liveMessages[0];
@@ -267,7 +267,7 @@ export default function ConversationThread({ conversationId, userId, messages, h
     } finally {
       loadingOlderRef.current = false;
     }
-  };
+  }, [conversationId, hasOlder, liveMessages, supabase]);
 
   useEffect(() => {
     const node = scrollRef.current;
@@ -281,7 +281,7 @@ export default function ConversationThread({ conversationId, userId, messages, h
     node.addEventListener("scroll", update, { passive: true });
     update();
     return () => node.removeEventListener("scroll", update);
-  }, [hasOlder, liveMessages]);
+  }, [loadOlderMessages]);
 
   const jumpToLatest = () => {
     const node = scrollRef.current;
