@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useMemo, useState } from "react";
 import InlineSearchList from "@/app/app/shared/InlineSearchList";
 import { COUNTRY_OPTIONS } from "@/lib/countries";
@@ -10,6 +12,7 @@ type Destination = { country_code: string; region_code?: string | null };
 const DEFAULT_MAX_DESTINATIONS = 5;
 
 export default function FriendshipDestinationPicker({ initialDestinations, regions, maxDestinations = DEFAULT_MAX_DESTINATIONS }: { initialDestinations: Destination[]; regions: Region[]; maxDestinations?: number }) {
+  const t = useTranslations();
   const destinationLimit = Number.isInteger(maxDestinations) && maxDestinations > 0 ? maxDestinations : DEFAULT_MAX_DESTINATIONS;
   const [destinations, setDestinations] = useState<Destination[]>(() => initialDestinations.map((destination) => ({
     country_code: destination.country_code.trim().toUpperCase(),
@@ -28,15 +31,15 @@ export default function FriendshipDestinationPicker({ initialDestinations, regio
   const addDestination = (nextRegionCode: string | null = null) => {
     const normalizedRegionCode = nextRegionCode?.trim().toUpperCase() || null;
     if (!countryCode) {
-      setSelectionMessage("Choose a destination country first.");
+      setSelectionMessage(t("app.profile.destinationCountryFirst"));
       return;
     }
     if (destinations.length >= destinationLimit) {
-      setSelectionMessage(`You can choose up to ${destinationLimit} destinations.`);
+      setSelectionMessage(t("app.profile.destinationLimit", { limit: destinationLimit }));
       return;
     }
     if (destinations.some((item) => item.country_code === countryCode && (item.region_code ?? null) === normalizedRegionCode)) {
-      setSelectionMessage("That destination is already selected.");
+      setSelectionMessage(t("app.profile.destinationDuplicate"));
       return;
     }
     setDestinations((current) => [...current, { country_code: countryCode, region_code: normalizedRegionCode }]);
@@ -51,10 +54,10 @@ export default function FriendshipDestinationPicker({ initialDestinations, regio
       {destinations.length < destinationLimit && (
         <div className="mt-4 space-y-4">
           <InlineSearchList
-            label="destination countries"
+            label={t("app.profile.destinationCountries")}
             options={COUNTRY_OPTIONS.map((country) => ({ value: country.code, label: country.name, searchAliases: country.aliases }))}
             selectedValues={[]}
-            placeholder="Search destination countries…"
+            placeholder={t("app.profile.searchDestinationCountries")}
             autoFocus={false}
             onSelect={(option) => {
               setCountryCode(option.value);
@@ -64,13 +67,13 @@ export default function FriendshipDestinationPicker({ initialDestinations, regio
           />
           {countryCode && (
             <div className="border-l border-black/10 pl-4">
-              <p className="text-sm text-black/60">{countryName(countryCode)} <span className="text-black/40">(optional region)</span></p>
+              <p className="text-sm text-black/60">{countryName(countryCode)} <span className="text-black/40">{t("app.profile.optionalRegion")}</span></p>
               {countryRegions.length > 0 ? (
                 <InlineSearchList
-                  label="destination regions"
+                  label={t("app.profile.destinationRegions")}
                   options={countryRegions.map((region) => ({ value: region.code, label: region.name }))}
                   selectedValues={regionCode ? [regionCode] : []}
-                  placeholder="Search a region or add the whole country…"
+                  placeholder={t("app.profile.searchRegionOrCountry")}
                   autoFocus={false}
                   onSelect={(option) => {
                     setRegionCode(option.value);
@@ -79,20 +82,20 @@ export default function FriendshipDestinationPicker({ initialDestinations, regio
                 />
               ) : null}
               <div className="mt-3 flex flex-wrap gap-3">
-                <button type="button" onClick={() => addDestination(null)} className="rounded-md border border-black/15 px-3 py-2 text-sm text-[#075d46] hover:border-[#075d46]">Add country</button>
-                {regionCode && <button type="button" onClick={() => addDestination(regionCode)} className="rounded-md border border-[#087456]/40 bg-[#e8eee8] px-3 py-2 text-sm text-[#075d46] hover:border-[#075d46]">Add region</button>}
+                <button type="button" onClick={() => addDestination(null)} className="rounded-md border border-black/15 px-3 py-2 text-sm text-brand hover:border-[#075d46]">{t("app.profile.addCountry")}</button>
+                {regionCode && <button type="button" onClick={() => addDestination(regionCode)} className="rounded-md border border-[#087456]/40 bg-[#e8eee8] px-3 py-2 text-sm text-brand hover:border-[#075d46]">{t("app.profile.addRegion")}</button>}
               </div>
             </div>
           )}
         </div>
       )}
-      {destinations.length >= destinationLimit && <p className="mt-4 text-sm text-black/50">You&apos;ve reached the {destinationLimit}-destination limit. Remove one to choose another.</p>}
+      {destinations.length >= destinationLimit && <p className="mt-4 text-sm text-black/50">{t("app.profile.destinationReached", { limit: destinationLimit })}</p>}
       {destinations.length > 0 && (
         <div className="mt-5 divide-y divide-black/10 border-y border-black/10">
           {destinations.map((destination, index) => (
             <div key={`${destination.country_code}-${destination.region_code ?? "country"}`} className="flex items-center justify-between gap-4 py-3 text-sm">
               <span>{countryName(destination.country_code)}{destination.region_code ? ` · ${regionName(destination.region_code)}` : ""}</span>
-              <button type="button" onClick={() => { setDestinations((current) => current.filter((_, itemIndex) => itemIndex !== index)); setSelectionMessage(null); }} className="text-xs text-black/50 hover:text-black/80">Remove destination</button>
+              <button type="button" onClick={() => { setDestinations((current) => current.filter((_, itemIndex) => itemIndex !== index)); setSelectionMessage(null); }} className="text-xs text-black/50 hover:text-black/80">{t("app.profile.removeDestination")}</button>
             </div>
           ))}
         </div>

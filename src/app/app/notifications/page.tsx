@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/server";
 import { isPrivateAvatarPath, isSignedAvatarUrl } from "@/lib/avatar";
 import NotificationSort from "./NotificationSort";
 import { ACTIONABLE_NOTIFICATION_TYPES } from "../notificationTypes";
+import { getPageI18n } from "@/i18n/server";
 
 // Message events intentionally remain outside this list. Conversations own
 // their unread state, while this page is reserved for actionable updates.
@@ -24,6 +25,7 @@ function first(value: SearchValue) {
 
 async function openNotification(notificationId: string) {
   "use server";
+  const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data: claimsData } = await db.auth.getClaims();
   const uid = claimsData?.claims?.sub;
@@ -106,13 +108,13 @@ async function openNotification(notificationId: string) {
   redirect(introduction?.conversation_id_legacy ? `/app/messages/${introduction.conversation_id_legacy}` : "/app/introductions");
 }
 
-function relativeTime(value: string) {
+function relativeTime(value: string, locale: string, t: (key: string, values?: Record<string, string | number>) => string) {
   const seconds = Math.max(0, Math.floor((Date.now() - new Date(value).getTime()) / 1000));
-  if (seconds < 60) return "Just now";
+  if (seconds < 60) return t("app.notifications.justNow");
   if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-  if (seconds < 172800) return "Yesterday";
-  return new Intl.DateTimeFormat("en", { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
+  if (seconds < 172800) return t("app.notifications.yesterday");
+  return new Intl.DateTimeFormat(locale, { month: "short", day: "numeric", year: "numeric" }).format(new Date(value));
 }
 
 type NotificationIconName = "introduction" | "photo" | "mail" | "message" | "shield" | "bell";
@@ -204,13 +206,13 @@ export default async function Notifications({ searchParams }: { searchParams?: P
   }));
 
   const eventFor = (notification: any) => {
-    if (notification.type === "support_ticket_created") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: "New support request", context: "A user support request is ready in the Support Inbox.", action: "Open Support Inbox" };
-    if (notification.type === "support_ticket_user_reply") return { kind: "system", icon: "message" as const, person: null, personName: "pen-pals.net", title: "User replied to a support request", context: "Review the latest reply in the Support Inbox.", action: "Open support ticket" };
-    if (notification.type === "support_ticket_public_reply") return { kind: "system", icon: "message" as const, person: null, personName: "pen-pals.net", title: "Support replied to your request", context: "A support specialist sent you an update.", action: "Open support request" };
-    if (notification.type === "support_ticket_waiting_user") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: "Support request needs your attention", context: "Support is waiting for an update from you.", action: "Open support request" };
-    if (notification.type === "support_ticket_resolved") return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: "Support request resolved", context: "Your support request has been marked resolved.", action: "Open support request" };
-    if (notification.type === "support_ticket_reopened") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: "Support request reopened", context: "Your support request needs your attention again.", action: "Open support request" };
-    if (notification.type === "profile_verification_reverify") return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: "Profile verification needs renewal", context: "Re-verify with your authenticator app to keep your profile badge active.", action: "Re-verify profile" };
+    if (notification.type === "support_ticket_created") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.newSupport"), context: t("app.notifications.newSupportContext"), action: t("app.notifications.openSupportInbox") };
+    if (notification.type === "support_ticket_user_reply") return { kind: "system", icon: "message" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.supportUserReply"), context: t("app.notifications.supportUserReplyContext"), action: t("app.notifications.openSupportTicket") };
+    if (notification.type === "support_ticket_public_reply") return { kind: "system", icon: "message" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.supportReply"), context: t("app.notifications.supportReplyContext"), action: t("app.notifications.openSupportRequest") };
+    if (notification.type === "support_ticket_waiting_user") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.supportNeeds"), context: t("app.notifications.supportNeedsContext"), action: t("app.notifications.openSupportRequest") };
+    if (notification.type === "support_ticket_resolved") return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.supportResolved"), context: t("app.notifications.supportResolvedContext"), action: t("app.notifications.openSupportRequest") };
+    if (notification.type === "support_ticket_reopened") return { kind: "system", icon: "bell" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.supportReopened"), context: t("app.notifications.supportReopenedContext"), action: t("app.notifications.openSupportRequest") };
+    if (notification.type === "profile_verification_reverify") return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.verificationRenew"), context: t("app.notifications.verificationRenewContext"), action: t("app.notifications.reverify") };
     const intro = introductionsById.get(notification.related_id);
     const photoRequest = photoRequestsById.get(notification.related_id);
     const personId = notification.type === "new_introduction"
@@ -221,13 +223,13 @@ export default async function Notifications({ searchParams }: { searchParams?: P
           ? photoRequest?.owner_id
           : intro?.recipient_id;
     const person = personId ? profilesById.get(personId) : null;
-    const personName = person?.display_name ?? person?.username ?? "Deleted user";
-    if (notification.type === "new_introduction") return { kind: "person", icon: "introduction" as const, person, personName, title: `New introduction from ${personName}`, context: intro?.icebreaker ? `“${intro.icebreaker}”` : "Read their introduction", action: "Open introduction" };
-    if (notification.type === "introduction_replied") return { kind: "person", icon: "message" as const, person, personName, title: `${personName} replied to your conversation`, context: "They responded to your message.", action: intro?.conversation_id_legacy ? "Open conversation" : "Open introductions" };
-    if (notification.type === "photo_access_request") return { kind: "person", icon: "photo" as const, person, personName, title: `${personName} requested to see your photo`, context: "Review their request in the conversation.", action: "Review request" };
-    if (notification.type === "photo_access_granted") return { kind: "person", icon: "photo" as const, person, personName, title: `${personName} accepted your photo request`, context: "You can now see each other’s photos.", action: "View conversation" };
-    if (notification.type === "introduction_declined") return { kind: "person", icon: "introduction" as const, person, personName, title: `${personName} declined your introduction`, context: "Your introduction was handled.", action: "Open introductions" };
-    return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: "Your update", context: "A new account or community update is available." };
+    const personName = person?.display_name ?? person?.username ?? t("app.notifications.deletedUser");
+    if (notification.type === "new_introduction") return { kind: "person", icon: "introduction" as const, person, personName, title: t("app.notifications.newIntro", { name: personName }), context: intro?.icebreaker ? `“${intro.icebreaker}”` : t("app.notifications.readIntro"), action: t("app.notifications.openIntro") };
+    if (notification.type === "introduction_replied") return { kind: "person", icon: "message" as const, person, personName, title: t("app.notifications.replied", { name: personName }), context: t("app.notifications.repliedContext"), action: intro?.conversation_id_legacy ? t("app.notifications.openConversation") : t("app.notifications.openIntroductions") };
+    if (notification.type === "photo_access_request") return { kind: "person", icon: "photo" as const, person, personName, title: t("app.notifications.photoRequest", { name: personName }), context: t("app.notifications.photoRequestContext"), action: t("app.notifications.reviewRequest") };
+    if (notification.type === "photo_access_granted") return { kind: "person", icon: "photo" as const, person, personName, title: t("app.notifications.photoGranted", { name: personName }), context: t("app.notifications.photoGrantedContext"), action: t("app.notifications.viewConversation") };
+    if (notification.type === "introduction_declined") return { kind: "person", icon: "introduction" as const, person, personName, title: t("app.notifications.introDeclined", { name: personName }), context: t("app.notifications.introDeclinedContext"), action: t("app.notifications.openIntroductions") };
+    return { kind: "system", icon: "shield" as const, person: null, personName: "pen-pals.net", title: t("app.notifications.yourUpdate"), context: t("app.notifications.yourUpdateContext") };
   };
 
   const filterHref = (filter: string) => {
@@ -239,65 +241,65 @@ export default async function Notifications({ searchParams }: { searchParams?: P
   };
 
   return (
-    <main className="min-h-full w-full bg-[#f7f5ef] px-6 py-10 text-[#16251f] sm:px-8 sm:py-12 lg:px-10 lg:py-14 xl:px-12 2xl:px-16">
+    <main lang={locale} className="min-h-full w-full bg-[#f7f5ef] px-6 py-10 text-primary sm:px-8 sm:py-12 lg:px-10 lg:py-14 xl:px-12 2xl:px-16">
       <div className="mx-auto w-full max-w-[1390px]">
         <header>
-          <p className="text-xs font-bold uppercase tracking-[.22em] text-[#087456]">Your updates</p>
-          <div className="mt-4 flex items-center gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e7eee2] text-[#39745f]" aria-hidden="true"><NotificationIcon name="bell" /></span><h1 className="font-serif text-[clamp(3.1rem,5vw,5rem)] leading-[.95] tracking-[-0.045em] text-[#10231d]">Notifications</h1></div>
-          <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">Introductions and important updates, kept brief.</p>
+          <p className="eyebrow">{t("app.notifications.eyebrow")}</p>
+          <div className="mt-4 flex items-center gap-4"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e7eee2] text-brand" aria-hidden="true"><NotificationIcon name="bell" /></span><h1 className="page-title-display">{t("app.notifications.title")}</h1></div>
+          <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">{t("app.notifications.intro")}</p>
         </header>
 
-        {errorMessage && <p role="alert" className="mt-7 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
-        {notificationsError && <p role="alert" className="mt-7 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">We couldn&apos;t load your notifications. Please try again.</p>}
+        {errorMessage && <p role="alert" className="notice notice-error mt-7">{errorMessage}</p>}
+        {notificationsError && <p role="alert" className="notice notice-error mt-7">{t("app.notifications.loadError")}</p>}
 
         <div className="mt-9 flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
-          <nav aria-label="Notification filters" className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <Link href={filterHref("all")} aria-current={activeFilter === "all" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "all" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-[#075d46]"}`}>All{unreadCount > 0 ? ` (${unreadCount})` : ""}</Link>
-            <Link href={filterHref("unread")} aria-current={activeFilter === "unread" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "unread" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-[#075d46]"}`}>Unread{unreadCount > 0 ? ` (${unreadCount})` : ""}</Link>
-            <Link href={filterHref("requests")} aria-current={activeFilter === "requests" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "requests" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-[#075d46]"}`}>Requests{requestCount > 0 ? ` (${requestCount})` : ""}</Link>
-            <Link href={filterHref("updates")} aria-current={activeFilter === "updates" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "updates" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-[#075d46]"}`}>Updates{updateCount > 0 ? ` (${updateCount})` : ""}</Link>
+          <nav aria-label={t("app.notifications.filters")} className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <Link href={filterHref("all")} aria-current={activeFilter === "all" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "all" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-brand"}`}>{t("app.notifications.all")}{unreadCount > 0 ? ` (${unreadCount})` : ""}</Link>
+            <Link href={filterHref("unread")} aria-current={activeFilter === "unread" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "unread" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-brand"}`}>{t("app.notifications.unread")}{unreadCount > 0 ? ` (${unreadCount})` : ""}</Link>
+            <Link href={filterHref("requests")} aria-current={activeFilter === "requests" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "requests" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-brand"}`}>{t("app.notifications.requests")}{requestCount > 0 ? ` (${requestCount})` : ""}</Link>
+            <Link href={filterHref("updates")} aria-current={activeFilter === "updates" ? "page" : undefined} className={`rounded-full border px-4 py-2 text-sm transition ${activeFilter === "updates" ? "border-[#075d46] bg-[#075d46] font-semibold text-white" : "border-transparent text-black/60 hover:border-black/10 hover:text-brand"}`}>{t("app.notifications.updates")}{updateCount > 0 ? ` (${updateCount})` : ""}</Link>
           </nav>
           <NotificationSort activeSort={activeSort} activeFilter={activeFilter} />
         </div>
 
         <div className="mt-7 grid gap-7 lg:grid-cols-[minmax(0,1fr)_292px] lg:items-start">
-          <section aria-label="Notification list" aria-live="polite" className="min-w-0 overflow-hidden rounded-xl border border-[#e1ded5] bg-[#fffdfa] shadow-[0_3px_14px_rgba(36,57,45,0.035)]">
+          <section aria-label={t("app.notifications.list")} aria-live="polite" className="min-w-0 overflow-hidden rounded-xl border border-[#e1ded5] bg-[#fffdfa] shadow-[0_3px_14px_rgba(36,57,45,0.035)]">
             {visibleNotifications.map((notification: any) => {
               const event = eventFor(notification);
               const content = <>
                   <span className="flex min-w-0 items-center gap-4 sm:gap-5">
-                  <span className="flex h-3 w-3 shrink-0 items-center justify-center" aria-hidden="true">{!notification.read_at && <span className="h-2.5 w-2.5 rounded-full bg-[#147d61]" />}</span>{!notification.read_at && <span className="sr-only">Unread notification</span>}
+                  <span className="flex h-3 w-3 shrink-0 items-center justify-center" aria-hidden="true">{!notification.read_at && <span className="h-2.5 w-2.5 rounded-full bg-[#147d61]" />}</span>{!notification.read_at && <span className="sr-only">{t("app.notifications.unreadNotification")}</span>}
                   <span className="relative shrink-0">
                     {event.person ? <span className="relative block h-14 w-14 overflow-hidden rounded-full border border-[#ddd9ce] bg-[#e8ece4] sm:h-16 sm:w-16">
-                      {event.person.photo ? <Image src={event.person.photo} alt={`${event.personName} profile photo`} fill sizes="64px" unoptimized={isSignedAvatarUrl(event.person.photo)} className="object-cover" /> : <span role="img" aria-label={`${event.personName} profile photo unavailable`} className="flex h-full items-center justify-center font-serif text-2xl text-[#557264]">{event.personName.trim().charAt(0).toUpperCase() || "·"}</span>}
-                    </span> : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e8eee4] text-[#39745f] sm:h-16 sm:w-16"><NotificationIcon name={event.icon} /></span>}
+                      {event.person.photo ? <Image src={event.person.photo} alt={`${event.personName} profile photo`} fill sizes="64px" unoptimized={isSignedAvatarUrl(event.person.photo)} className="object-cover" /> : <span role="img" aria-label={`${event.personName} profile photo unavailable`} className="flex h-full items-center justify-center font-serif text-2xl text-muted">{event.personName.trim().charAt(0).toUpperCase() || "·"}</span>}
+                    </span> : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e8eee4] text-brand sm:h-16 sm:w-16"><NotificationIcon name={event.icon} /></span>}
                   </span>
                   <span className="min-w-0 flex-1">
-                    <span className={`block text-[16px] leading-6 text-[#10231d] ${notification.read_at ? "font-medium" : "font-semibold"}`}>{event.title}</span>
+                    <span className={`block text-[16px] leading-6 text-primary ${notification.read_at ? "font-medium" : "font-semibold"}`}>{event.title}</span>
                     <span className="mt-1 block line-clamp-2 text-[15px] leading-6 text-black/60">{event.context}</span>
                   </span>
                 </span>
                 <span className="flex shrink-0 items-center gap-3 sm:ml-4 sm:flex-col sm:items-end sm:justify-center sm:gap-2">
-                  <time className="text-xs text-black/45 sm:whitespace-nowrap" dateTime={notification.created_at}>{relativeTime(notification.created_at)}</time>
-                  {event.action && <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-[#6f9a88] px-3 py-2 text-sm font-medium text-[#075d46] transition group-hover:bg-[#edf3ed]">{event.action}</span>}
+                  <time className="text-xs text-black/45 sm:whitespace-nowrap" dateTime={notification.created_at}>{relativeTime(notification.created_at, locale, t)}</time>
+                  {event.action && <span className="inline-flex min-h-10 items-center justify-center rounded-md border border-[#6f9a88] px-3 py-2 text-sm font-medium text-brand transition group-hover:bg-[#edf3ed]">{event.action}</span>}
                 </span>
               </>;
               return event.action ? <form action={openNotification.bind(null, notification.id)} key={notification.id} className="contents"><button type="submit" className={`group grid w-full gap-4 px-5 py-5 text-left transition hover:bg-[#f2f5ef] focus-visible:bg-[#f2f5ef] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#087456] sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${notification.read_at ? "" : "bg-[#f4f7f1]/70"}`}>{content}</button></form> : <div key={notification.id} className={`grid gap-4 px-5 py-5 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center ${notification.read_at ? "" : "bg-[#f4f7f1]/70"}`}>{content}</div>;
             })}
-            {!notificationsError && !notifications.length && <p className="px-6 py-14 text-sm text-black/55">You&apos;re all caught up.</p>}
-            {!notificationsError && notifications.length > 0 && !visibleNotifications.length && <p className="px-6 py-14 text-sm text-black/55">You&apos;re all caught up.</p>}
+            {!notificationsError && !notifications.length && <p className="px-6 py-14 text-sm text-black/55">{t("app.notifications.caughtUp")}</p>}
+            {!notificationsError && notifications.length > 0 && !visibleNotifications.length && <p className="px-6 py-14 text-sm text-black/55">{t("app.notifications.caughtUp")}</p>}
           </section>
 
           <aside className="rounded-xl border border-[#e3e0d8] bg-[#fbfaf7] px-6 py-7 shadow-[0_3px_14px_rgba(36,57,45,0.025)] sm:px-7 sm:py-8">
-            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e7eee2] text-[#39745f]"><NotificationIcon name="mail" /></span>
-            <h2 className="mt-7 font-serif text-2xl text-[#10231d]">Notification preferences</h2>
-            <p className="mt-4 text-sm leading-6 text-black/65">Choose which updates you want to see.</p>
-            <p className="mt-3 text-sm leading-6 text-black/65">Update your notification preferences anytime.</p>
-            <Link href="/app/settings" className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-[#075d46] hover:underline">Manage preferences <span aria-hidden="true" className="text-lg leading-none">→</span></Link>
+            <span className="flex h-14 w-14 items-center justify-center rounded-full bg-[#e7eee2] text-brand"><NotificationIcon name="mail" /></span>
+            <h2 className="mt-7 font-serif text-2xl text-primary">{t("app.notifications.preferences")}</h2>
+            <p className="mt-4 text-sm leading-6 text-black/65">{t("app.notifications.preferencesBody")}</p>
+            <p className="mt-3 text-sm leading-6 text-black/65">{t("app.notifications.preferencesBody2")}</p>
+            <Link href="/app/settings" className="mt-7 inline-flex items-center gap-2 text-sm font-semibold text-brand hover:underline">{t("app.notifications.manage")} <span aria-hidden="true" className="text-lg leading-none">→</span></Link>
           </aside>
         </div>
 
-        <p className="mt-7 flex items-center gap-3 px-1 text-sm text-black/50"><span className="text-[#557264]" aria-hidden="true"><NotificationIcon name="shield" /></span>Notifications appear here when you have a new request or update.</p>
+        <p className="mt-7 flex items-center gap-3 px-1 text-sm text-black/50"><span className="text-muted" aria-hidden="true"><NotificationIcon name="shield" /></span>{t("app.notifications.footer")}</p>
       </div>
     </main>
   );

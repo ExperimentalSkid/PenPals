@@ -187,7 +187,7 @@ export default function ProfileBadge({ badge, trailing, className = "", compact 
           <span className="min-w-0 whitespace-normal break-words">{definition.label}</span>
         </span>
       )}
-      {!trailing && <span role="tooltip" className="pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-30 w-full whitespace-normal break-words rounded-md border border-black/10 bg-[#fffdfa] px-3 py-2 text-left text-xs font-normal leading-5 text-[#263b33] opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">{explanation}</span>}
+      {!trailing && <span role="tooltip" className="pointer-events-none invisible absolute left-0 top-[calc(100%+8px)] z-30 w-full whitespace-normal break-words rounded-md border border-black/10 bg-[#fffdfa] px-3 py-2 text-left text-xs font-normal leading-5 text-primary opacity-0 shadow-lg transition-opacity group-hover:visible group-hover:opacity-100 group-focus:visible group-focus:opacity-100">{explanation}</span>}
       {trailing}
     </span>
   );

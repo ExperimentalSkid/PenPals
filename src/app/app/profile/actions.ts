@@ -6,17 +6,19 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { isPrivateAvatarPath } from "@/lib/avatar";
 import { hasCompletedProfile, onboardingNextStep } from "@/lib/profile-completeness";
+import { getPageI18n } from "@/i18n/server";
 
 type ActionError = { code?: string | null; message?: string | null } | null;
 
-function safeProfileError(error: ActionError, fallback = "We couldn't save your profile changes. Please try again.") {
-  if (!error) return fallback;
-  if (error.code === "23505" || error.message?.toLowerCase().includes("username")) return "That username is already taken.";
-  if (error.message?.toLowerCase().includes("age") || error.message?.toLowerCase().includes("18") || error.message?.toLowerCase().includes("underage")) return "You must be at least 18 years old to use pen-pals.net.";
-  if (error.message?.toLowerCase().includes("quote")) return "Please add a quote between 1 and 240 characters.";
-  if (error.message?.toLowerCase().includes("language")) return "Please review your language selections.";
-  if (error.message?.toLowerCase().includes("interest")) return "Please review your interest selections.";
-  return fallback;
+function safeProfileError(error: ActionError, t: (key: string) => string, fallback?: string) {
+  const defaultFallback = fallback ?? t("server.profile.saveFailed");
+  if (!error) return defaultFallback;
+  if (error.code === "23505" || error.message?.toLowerCase().includes("username")) return t("server.profile.usernameTaken");
+  if (error.message?.toLowerCase().includes("age") || error.message?.toLowerCase().includes("18") || error.message?.toLowerCase().includes("underage")) return t("server.profile.underage");
+  if (error.message?.toLowerCase().includes("quote")) return t("server.profile.quote");
+  if (error.message?.toLowerCase().includes("language")) return t("server.profile.languagesReview");
+  if (error.message?.toLowerCase().includes("interest")) return t("server.profile.interestsReview");
+  return defaultFallback;
 }
 
 function profileErrorRedirect(message: string, appeal = false): never {
@@ -58,6 +60,7 @@ function clearPendingAvatar(cookieStore: Awaited<ReturnType<typeof cookies>>) {
 }
 
 export async function saveProfile(formData: FormData) {
+  const { t } = await getPageI18n();
   const supabase = await createClient();
   const { data: claimsData } = await supabase.auth.getClaims();
   const uid = claimsData?.claims?.sub;
@@ -75,7 +78,7 @@ export async function saveProfile(formData: FormData) {
     .select("id,username,gender,bio,quote,looking_for")
     .eq("id", uid)
     .maybeSingle();
-  if (profileReadError) profileErrorRedirect("We couldn't load your profile. Please refresh and try again.");
+  if (profileReadError) profileErrorRedirect(t("server.profile.loadFailed"));
   const gender = String(formData.get("gender") ?? "").trim() || existingProfile?.gender?.trim() || "prefer_not_to_say";
   const country = String(formData.get("country") ?? "").trim();
   const city = String(formData.get("city") ?? "").trim();
@@ -100,13 +103,13 @@ export async function saveProfile(formData: FormData) {
   try {
     languages = JSON.parse(String(formData.get("languages") ?? "[]"));
   } catch {
-    profileErrorRedirect("We couldn't use those language choices. Please choose them again.");
+    profileErrorRedirect(t("server.profile.languagesInvalid"));
   }
-  if (!Array.isArray(languages)) profileErrorRedirect("We couldn't use those language choices. Please choose them again.");
+  if (!Array.isArray(languages)) profileErrorRedirect(t("server.profile.languagesInvalid"));
 
   const rawInterests = String(formData.get("interests") ?? "").trim();
   const interestTokens = rawInterests ? rawInterests.split(",").map((value) => value.trim()) : [];
-  if (interestTokens.some((value) => !/^\d+$/.test(value))) profileErrorRedirect("We couldn't use those interests. Please choose them again.");
+  if (interestTokens.some((value) => !/^\d+$/.test(value))) profileErrorRedirect(t("server.profile.interestsInvalid"));
   const interests = [...new Set(interestTokens.filter(Boolean).map(Number))];
 
   const cookieStore = await cookies();
@@ -122,9 +125,9 @@ export async function saveProfile(formData: FormData) {
   try {
     friendshipDestinations = JSON.parse(String(formData.get("friendship_destinations") ?? "[]"));
   } catch {
-    profileErrorRedirect("We couldn't use those destinations. Please choose them again.");
+    profileErrorRedirect(t("server.profile.destinationsInvalid"));
   }
-  if (!Array.isArray(friendshipDestinations)) profileErrorRedirect("We couldn't use those destinations. Please choose them again.");
+  if (!Array.isArray(friendshipDestinations)) profileErrorRedirect(t("server.profile.destinationsInvalid"));
 
   const usernameCandidates = existingProfile?.username
     ? [existingProfile.username.trim().toLowerCase()]
@@ -157,16 +160,16 @@ export async function saveProfile(formData: FormData) {
       p_reply_pace: replyPace,
     });
     if (!existingProfile && isUsernameConflict(error) && username !== usernameCandidates.at(-1)) continue;
-    if (error) profileErrorRedirect(safeProfileError(error));
-    if (saveResult === "underage") profileErrorRedirect("You must be at least 18 years old to use pen-pals.net.");
-    if (saveResult === "restricted" || saveResult === "cooldown") profileErrorRedirect("This email cannot currently be used to create an account.", saveResult === "restricted");
+    if (error) profileErrorRedirect(safeProfileError(error, t));
+    if (saveResult === "underage") profileErrorRedirect(t("server.profile.underage"));
+    if (saveResult === "restricted" || saveResult === "cooldown") profileErrorRedirect(t("server.profile.emailRestricted"), saveResult === "restricted");
     // The shared app layout decides whether navigation is available. Refresh
     // it after persisted profile changes so completion and edits are reflected
     // immediately instead of retaining the onboarding shell until a reload.
     revalidatePath("/app", "layout");
     if (usablePendingAvatar) {
       const { error: avatarAttachError } = await supabase.from("profiles").update({ avatar_path: usablePendingAvatar }).eq("id", uid);
-      if (avatarAttachError) profileErrorRedirect("Your profile was saved, but we couldn't attach that photo. Please try uploading it again.");
+      if (avatarAttachError) profileErrorRedirect(t("server.profile.photoAttach"));
       clearPendingAvatar(cookieStore);
     }
     const savedEntryProfile = { username, display_name, birth_date, country };
@@ -176,26 +179,27 @@ export async function saveProfile(formData: FormData) {
     }
     redirect("/app");
   }
-  profileErrorRedirect("We couldn't save your profile changes. Please try again.");
+  profileErrorRedirect(t("server.profile.saveFailed"));
 }
 
 export async function uploadAvatar(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
   const file = formData.get("avatar");
   if (!(file instanceof File) || file.size === 0 || file.size > 5 * 1024 * 1024 || !["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-    profileErrorRedirect("Use a JPG, PNG, or WebP image under 5 MB.");
+    profileErrorRedirect(t("server.profile.photoFormat"));
   }
   const path = `${uid}/${crypto.randomUUID()}.${file.type.split("/")[1]}`;
-  const { error: uploadError } = await db.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: false });
-  if (uploadError) profileErrorRedirect(safeProfileError(uploadError, "We couldn't upload that photo."));
+  const { error: uploadError, data: uploadData } = await db.storage.from("avatars").upload(path, file, { contentType: file.type, upsert: false });
+  if (uploadError && !uploadData) profileErrorRedirect(safeProfileError(uploadError, t, t("server.profile.photoUpload")));
   const cookieStore = await cookies();
   const { data: existingProfile, error: profileReadError } = await db.from("profiles").select("id").eq("id", uid).maybeSingle();
   if (profileReadError) {
     await db.storage.from("avatars").remove([path]);
-    profileErrorRedirect("We couldn't load your profile for the new photo.");
+    profileErrorRedirect(t("server.profile.photoProfileLoad"));
   }
   if (!existingProfile) {
     const previousPending = cookieStore.get(PENDING_AVATAR_COOKIE)?.value;
@@ -212,30 +216,32 @@ export async function uploadAvatar(formData: FormData) {
   const { error: profileError } = await db.from("profiles").update({ avatar_path: path }).eq("id", uid);
   if (profileError) {
     await db.storage.from("avatars").remove([path]);
-    profileErrorRedirect("We couldn't save the new photo.");
+    profileErrorRedirect(t("server.profile.photoSave"));
   }
   clearPendingAvatar(cookieStore);
   redirect("/app/profile/setup");
 }
 
 export async function removeAvatar() {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
   const { data: profile, error: profileReadError } = await db.from("profiles").select("avatar_path").eq("id", uid).maybeSingle();
-  if (profileReadError) profileErrorRedirect("We couldn't load your current photo.");
+  if (profileReadError) profileErrorRedirect(t("server.profile.photoCurrentLoad"));
   if (!profile?.avatar_path) redirect("/app/profile/setup");
   const { error: profileUpdateError } = await db.from("profiles").update({ avatar_path: null }).eq("id", uid);
-  if (profileUpdateError) profileErrorRedirect("We couldn't remove your photo.");
+  if (profileUpdateError) profileErrorRedirect(t("server.profile.photoRemove"));
   if (isPrivateAvatarPath(profile.avatar_path, uid)) {
     const { error: storageError } = await db.storage.from("avatars").remove([profile.avatar_path]);
-    if (storageError) profileErrorRedirect("Your photo was hidden, but old storage cleanup failed.");
+    if (storageError) profileErrorRedirect(t("server.profile.photoCleanup"));
   }
   redirect("/app/profile/setup");
 }
 
 export async function savePrivacy(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
@@ -243,11 +249,11 @@ export async function savePrivacy(formData: FormData) {
 
   // Settings only submits after a successful privacy read. Re-check that state
   // here so stale/hand-crafted forms cannot overwrite unknown privacy values.
-  if (formData.get("settings_loaded") !== "1") redirect(`/app/settings?error=${encodeURIComponent("We couldn't load your privacy settings. Please refresh and try again.")}`);
+  if (formData.get("settings_loaded") !== "1") redirect(`/app/settings?error=${encodeURIComponent(t("server.profile.privacyLoad"))}`);
   const { data: currentPrivacy, error: privacyReadError } = await db.from("profiles").select("id,profile_visibility,show_city,show_activity_status,show_response_rate,accepting_new_conversations,introduction_scope,availability,inactive_mode").eq("id", uid).maybeSingle();
-  if (privacyReadError || !currentPrivacy) redirect(`/app/settings?error=${encodeURIComponent("We couldn't load your privacy settings. Please refresh and try again.")}`);
+  if (privacyReadError || !currentPrivacy) redirect(`/app/settings?error=${encodeURIComponent(t("server.profile.privacyLoad"))}`);
   const { error: exclusionsReadError } = await db.from("profile_introduction_country_exclusions").select("country_code").eq("profile_id", uid);
-  if (exclusionsReadError) redirect(`/app/settings?error=${encodeURIComponent("We couldn't load your privacy settings. Please refresh and try again.")}`);
+  if (exclusionsReadError) redirect(`/app/settings?error=${encodeURIComponent(t("server.profile.privacyLoad"))}`);
 
   const rawCountries = formData.getAll("excluded_countries").map((value) => String(value).trim().toUpperCase()).filter(Boolean);
   if (rawCountries.some((value) => !/^[A-Z]{2,3}$/.test(value))) redirect("/app/settings?error=Invalid country exclusion");
@@ -263,11 +269,12 @@ export async function savePrivacy(formData: FormData) {
     p_country_codes: [...new Set(rawCountries)],
     p_inactive_mode: formData.get("inactive_mode") === "on",
   });
-  if (error) redirect(`/app/settings?error=${encodeURIComponent(error.message?.includes("country") ? "Invalid country exclusion" : "We couldn't save your privacy settings.")}`);
+  if (error) redirect(`/app/settings?error=${encodeURIComponent(error.message?.includes("country") ? t("server.profile.invalidCountry") : t("server.profile.privacySave"))}`);
   redirect("/app/settings");
 }
 
 export async function saveCommunicationPreferences(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   if (!data?.claims?.sub) redirect("/sign-in");
@@ -279,41 +286,45 @@ export async function saveCommunicationPreferences(formData: FormData) {
   });
   if (error) {
     const message = error.message?.includes("at least one")
-      ? "Keep at least one communication mode enabled."
-      : "We couldn't save your communication preferences.";
+      ? t("server.profile.keepMode")
+      : t("server.profile.communicationSave");
     redirect(`/app/settings?error=${encodeURIComponent(message)}`);
   }
   redirect("/app/settings?communication=saved");
 }
 
 export async function deactivateAccount() {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { error } = await db.rpc("deactivate_account");
-  if (error) redirect(`/app/settings?error=${encodeURIComponent("We couldn't deactivate your account.")}`);
+  if (error) redirect(`/app/settings?error=${encodeURIComponent(t("server.profile.deactivateFailed"))}`);
   redirect("/");
 }
 
 export async function reactivateAccount() {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { error } = await db.rpc("reactivate_account");
-  if (error) redirect(`/reactivate?error=${encodeURIComponent("We couldn't reactivate your account.")}`);
+  if (error) redirect(`/reactivate?error=${encodeURIComponent(t("server.profile.reactivateFailed"))}`);
   redirect("/app/profile/setup");
 }
 
 export async function blockUser(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   if (!data?.claims?.sub) redirect("/sign-in");
   const { error } = await db.from("profile_blocks").upsert({ blocker_id: data.claims.sub, blocked_id: String(formData.get("blocked_id")) });
-  if (error) redirect(`/profile/${String(formData.get("username"))}?error=${encodeURIComponent("That action isn't available right now.")}`);
+  if (error) redirect(`/profile/${String(formData.get("username"))}?error=${encodeURIComponent(t("server.profile.actionUnavailable"))}`);
   redirect(`/profile/${String(formData.get("username"))}`);
 }
 
 export async function unblockUser(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   if (!data?.claims?.sub) redirect("/sign-in");
   const { error } = await db.from("profile_blocks").delete().eq("blocker_id", data.claims.sub).eq("blocked_id", String(formData.get("blocked_id")));
-  if (error) redirect(`/app/settings/blocked?error=${encodeURIComponent("That action isn't available right now.")}`);
+  if (error) redirect(`/app/settings/blocked?error=${encodeURIComponent(t("server.profile.actionUnavailable"))}`);
   redirect("/app/settings");
 }

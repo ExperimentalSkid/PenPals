@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -27,23 +28,25 @@ function qrCodeDataUrl(value?: string) {
   return `data:image/svg+xml;utf-8,${encodeURIComponent(trimmed)}`;
 }
 
-function dateLabel(value?: string | null) {
+function dateLabel(value: string | null | undefined, locale: string) {
   if (!value) return null;
   const date = new Date(value);
   return Number.isFinite(date.getTime())
-    ? new Intl.DateTimeFormat("en", { dateStyle: "medium" }).format(date)
+    ? new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(date)
     : null;
 }
 
-function errorText(error: unknown) {
+function errorText(error: unknown, t: (key: string) => string) {
   const message = error instanceof Error ? error.message : "";
-  if (/rate|too many|频率/i.test(message)) return "Too many attempts. Please wait a moment and try again.";
-  if (/factor|totp|aal|challenge|verification/i.test(message)) return "That code could not be verified. Check your authenticator and try again.";
-  return "Verification is temporarily unavailable. Please try again.";
+  if (/rate|too many|频率/i.test(message)) return t("app.totp.tooMany");
+  if (/factor|totp|aal|challenge|verification/i.test(message)) return t("app.totp.badCode");
+  return t("app.totp.unavailable");
 }
 
 export default function TotpVerificationPanel({ status }: { status: TotpStatus }) {
   const router = useRouter();
+  const locale = useLocale();
+  const t = useTranslations();
   const [factor, setFactor] = useState<FactorState | null>(null);
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
@@ -70,7 +73,7 @@ export default function TotpVerificationPanel({ status }: { status: TotpStatus }
       if (enrollmentError || !enrollment?.totp) throw enrollmentError ?? new Error("TOTP enrollment unavailable");
       setFactor({ id: enrollment.id, qrCode: enrollment.totp.qr_code, secret: enrollment.totp.secret });
     } catch (caught) {
-      setError(errorText(caught));
+      setError(errorText(caught, t));
     } finally {
       setBusy(false);
     }
@@ -79,7 +82,7 @@ export default function TotpVerificationPanel({ status }: { status: TotpStatus }
   const verify = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!factor || !/^\d{6}$/.test(code)) {
-      setError("Enter the 6-digit code from your authenticator app.");
+      setError(t("app.totp.enterCode"));
       return;
     }
     setBusy(true);
@@ -95,44 +98,46 @@ export default function TotpVerificationPanel({ status }: { status: TotpStatus }
       if (persistError) throw persistError;
       setFactor(null);
       setCode("");
-      setMessage("Your profile verification is active for the next 30 days.");
+      setMessage(t("app.totp.active30"));
       router.refresh();
     } catch (caught) {
-      setError(errorText(caught));
+      setError(errorText(caught, t));
     } finally {
       setBusy(false);
     }
   };
 
+  const reverifyDate = dateLabel(status.reverify_after, locale);
+  const graceDate = dateLabel(status.grace_until, locale);
   const stateCopy = status.state === "verified"
-    ? `Your badge is active${dateLabel(status.reverify_after) ? ` until ${dateLabel(status.reverify_after)}` : ""}.`
+    ? (reverifyDate ? t("app.totp.activeUntil", { date: reverifyDate }) : t("app.totp.active"))
     : status.state === "grace"
-      ? `Your badge is still visible during the grace period${dateLabel(status.grace_until) ? ` until ${dateLabel(status.grace_until)}` : ""}. Re-verify now to keep it active.`
+      ? (graceDate ? t("app.totp.graceUntil", { date: graceDate }) : t("app.totp.grace"))
       : status.state === "expired"
-        ? "Your verification badge is currently hidden. Re-verify to restore it."
+        ? t("app.totp.expired")
         : status.state === "inactive"
-          ? "Your verification timer is paused while your profile is inactive."
-          : "Use an authenticator app to add the verified badge to your profile.";
+          ? t("app.totp.inactive")
+          : t("app.totp.intro");
 
   return (
     <div className="mt-6 border-y border-black/10 py-5">
-      <p className="text-sm font-medium text-[#263b33]">Profile badge with an authenticator app</p>
-      <p className="mt-1 max-w-2xl text-sm leading-6 text-black/55">{stateCopy}</p>
-      {message && <p role="status" aria-live="polite" className="mt-3 text-sm text-[#075d46]">{message}</p>}
+      <p className="text-sm font-medium text-primary">{t("app.totp.title")}</p>
+      <p className="section-description mt-1 max-w-2xl">{stateCopy}</p>
+      {message && <p role="status" aria-live="polite" className="mt-3 text-sm text-brand">{message}</p>}
       {error && <p role="alert" aria-live="assertive" className="mt-3 text-sm text-red-700">{error}</p>}
 
-      {!factor && <button type="button" onClick={begin} disabled={busy || status.state === "inactive"} className="mt-4 rounded-md border border-[#087456] px-3 py-2 text-sm font-medium text-[#075d46] transition hover:bg-[#e7eee8] disabled:cursor-not-allowed disabled:opacity-50">{busy ? "Preparing…" : status.enrolled ? "Re-verify with authenticator" : "Set up authenticator"}</button>}
+      {!factor && <button type="button" onClick={begin} disabled={busy || status.state === "inactive"} className="mt-4 rounded-md border border-[#087456] px-3 py-2 text-sm font-medium text-brand transition hover:bg-[#e7eee8] disabled:cursor-not-allowed disabled:opacity-50">{busy ? t("app.totp.preparing") : status.enrolled ? t("app.totp.reverify") : t("app.totp.setup")}</button>}
 
       {factor && <form onSubmit={verify} className="mt-5 max-w-xl space-y-4 rounded-lg border border-black/10 bg-white/45 p-4">
         {factor.qrCode && <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
           {/* The Auth API returns the QR as an inline SVG data URI; optimization cannot process this local secret. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={qrCodeDataUrl(factor.qrCode)} alt="QR code for pen-pals.net profile verification" className="h-40 w-40 rounded-md border border-black/10 bg-white p-2" />
-          <div className="text-sm leading-6 text-black/60"><p className="font-medium text-[#263b33]">Scan with your authenticator app</p><p className="mt-1">Then enter the 6-digit code it generates.</p>{factor.secret && <p className="mt-3 break-all text-xs text-black/50">Can&apos;t scan? Add this setup key manually: <span className="font-mono">{factor.secret}</span></p>}</div>
+          <img src={qrCodeDataUrl(factor.qrCode)} alt={t("app.totp.qrAlt")} className="h-40 w-40 rounded-md border border-black/10 bg-white p-2" />
+          <div className="text-sm leading-6 text-black/60"><p className="font-medium text-primary">{t("app.totp.scan")}</p><p className="mt-1">{t("app.totp.scanBody")}</p>{factor.secret && <p className="mt-3 break-all text-xs text-black/50">{t("app.totp.manual")} <span className="font-mono">{factor.secret}</span></p>}</div>
         </div>}
-        {!factor.qrCode && <p className="text-sm text-black/60">Enter the current 6-digit code from your enrolled authenticator app.</p>}
-        <label className="field-label" htmlFor="profile-totp-code">Authenticator code<input id="profile-totp-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required className="field mt-2 block w-full" /></label>
-        <div className="flex flex-wrap gap-3"><button type="submit" disabled={busy || code.length !== 6} className="btn-primary px-4 py-2.5 text-sm disabled:cursor-wait disabled:opacity-60">{busy ? "Verifying…" : "Confirm verification"}</button><button type="button" onClick={() => { setFactor(null); setCode(""); setError(null); }} disabled={busy} className="rounded-md border border-black/15 px-4 py-2.5 text-sm text-black/65">Cancel</button></div>
+        {!factor.qrCode && <p className="text-sm text-black/60">{t("app.totp.current")}</p>}
+        <label className="field-label" htmlFor="profile-totp-code">{t("app.totp.code")}<input id="profile-totp-code" value={code} onChange={(event) => setCode(event.target.value.replace(/\D/g, "").slice(0, 6))} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" minLength={6} maxLength={6} required className="field mt-2 block w-full" /></label>
+        <div className="flex flex-wrap gap-3"><button type="submit" disabled={busy || code.length !== 6} className="btn-primary px-4 py-2.5 text-sm disabled:cursor-wait disabled:opacity-60">{busy ? t("app.totp.verifying") : t("app.totp.confirm")}</button><button type="button" onClick={() => { setFactor(null); setCode(""); setError(null); }} disabled={busy} className="rounded-md border border-black/15 px-4 py-2.5 text-sm text-black/65">{t("app.totp.cancel")}</button></div>
       </form>}
     </div>
   );

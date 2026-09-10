@@ -17,6 +17,6 @@ export async function requireStaff() {
 
 export async function requireAdmin() {
   const staff = await requireStaff();
-  if (staff.role !== "admin") redirect("/app/admin/reports");
+  if (staff.role !== "admin") redirect("/app/moderation");
   return staff;
 }

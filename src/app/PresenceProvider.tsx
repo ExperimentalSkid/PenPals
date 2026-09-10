@@ -26,6 +26,37 @@ function removePresenceChannel(client: PresenceClient, targetId: string, channel
 
 export default function PresenceProvider({ userId, children }: { userId: string; children: ReactNode }) {
   const supabase = useMemo(() => createClient(), []);
+
+  useEffect(() => {
+    let active = true;
+
+    const touchActivity = async () => {
+      if (!active || document.visibilityState === "hidden") return;
+      const { error } = await supabase.rpc("touch_activity");
+      if (error && active) console.warn("Could not update activity timestamp.");
+    };
+
+    void touchActivity();
+
+    const interval = window.setInterval(() => {
+      void touchActivity();
+    }, 5 * 60 * 1000);
+
+    const onFocus = () => void touchActivity();
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") void touchActivity();
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      active = false;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [supabase]);
   const channels = useRef(new Map<string, { channel: PresenceChannel | null; refs: number }>());
   const [presence, setPresence] = useState<Map<string, PresenceInfo>>(new Map());
   const ownSettingsRef = useRef({ availability: "available", show_activity_status: true, inactive_mode: false });

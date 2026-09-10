@@ -1,4 +1,5 @@
 @import "country-flag-icons/3x2/flags.css";
+@import "leaflet/dist/leaflet.css";
 @import "tailwindcss";
 
 :root {
@@ -83,6 +84,22 @@ body {
 @layer components {
   .surface { @apply rounded-3xl border bg-white/85 shadow-[0_12px_40px_rgba(16,42,67,.06)] backdrop-blur; border-color: var(--penpals-border); }
   .eyebrow { @apply text-xs font-bold uppercase tracking-[.18em]; color: var(--penpals-navy); }
+  .page-title { @apply mt-3 max-w-3xl font-serif text-5xl leading-[.98] tracking-[-0.03em] sm:text-6xl; color: var(--penpals-text); text-wrap: balance; }
+  .page-title-display { @apply font-serif leading-[.96] tracking-[-0.045em]; font-size: clamp(3rem, 5vw, 5rem); color: var(--penpals-text); text-wrap: balance; }
+  .page-title-compact { @apply mt-3 font-serif text-4xl leading-[1.02] tracking-[-0.025em] sm:text-5xl; color: var(--penpals-text); text-wrap: balance; }
+  .section-title { @apply font-serif text-2xl; color: var(--penpals-text); text-wrap: balance; }
+  .section-title-large { @apply font-serif text-3xl; color: var(--penpals-text); text-wrap: balance; }
+  .subsection-title { @apply font-serif text-xl; color: var(--penpals-text); text-wrap: balance; }
+  .page-description { @apply mt-3 max-w-2xl text-base leading-7 sm:text-lg; color: var(--penpals-muted); }
+  .section-description { @apply text-sm leading-6; color: color-mix(in srgb, var(--penpals-text) 58%, transparent); }
+  .text-brand { color: var(--penpals-navy); }
+  .text-primary { color: var(--penpals-text); }
+  .text-muted { color: var(--penpals-muted); }
+  .notice { @apply border-l-2 px-3 py-2 text-sm leading-6; }
+  .notice-error { @apply border-red-400 bg-red-50/40 text-red-700; }
+  .notice-success { @apply border-emerald-700/45 bg-emerald-50/55 text-emerald-800; }
+  .notice-warning { @apply border-amber-500 bg-amber-50/45 text-amber-800; }
+  .notice-info { border-color: color-mix(in srgb, var(--penpals-navy) 55%, transparent); background-color: color-mix(in srgb, var(--penpals-mist) 55%, transparent); color: var(--penpals-navy); }
   .btn-primary { @apply rounded-xl px-5 py-3 font-semibold text-white shadow-sm transition; background-color: var(--penpals-navy); }
   .btn-primary:hover { background-color: #052D59; }
   .btn-secondary { @apply rounded-xl bg-white/70 px-5 py-3 font-semibold transition; border: 1px solid var(--penpals-border); color: var(--penpals-text); }
@@ -206,4 +223,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
   .front-page-conversation-card {
     animation: none !important;
   }
+}
+
+.snail-mail-map-envelope {
+  display: grid !important;
+  place-items: center;
+  border: 1px solid var(--penpals-border);
+  border-radius: 999px;
+  background: var(--penpals-ivory);
+  color: var(--penpals-navy);
+  font-size: 15px;
+  box-shadow: 0 2px 7px rgba(16, 42, 67, .18);
 }

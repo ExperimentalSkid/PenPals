@@ -3,6 +3,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useTranslations } from "next-intl";
 
 export type SupportAttachment = {
   id: string;
@@ -13,8 +14,8 @@ export type SupportAttachment = {
   signedUrl: string | null;
 };
 
-function formatBytes(bytes: number) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "Unknown size";
+function formatBytes(bytes: number, unknownSize: string) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return unknownSize;
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${Math.round(bytes / 1024)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -29,6 +30,7 @@ function isInlineDocument(attachment: SupportAttachment) {
 }
 
 export default function SupportAttachmentViewer({ attachments }: { attachments: SupportAttachment[] }) {
+  const t = useTranslations();
   const images = attachments.filter(isImage).filter((attachment) => attachment.signedUrl);
   const [activeImage, setActiveImage] = useState<number | null>(null);
   const [zoom, setZoom] = useState(1);
@@ -91,8 +93,8 @@ export default function SupportAttachmentViewer({ attachments }: { attachments: 
   const selectedImage = activeImage === null ? null : images[activeImage];
 
   return (
-    <section className="mt-4 border-t border-black/10 pt-4" aria-label="Attachments">
-      <p className="text-xs font-semibold uppercase tracking-[.12em] text-black/45">Attachments</p>
+    <section className="mt-4 border-t border-black/10 pt-4" aria-label={t("app.attachments.label")}>
+      <p className="text-xs font-semibold uppercase tracking-[.12em] text-black/45">{t("app.attachments.label")}</p>
       <div className="mt-3 space-y-3">
         {attachments.map((attachment) => {
           const imageIndex = images.findIndex((image) => image.id === attachment.id);
@@ -103,21 +105,21 @@ export default function SupportAttachmentViewer({ attachments }: { attachments: 
                 type="button"
                 className="group flex max-w-full items-center gap-3 rounded-lg border border-black/10 bg-white/45 p-2 text-left transition hover:border-[#087456]/50 hover:bg-white/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]"
                 onClick={(event) => openImage(imageIndex, event.currentTarget)}
-                aria-label={`Preview image ${attachment.fileName}`}
+                aria-label={t("app.attachments.previewImage", { name: attachment.fileName })}
               >
                 <span className="flex h-24 w-32 shrink-0 items-center justify-center overflow-hidden rounded-md bg-[#eef0e9]">
                   <img src={attachment.signedUrl} alt="" className="h-full w-full object-cover transition group-hover:scale-[1.03]" />
                 </span>
                 <span className="min-w-0 text-sm">
-                  <span className="block truncate font-medium text-[#10231d]">{attachment.fileName}</span>
-                  <span className="mt-1 block text-xs text-black/45">{attachment.mimeType} · {formatBytes(attachment.sizeBytes)}</span>
-                  <span className="mt-2 block text-xs font-semibold text-[#087456]">Open preview</span>
+                  <span className="block truncate font-medium text-primary">{attachment.fileName}</span>
+                  <span className="mt-1 block text-xs text-black/45">{attachment.mimeType} · {formatBytes(attachment.sizeBytes, t("app.attachments.unknownSize"))}</span>
+                  <span className="mt-2 block text-xs font-semibold text-brand">{t("app.attachments.openPreview")}</span>
                 </span>
               </button>
             ) : (
               <div key={attachment.id} className="rounded-lg border border-black/10 bg-white/45 px-3 py-3 text-sm">
-                <p className="font-medium text-[#10231d]">{attachment.fileName}</p>
-                <p className="mt-1 text-xs text-black/45">Preview unavailable · {attachment.mimeType} · {formatBytes(attachment.sizeBytes)}</p>
+                <p className="font-medium text-primary">{attachment.fileName}</p>
+                <p className="mt-1 text-xs text-black/45">{t("app.attachments.previewUnavailable")} · {attachment.mimeType} · {formatBytes(attachment.sizeBytes, t("app.attachments.unknownSize"))}</p>
               </div>
             );
           }
@@ -126,23 +128,23 @@ export default function SupportAttachmentViewer({ attachments }: { attachments: 
             <div key={attachment.id} className="rounded-lg border border-black/10 bg-white/45 px-3 py-3">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0 text-sm">
-                  <p className="truncate font-medium text-[#10231d]">{attachment.fileName}</p>
-                  <p className="mt-1 text-xs text-black/45">{attachment.mimeType} · {formatBytes(attachment.sizeBytes)}</p>
+                  <p className="truncate font-medium text-primary">{attachment.fileName}</p>
+                  <p className="mt-1 text-xs text-black/45">{attachment.mimeType} · {formatBytes(attachment.sizeBytes, t("app.attachments.unknownSize"))}</p>
                 </div>
-                {attachment.signedUrl && <a href={attachment.signedUrl} target="_blank" rel="noreferrer" className="shrink-0 text-sm font-semibold text-[#087456] hover:underline">Open securely</a>}
+                {attachment.signedUrl && <a href={attachment.signedUrl} target="_blank" rel="noreferrer" className="shrink-0 text-sm font-semibold text-brand hover:underline">{t("app.attachments.openSecurely")}</a>}
               </div>
               {attachment.signedUrl && isInlineDocument(attachment) && (
                 <details className="mt-3">
-                  <summary className="cursor-pointer text-xs font-semibold text-[#087456]">Preview inline</summary>
+                  <summary className="cursor-pointer text-xs font-semibold text-brand">{t("app.attachments.previewInline")}</summary>
                   <iframe
-                    title={`Preview ${attachment.fileName}`}
+                    title={t("app.attachments.previewTitle", { name: attachment.fileName })}
                     src={attachment.signedUrl}
                     sandbox=""
                     className="mt-3 h-64 w-full rounded-md border border-black/10 bg-white"
                   />
                 </details>
               )}
-              {!attachment.signedUrl && <p className="mt-2 text-xs text-red-700">Secure preview is temporarily unavailable.</p>}
+              {!attachment.signedUrl && <p className="mt-2 text-xs text-red-700">{t("app.attachments.secureUnavailable")}</p>}
             </div>
           );
         })}
@@ -157,23 +159,23 @@ export default function SupportAttachmentViewer({ attachments }: { attachments: 
           <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="support-image-preview-title" className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl border border-white/20 bg-[#f7f5ef] shadow-2xl" onMouseDown={(event) => event.stopPropagation()} onKeyDown={handleDialogKeyDown}>
             <header className="flex items-start justify-between gap-4 border-b border-black/10 px-4 py-3 sm:px-6">
               <div className="min-w-0">
-                <p id="support-image-preview-title" className="font-medium text-[#10231d]">Image preview</p>
-                <p className="mt-1 truncate text-xs text-black/50">{selectedImage.fileName} · {selectedImage.mimeType} · {formatBytes(selectedImage.sizeBytes)}</p>
+                <p id="support-image-preview-title" className="font-medium text-primary">{t("app.attachments.imagePreview")}</p>
+                <p className="mt-1 truncate text-xs text-black/50">{selectedImage.fileName} · {selectedImage.mimeType} · {formatBytes(selectedImage.sizeBytes, t("app.attachments.unknownSize"))}</p>
               </div>
-              <button ref={closeButtonRef} type="button" onClick={() => setActiveImage(null)} className="shrink-0 rounded-md border border-black/15 px-3 py-1.5 text-sm font-semibold text-[#10231d] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label="Close image preview">Close</button>
+              <button ref={closeButtonRef} type="button" onClick={() => setActiveImage(null)} className="shrink-0 rounded-md border border-black/15 px-3 py-1.5 text-sm font-semibold text-primary hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label={t("app.attachments.closePreview")}>{t("app.attachments.close")}</button>
             </header>
             <div className="relative flex min-h-0 flex-1 items-center justify-center overflow-auto bg-[#16251f]/10 p-4 sm:p-8">
-              {images.length > 1 && <button type="button" onClick={() => { setActiveImage((activeImage! - 1 + images.length) % images.length); setZoom(1); }} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-black/15 bg-[#f7f5ef]/95 px-3 py-2 text-lg text-[#10231d] shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label="Previous image">←</button>}
+              {images.length > 1 && <button type="button" onClick={() => { setActiveImage((activeImage! - 1 + images.length) % images.length); setZoom(1); }} className="absolute left-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-black/15 bg-[#f7f5ef]/95 px-3 py-2 text-lg text-primary shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label={t("app.attachments.previous")}>←</button>}
               <img src={selectedImage.signedUrl!} alt={selectedImage.fileName} className="max-h-[68vh] max-w-full object-contain transition-transform duration-150" style={{ transform: `scale(${zoom})` }} />
-              {images.length > 1 && <button type="button" onClick={() => { setActiveImage((activeImage! + 1) % images.length); setZoom(1); }} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-black/15 bg-[#f7f5ef]/95 px-3 py-2 text-lg text-[#10231d] shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label="Next image">→</button>}
+              {images.length > 1 && <button type="button" onClick={() => { setActiveImage((activeImage! + 1) % images.length); setZoom(1); }} className="absolute right-3 top-1/2 z-10 -translate-y-1/2 rounded-full border border-black/15 bg-[#f7f5ef]/95 px-3 py-2 text-lg text-primary shadow-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label={t("app.attachments.next")}>→</button>}
             </div>
             <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-black/10 px-4 py-3 text-sm sm:px-6">
-              <span className="text-xs text-black/50">Image {activeImage! + 1} of {images.length}</span>
+              <span className="text-xs text-black/50">{t("app.attachments.imageCount", { current: activeImage! + 1, total: images.length })}</span>
               <div className="flex items-center gap-2">
-                <button type="button" onClick={() => setZoom((value) => Math.max(1, value - 0.25))} className="rounded-md border border-black/15 px-2.5 py-1.5 text-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label="Zoom out">−</button>
-                <button type="button" onClick={() => setZoom(1)} className="rounded-md border border-black/15 px-2.5 py-1.5 text-xs hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]">Reset zoom</button>
-                <button type="button" onClick={() => setZoom((value) => Math.min(3, value + 0.25))} className="rounded-md border border-black/15 px-2.5 py-1.5 text-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label="Zoom in">+</button>
-                <a href={selectedImage.signedUrl!} target="_blank" rel="noreferrer" className="ml-1 text-xs font-semibold text-[#087456] hover:underline">Open securely</a>
+                <button type="button" onClick={() => setZoom((value) => Math.max(1, value - 0.25))} className="rounded-md border border-black/15 px-2.5 py-1.5 text-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label={t("app.attachments.zoomOut")}>−</button>
+                <button type="button" onClick={() => setZoom(1)} className="rounded-md border border-black/15 px-2.5 py-1.5 text-xs hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]">{t("app.attachments.resetZoom")}</button>
+                <button type="button" onClick={() => setZoom((value) => Math.min(3, value + 0.25))} className="rounded-md border border-black/15 px-2.5 py-1.5 text-sm hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#087456]" aria-label={t("app.attachments.zoomIn")}>+</button>
+                <a href={selectedImage.signedUrl!} target="_blank" rel="noreferrer" className="ml-1 text-xs font-semibold text-brand hover:underline">{t("app.attachments.openSecurely")}</a>
               </div>
             </footer>
           </div>

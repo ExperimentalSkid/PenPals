@@ -20,7 +20,7 @@ export default function IntroductionSort({ activeSort, activeStatus }: Introduct
         <option value="newest">Newest first</option>
         <option value="oldest">Oldest first</option>
       </select>
-      <span aria-hidden="true" className="text-lg text-[#3b5147]">≡</span>
+      <span aria-hidden="true" className="text-lg text-primary">≡</span>
     </form>
   );
 }

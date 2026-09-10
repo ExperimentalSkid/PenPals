@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
+import { getPageI18n } from "@/i18n/server";
 
 const CATEGORY_MAP: Record<string, string> = {
   account_access: "account_access",
@@ -33,6 +34,7 @@ function cleanupPaths(db: Awaited<ReturnType<typeof createClient>>, paths: strin
 }
 
 export async function submitSupportTicket(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data: claimsData } = await db.auth.getClaims();
   const uid = claimsData?.claims?.sub;
@@ -43,14 +45,14 @@ export async function submitSupportTicket(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   const submissionTokenValue = String(formData.get("submission_token") ?? "").trim();
   const submissionToken = UUID_PATTERN.test(submissionTokenValue) ? submissionTokenValue : null;
-  if (!category) returnError("Choose a support category.");
-  if (subject.length < 3 || subject.length > 200) returnError("Subject must be between 3 and 200 characters.");
-  if (description.length < 10 || description.length > 4000) returnError("Description must be between 10 and 4,000 characters.");
+  if (!category) returnError(t("server.support.chooseCategory"));
+  if (subject.length < 3 || subject.length > 200) returnError(t("server.support.subjectLength"));
+  if (description.length < 10 || description.length > 4000) returnError(t("server.support.descriptionLength"));
 
   const files = formData.getAll("attachments").filter((value): value is File => value instanceof File && value.size > 0);
-  if (files.length > MAX_ATTACHMENTS) returnError(`You can attach up to ${MAX_ATTACHMENTS} files.`);
+  if (files.length > MAX_ATTACHMENTS) returnError(t("server.support.attachmentCount", { count: MAX_ATTACHMENTS }));
   if (files.some((file) => file.size > MAX_ATTACHMENT_BYTES || !ALLOWED_TYPES.has(file.type))) {
-    returnError("Attachments must be PDF, JPG, PNG, WebP, or plain text files under 10 MB each.");
+    returnError(t("server.support.attachmentType"));
   }
 
   const uploadedPaths: string[] = [];
@@ -61,7 +63,7 @@ export async function submitSupportTicket(formData: FormData) {
     const { error: uploadError } = await db.storage.from("support-attachments").upload(storagePath, file, { contentType: file.type, upsert: false });
     if (uploadError) {
       await cleanupPaths(db, uploadedPaths);
-      returnError("We couldn't upload one of those attachments. Please try again.");
+      returnError(t("server.support.uploadFailed"));
     }
     uploadedPaths.push(storagePath);
     attachments.push({ storage_path: storagePath, file_name: file.name.slice(0, 200), mime_type: file.type, size_bytes: file.size });
@@ -77,10 +79,10 @@ export async function submitSupportTicket(formData: FormData) {
   if (error) {
     await cleanupPaths(db, uploadedPaths);
     const message = error.message?.toLowerCase().includes("verified")
-      ? "Please verify your email before contacting support."
+      ? t("server.support.verifyEmail")
       : error.message?.toLowerCase().includes("unavailable")
-        ? "Your account is not currently available."
-        : "We couldn't submit your support request. Please try again.";
+        ? t("server.support.accountUnavailable")
+        : t("server.support.submitFailed");
     returnError(message);
   }
 
@@ -88,6 +90,7 @@ export async function submitSupportTicket(formData: FormData) {
 }
 
 export async function replyToSupportTicket(formData: FormData) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data: claimsData } = await db.auth.getClaims();
   const uid = claimsData?.claims?.sub;
@@ -97,9 +100,9 @@ export async function replyToSupportTicket(formData: FormData) {
   const body = String(formData.get("body") ?? "").trim();
   const submissionTokenValue = String(formData.get("submission_token") ?? "").trim();
   const submissionToken = UUID_PATTERN.test(submissionTokenValue) ? submissionTokenValue : null;
-  if (!UUID_PATTERN.test(ticketId)) replyError(ticketId, "That support request could not be found.");
-  if (body.length < 1 || body.length > 4000) replyError(ticketId, "Your reply must be between 1 and 4,000 characters.");
-  if (!submissionToken) replyError(ticketId, "Please try sending your reply again.");
+  if (!UUID_PATTERN.test(ticketId)) replyError(ticketId, t("server.support.notFound"));
+  if (body.length < 1 || body.length > 4000) replyError(ticketId, t("server.support.replyLength"));
+  if (!submissionToken) replyError(ticketId, t("server.support.replyRetry"));
 
   const { error } = await db.rpc("reply_to_support_ticket", {
     ticket_uuid: ticketId,
@@ -108,12 +111,12 @@ export async function replyToSupportTicket(formData: FormData) {
   });
   if (error) {
     const message = error.message?.toLowerCase().includes("closed")
-      ? "This support request is closed and can no longer receive replies."
+      ? t("server.support.closed")
       : error.message?.toLowerCase().includes("verified")
-        ? "Please verify your email before replying to support."
+        ? t("server.support.verifyReply")
         : error.message?.toLowerCase().includes("not found")
-          ? "That support request could not be found."
-          : "We couldn't send your reply. Please try again.";
+          ? t("server.support.notFound")
+          : t("server.support.replyFailed");
     replyError(ticketId, message);
   }
 

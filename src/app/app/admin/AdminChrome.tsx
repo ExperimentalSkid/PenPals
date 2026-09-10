@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export type AdminSection = "overview" | "cases" | "admin-inbox" | "support" | "contact" | "analytics" | "reports" | "users" | "age-appeals" | "audit" | "rules";
+export type AdminSection = "overview" | "cases" | "admin-inbox" | "support" | "contact" | "analytics" | "system" | "privacy-retention" | "email" | "security" | "settings" | "reports" | "users" | "staff" | "age-appeals" | "audit" | "rules";
 
 const links: Array<{ id: AdminSection; label: string; href: string }> = [
   { id: "overview", label: "Overview", href: "/app/admin" },
@@ -9,22 +9,24 @@ const links: Array<{ id: AdminSection; label: string; href: string }> = [
   { id: "support", label: "Support Inbox", href: "/app/admin/support" },
   { id: "contact", label: "Contact Inbox", href: "/app/admin/contact" },
   { id: "analytics", label: "Analytics", href: "/app/admin/analytics" },
+  { id: "system", label: "System", href: "/app/admin/system" },
+  { id: "privacy-retention", label: "Privacy & Retention", href: "/app/admin/privacy-retention" },
+  { id: "email", label: "Email", href: "/app/admin/email" },
+  { id: "security", label: "Security", href: "/app/admin/security" },
+  { id: "settings", label: "Settings", href: "/app/admin/settings" },
   { id: "reports", label: "Reports", href: "/app/admin/reports" },
   { id: "users", label: "Users", href: "/app/admin/users" },
+  { id: "staff", label: "Staff", href: "/app/admin/staff" },
   { id: "age-appeals", label: "Age appeals", href: "/app/admin/age-appeals" },
   { id: "audit", label: "Audit log", href: "/app/admin/audit" },
   { id: "rules", label: "Rules", href: "/app/admin/moderation-rules" },
 ];
 
 export function AdminNav({ active, showRules = true, isAdmin = showRules }: { active: AdminSection; showRules?: boolean; isAdmin?: boolean }) {
-  // Queue pages are intentionally reached from the main app's staff workspace
-  // links. Keeping them out of this secondary bar avoids two competing entry
-  // points while retaining the queue routes themselves.
-  const inboxSections = new Set<AdminSection>(["cases", "admin-inbox", "support", "contact"]);
   return (
     <nav aria-label="Admin Center" className="admin-nav">
       <div className="flex min-w-max items-center gap-1">
-        {links.filter((item) => (showRules || item.id !== "rules") && (isAdmin || item.id !== "admin-inbox") && !inboxSections.has(item.id)).map((item) => (
+        {links.filter((item) => !["cases", "admin-inbox", "support", "contact"].includes(item.id) && (showRules || item.id !== "rules")).map((item) => (
           <Link
             key={item.id}
             href={item.href}
@@ -47,7 +49,8 @@ export function AdminHeader({
   backHref = "/app/admin",
   backLabel = "Admin Center",
   isAdmin = false,
-  showNav = false,
+  showNav = isAdmin,
+  accessLabel = "Staff workspace",
   children,
 }: {
   active: AdminSection;
@@ -58,6 +61,7 @@ export function AdminHeader({
   backLabel?: string;
   isAdmin?: boolean;
   showNav?: boolean;
+  accessLabel?: string;
   children?: React.ReactNode;
 }) {
   const displayTitle = active === "cases" && title === "Cases" ? "Mod Inbox" : title;
@@ -69,7 +73,7 @@ export function AdminHeader({
     <>
       <div className="flex flex-wrap items-center justify-between gap-4">
         <Link href={backHref} className="admin-back-link">← {displayBackLabel}</Link>
-        <span className="admin-access-label">Staff workspace</span>
+        <span className="admin-access-label">{accessLabel}</span>
       </div>
       <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
         <div>

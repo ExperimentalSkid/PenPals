@@ -128,7 +128,7 @@ export default function InlineSearchList({
               type="button"
               role="option"
               aria-selected={selectedValues.includes(option.value)}
-              className={`block w-full px-3 py-2.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#087456] ${index === safeActiveIndex ? "bg-[#f0f1e9] text-[#075d46]" : "text-[#16251f] hover:bg-white/70"}`}
+              className={`block w-full px-3 py-2.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#087456] ${index === safeActiveIndex ? "bg-[#f0f1e9] text-brand" : "text-primary hover:bg-white/70"}`}
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
                 onSelect(option);

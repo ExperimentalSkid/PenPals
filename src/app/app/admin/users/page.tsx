@@ -103,19 +103,19 @@ export default async function AdminUsers({ searchParams }: { searchParams: Promi
         <label className="text-sm text-black/60">Profile<select name="completeness" defaultValue={filters.completeness ?? ""} className="field mt-2 w-full"><option value="">All profiles</option><option value="complete">Complete</option><option value="incomplete">Incomplete</option></select></label>
         <button className="btn-primary px-4 py-2.5 text-sm">Apply filters</button>
       </form>
-      {filters.error && <p role="alert" className="mt-5 border-l-2 border-amber-500 px-3 py-2 text-sm text-amber-800">{filters.error}</p>}
-      {error && <p role="alert" className="mt-5 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">The administrator user directory could not be loaded.</p>}
+      {filters.error && <p role="alert" className="notice notice-warning mt-5">{filters.error}</p>}
+      {error && <p role="alert" className="notice notice-error mt-5">The administrator user directory could not be loaded.</p>}
       <section className="admin-section mt-8" aria-label="Users">
         {users.length ? <div className="admin-table">
           <div className="admin-table-head md:grid md:grid-cols-[minmax(0,1fr)_auto]"><span>User</span><span>Role · state · activity</span></div>
-          {users.map((user) => <Link key={user.id} href={`/app/admin/users/${user.id}`} className="admin-row block hover:text-[#075d46]">
+          {users.map((user) => <Link key={user.id} href={`/app/admin/users/${user.id}`} className="admin-row block hover:text-brand">
             <div className="flex flex-wrap items-center justify-between gap-5">
-              <div className="min-w-0"><p className="font-serif text-2xl text-[#10231d]">{user.display_name || user.username}</p><p className="mt-1 text-sm text-black/55">@{user.username}{ageFor(user.birth_date) !== null ? ` · ${ageFor(user.birth_date)}` : ""}{user.city ? ` · ${user.city}` : ""}{user.country ? `, ${user.country}` : ""}</p></div>
+              <div className="min-w-0"><p className="section-title">{user.display_name || user.username}</p><p className="mt-1 text-sm text-black/55">@{user.username}{ageFor(user.birth_date) !== null ? ` · ${ageFor(user.birth_date)}` : ""}{user.city ? ` · ${user.city}` : ""}{user.country ? `, ${user.country}` : ""}</p></div>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-right text-xs text-black/50"><StatusChip value={user.role} tone={user.role === "admin" ? "good" : "neutral"} /><StatusChip value={user.profile_complete ? "complete" : "incomplete"} tone={user.profile_complete ? "good" : "warn"} /><StatusChip value={user.deactivated_at ? "deactivated" : "active"} tone={user.deactivated_at ? "danger" : "good"} /><span>Last active {dateLabel(user.last_active_at)}</span></div>
             </div>
           </Link>)}
         </div> : <p className="border-t border-black/10 py-10 text-sm text-black/50">No users match these filters.</p>}
       </section>
-      <nav className="mt-8 flex items-center justify-between border-t border-black/10 pt-5 text-sm" aria-label="User pagination"><span className="text-black/50">Page {page} of {pageCount}</span><div className="flex gap-4">{page > 1 && <Link href={linkFor(page - 1)} className="text-[#087456] hover:underline">Previous</Link>}{page < pageCount && <Link href={linkFor(page + 1)} className="text-[#087456] hover:underline">Next</Link>}</div></nav>
+      <nav className="mt-8 flex items-center justify-between border-t border-black/10 pt-5 text-sm" aria-label="User pagination"><span className="text-black/50">Page {page} of {pageCount}</span><div className="flex gap-4">{page > 1 && <Link href={linkFor(page - 1)} className="text-brand hover:underline">Previous</Link>}{page < pageCount && <Link href={linkFor(page + 1)} className="text-brand hover:underline">Next</Link>}</div></nav>
   </AdminPage>;
 }

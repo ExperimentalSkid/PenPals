@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useActionState, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -104,6 +106,7 @@ export default function IcebreakerModal({
   recipientName: string;
   interestNames?: string[];
 }) {
+  const t = useTranslations();
   const [open, setOpen] = useState(false);
   const [text, setText] = useState("");
   const [qualityGuidance, setQualityGuidance] = useState(false);
@@ -179,14 +182,14 @@ export default function IcebreakerModal({
             <button ref={closeRef} type="button" onClick={() => setOpen(false)} className="float-right text-xl leading-none text-black/45 hover:text-black/75" aria-label="Close">
               ×
             </button>
-            <p className="eyebrow">A thoughtful hello</p>
-            <h2 id="icebreaker-title" className="mt-2 font-serif text-3xl text-[#10231d]">Introduce yourself</h2>
-            <p id="icebreaker-description" className="mt-3 max-w-md text-sm leading-6 text-black/60">Introductions are a short first note to help someone decide whether to start a conversation.</p>
+            <p className="eyebrow">{t("app.icebreaker.eyebrow")}</p>
+            <h2 id="icebreaker-title" className="section-title-large mt-2">{t("app.icebreaker.title")}</h2>
+            <p id="icebreaker-description" className="mt-3 max-w-md text-sm leading-6 text-black/60">{t("app.icebreaker.intro")}</p>
             <form action={formAction} className="mt-6 space-y-4">
               <input type="hidden" name="user_id" value={userId} />
               <input type="hidden" name="username" value={username} />
               <div>
-                {qualityGuidance && <p id="icebreaker-quality-guidance" role="status" className="mb-3 border-l-2 border-[#087456]/40 pl-3 text-sm leading-6 text-[#263b33]">Write a genuine introduction. Mention something from their profile, something you have in common, or ask a real question. Repeated characters and filler text won’t be accepted.</p>}
+                {qualityGuidance && <p id="icebreaker-quality-guidance" role="status" className="mb-3 border-l-2 border-[#087456]/40 pl-3 text-sm leading-6 text-primary">{t("app.icebreaker.guidance")}</p>}
                 <textarea
                   id="icebreaker-text"
                   ref={composerRef}
@@ -200,19 +203,19 @@ export default function IcebreakerModal({
                   className="field min-h-48 w-full resize-y leading-7"
                   placeholder={placeholder}
                 />
-                <label htmlFor="icebreaker-text" className="sr-only">Introduction message</label>
+                <label htmlFor="icebreaker-text" className="sr-only">{t("app.icebreaker.message")}</label>
                 <div id="icebreaker-guidance" className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-black/50">
-                  <span>50–500 characters</span>
-                  <span>At least 8 words</span>
+                  <span>{t("app.icebreaker.range")}</span>
+                  <span>{t("app.icebreaker.words")}</span>
                 </div>
-                <p id="icebreaker-count" className={`mt-1 text-xs ${valid ? "text-[#087456]" : "text-black/45"}`}>
+                <p id="icebreaker-count" className={`mt-1 text-xs ${valid ? "text-brand" : "text-black/45"}`}>
                   {text.length}/500 · {wordCount} words
                 </p>
                 {state.status === "error" && state.message && <p role="alert" className="mt-2 text-sm leading-6 text-red-700">{state.message}</p>}
               </div>
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={() => setOpen(false)} className="rounded-md px-4 py-2.5 text-sm text-black/60 hover:bg-black/[0.04]">
-                  Cancel
+                  {t("app.icebreaker.cancel")}
                 </button>
                 <IcebreakerSubmitButton valid={valid} />
               </div>

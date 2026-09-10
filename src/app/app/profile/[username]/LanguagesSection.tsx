@@ -20,7 +20,7 @@ export default function LanguagesSection({ languages }: { languages: ProfileLang
 
   return (
     <section aria-labelledby="languages-heading" className="border-t border-black/10 pt-7">
-      <h2 id="languages-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-[#3b5147]">
+      <h2 id="languages-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-primary">
         <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px] shrink-0" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
           <circle cx="12" cy="12" r="8.5" />
           <path d="M3.8 12h16.4M12 3.5c2.2 2.4 3.3 5.2 3.3 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.3-5.9-3.3-8.5S9.8 5.9 12 3.5Z" />

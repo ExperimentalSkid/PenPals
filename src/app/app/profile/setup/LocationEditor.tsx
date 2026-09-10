@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent } from "react";
 import InlineSearchList from "@/app/app/shared/InlineSearchList";
@@ -29,6 +31,7 @@ export default function LocationEditor({
   regions,
   localities,
 }: LocationEditorProps) {
+  const t = useTranslations();
   const resolvedCountry = initialCountryCode?.toUpperCase() || COUNTRY_OPTIONS.find((country) => country.name.toLowerCase() === initialCountry?.trim().toLowerCase())?.code || "";
   const initialHasRegionOptions = regions.some((region) => region.country_code === resolvedCountry);
   const resolvedInitialPrecision = initialPrecision || (initialLocalityId ? "locality" : initialRegionCode ? "region" : "country");
@@ -136,20 +139,20 @@ export default function LocationEditor({
     <div className="space-y-7">
       <div className="grid gap-5 sm:grid-cols-2">
         <div>
-        <p className="text-sm font-medium text-[#263b33]">Country <span className="text-xs font-normal text-black/45">(required)</span></p>
+        <p className="text-sm font-medium text-primary">{t("app.profile.country")} <span className="text-xs font-normal text-black/45">{t("app.profile.requiredLabel")}</span></p>
         <InlineSearchList
-          label="countries"
+          label={t("app.profile.country")}
           options={COUNTRY_OPTIONS.map((option) => ({ value: option.code, label: option.name, searchAliases: option.aliases }))}
           selectedValues={countryCode ? [countryCode] : []}
-          placeholder="Search countries…"
+          placeholder={t("app.discover.searchCountries")}
           autoFocus={false}
           onSelect={(option) => selectCountry(option.value)}
         />
-          <p className="mt-2 text-sm text-[#66717C]" aria-live="polite">{country ? <>Selected: <span className="font-medium text-[#102A43]">{country.name}</span></> : "Choose a country to continue."}</p>
+          <p className="mt-2 text-sm text-muted" aria-live="polite">{country ? <>{t("app.profile.selected")} <span className="font-medium text-[#102A43]">{country.name}</span></> : t("app.profile.chooseCountryContinue")}</p>
         </div>
 
         <div>
-        <label htmlFor="location-precision" className="text-sm font-medium text-[#263b33]">Location detail <span className="text-xs font-normal text-black/45">(required)</span></label>
+        <label htmlFor="location-precision" className="text-sm font-medium text-primary">{t("app.profile.locationDetail")} <span className="text-xs font-normal text-black/45">{t("app.profile.requiredLabel")}</span></label>
         <select
           id="location-precision"
           name="location_precision"
@@ -173,34 +176,34 @@ export default function LocationEditor({
           }}
           className="field mt-2 w-full rounded-md bg-[#fffdfa]"
         >
-          <option value="country">Country only</option>
-          <option value="region" disabled={!hasRegionOptions}>Region{!hasRegionOptions ? " (not available)" : ""}</option>
-          <option value="locality" disabled={!hasRegionOptions}>City / town{!hasRegionOptions ? " (not available)" : ""}</option>
+          <option value="country">{t("app.profile.countryOnly")}</option>
+          <option value="region" disabled={!hasRegionOptions}>{t("app.profile.region")}{!hasRegionOptions ? ` (${t("app.profile.notAvailable")})` : ""}</option>
+          <option value="locality" disabled={!hasRegionOptions}>{t("app.profile.city")}{!hasRegionOptions ? ` (${t("app.profile.notAvailable")})` : ""}</option>
         </select>
-        <p className="mt-2 text-xs leading-5 text-[#66717C]">{!countryCode ? "Choose a country first to see available location details." : hasRegionOptions ? "Choose how much location detail to share with other members." : "Only country-level location is available for this country."}</p>
+        <p className="mt-2 text-xs leading-5 text-muted">{!countryCode ? t("app.profile.chooseCountryLocation") : hasRegionOptions ? t("app.profile.chooseLocationDetail") : t("app.profile.countryOnlyAvailable")}</p>
         </div>
       </div>
 
       {precision !== "country" && (
       <div>
-          <p className="text-sm font-medium text-[#263b33]">Region <span className="font-normal text-black/45">(required for region or city / town detail)</span></p>
+          <p className="text-sm font-medium text-primary">{t("app.profile.region")} <span className="font-normal text-black/45">{t("app.profile.regionRequired")}</span></p>
           {countryCode && countryRegions.length > 0 ? (
             <InlineSearchList
-              label="regions"
+              label={t("app.profile.region")}
               options={countryRegions.map((region) => ({ value: region.code, label: region.name }))}
               selectedValues={regionCode ? [regionCode] : []}
-              placeholder="Search regions…"
+              placeholder={t("app.discover.searchRegions")}
               autoFocus={false}
               onSelect={(option) => selectRegion(option.value)}
             />
-          ) : <p className="mt-2 text-sm text-black/45">Region suggestions will appear after you choose a country.</p>}
+          ) : <p className="mt-2 text-sm text-black/45">{t("app.profile.regionHint")}</p>}
           {selectedRegion && <p className="mt-2 text-sm text-black/55">{selectedRegion.name}</p>}
         </div>
       )}
 
       {precision === "locality" && (
         <div>
-          <label htmlFor="location-city" className="text-sm font-medium text-[#263b33]">City / town <span className="text-xs font-normal text-black/45">(required for city / town precision)</span></label>
+          <label htmlFor="location-city" className="text-sm font-medium text-primary">{t("app.profile.city")} <span className="text-xs font-normal text-black/45">{t("app.profile.cityRequired")}</span></label>
           <input
             id="location-city"
             type="text"
@@ -219,12 +222,12 @@ export default function LocationEditor({
             onFocus={() => setLocalityOpen(Boolean(localityName.trim()))}
             onKeyDown={handleLocalityKeyDown}
             className="field mt-2 w-full rounded-md bg-[#fffdfa]"
-            placeholder="Search or enter a city / town"
+            placeholder={t("app.profile.cityPlaceholder")}
             required={Boolean(countryCode && regionCode)}
             disabled={!countryCode || !regionCode}
           />
           {countryCode && localityOpen && localitySuggestions.length > 0 && !localityId && (
-            <div id="location-city-options" className="mt-2 divide-y divide-black/10 border-y border-black/10 bg-white/40" role="listbox" aria-label="City and town suggestions">
+            <div id="location-city-options" className="mt-2 divide-y divide-black/10 border-y border-black/10 bg-white/40" role="listbox" aria-label={t("app.profile.citySuggestions")}>
               {localitySuggestions.map((locality, index) => (
                 <button
                   key={locality.id}
@@ -232,7 +235,7 @@ export default function LocationEditor({
                   type="button"
                   role="option"
                   aria-selected={index === safeLocalityActiveIndex}
-                  className={`block w-full px-3 py-2.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#087456] ${index === safeLocalityActiveIndex ? "bg-[#f0f1e9] text-[#075d46]" : "text-[#16251f] hover:bg-white/70"}`}
+                  className={`block w-full px-3 py-2.5 text-left text-sm transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-inset focus-visible:outline-[#087456] ${index === safeLocalityActiveIndex ? "bg-[#f0f1e9] text-brand" : "text-primary hover:bg-white/70"}`}
                   onMouseDown={(event) => event.preventDefault()}
                   onClick={() => selectLocality(locality)}
                 >
@@ -241,7 +244,7 @@ export default function LocationEditor({
               ))}
             </div>
           )}
-          <p className="mt-2 text-xs leading-5 text-black/50">{regionCode ? "Suggestions are scoped to your country and region; you can enter any broader locality." : "Choose a country and region before searching for a city / town."}</p>
+          <p className="mt-2 text-xs leading-5 text-black/50">{regionCode ? t("app.profile.localityHint") : t("app.profile.chooseRegionBeforeCity")}</p>
         </div>
       )}
 

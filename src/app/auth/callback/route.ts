@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
 
   let db: Awaited<ReturnType<typeof createClient>> | null = null;
   try {
-    db = await createClient();
+    db = await createClient(request.headers.get("x-real-ip")?.trim() || null);
     const flowId = query.get("sb_flow_id");
     const { error: exchangeError } = await db.auth.exchangeCodeForSession(code, flowId ? { flowId } : undefined);
     if (exchangeError) return failure(request, mode, "invalid");

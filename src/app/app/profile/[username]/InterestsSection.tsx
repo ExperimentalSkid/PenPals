@@ -21,7 +21,7 @@ function InterestIcon() {
 }
 
 function Chips({ interests }: { interests: ProfileInterest[] }) {
-  return <div className="flex flex-wrap gap-2">{interests.map((interest) => <span key={interest.interest_id} className="rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-[#33443e]">{interestName(interest.interests)}</span>)}</div>;
+  return <div className="flex flex-wrap gap-2">{interests.map((interest) => <span key={interest.interest_id} className="rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary">{interestName(interest.interests)}</span>)}</div>;
 }
 
 export default function InterestsSection({ interests }: { interests: ProfileInterest[] }): ReactNode {
@@ -32,10 +32,10 @@ export default function InterestsSection({ interests }: { interests: ProfileInte
 
   return (
     <section aria-labelledby="interests-heading" className="mt-9 border-t border-black/10 pt-7">
-      <h2 id="interests-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-[#3b5147]"><InterestIcon />Interests</h2>
+      <h2 id="interests-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-primary"><InterestIcon />Interests</h2>
       <div className="mt-5">
         <Chips interests={visibleInterests} />
-        {additionalInterests.length > 0 && <details className="mt-3"><summary className="inline-flex cursor-pointer list-none rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-[#33443e] underline decoration-[#33443e]/35 underline-offset-2">+{additionalInterests.length} more</summary><div className="mt-3"><Chips interests={additionalInterests} /></div></details>}
+        {additionalInterests.length > 0 && <details className="mt-3"><summary className="inline-flex cursor-pointer list-none rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary underline decoration-[#33443e]/35 underline-offset-2">+{additionalInterests.length} more</summary><div className="mt-3"><Chips interests={additionalInterests} /></div></details>}
       </div>
     </section>
   );

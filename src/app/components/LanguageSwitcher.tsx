@@ -1,0 +1,58 @@
+"use client";
+
+import { usePathname, useRouter } from "next/navigation";
+import type { AppLocale } from "@/i18n/config";
+import { createClient } from "@/lib/supabase/client";
+import CountryFlag from "@/app/components/CountryFlag";
+
+function localizedPath(pathname: string, locale: AppLocale) {
+  const englishPath = pathname === "/es" ? "/" : pathname.startsWith("/es/") ? pathname.slice(3) : pathname;
+  const publicPath = englishPath === "/" || ["/faq", "/privacy", "/contact"].includes(englishPath) || ["/country/", "/language/", "/interest/"].some((prefix) => englishPath.startsWith(prefix));
+  if (!publicPath) return null;
+  return locale === "es" ? (englishPath === "/" ? "/es" : `/es${englishPath}`) : englishPath;
+}
+
+export default function LanguageSwitcher({ locale, label, paths }: { locale: AppLocale; label: string; paths?: Partial<Record<AppLocale, string>> }) {
+  const router = useRouter();
+  const pathname = usePathname();
+
+  async function selectLocale(nextLocale: AppLocale) {
+    if (nextLocale === locale) return;
+    document.cookie = `NEXT_LOCALE=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
+    try {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (data.user) await supabase.auth.updateUser({ data: { locale: nextLocale } });
+    } catch {
+      // Cookie preference remains authoritative for the UI if metadata persistence is unavailable.
+    }
+    const target = paths?.[nextLocale] ?? localizedPath(pathname, nextLocale);
+    if (target && target !== pathname) router.push(target);
+    else router.refresh();
+  }
+
+  return (
+    <div role="group" aria-label={label} className="inline-flex items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => void selectLocale("en")}
+        aria-label="English"
+        aria-pressed={locale === "en"}
+        title="English"
+        className={`flex h-8 w-10 items-center justify-center rounded-md border transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#073A73]/35 ${locale === "en" ? "border-[#073A73] bg-white shadow-sm" : "border-[#D9D3C8] bg-white/55"}`}
+      >
+        <CountryFlag code="GB" countryName="United Kingdom" />
+      </button>
+      <button
+        type="button"
+        onClick={() => void selectLocale("es")}
+        aria-label="Español"
+        aria-pressed={locale === "es"}
+        title="Español"
+        className={`flex h-8 w-10 items-center justify-center rounded-md border transition hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#073A73]/35 ${locale === "es" ? "border-[#073A73] bg-white shadow-sm" : "border-[#D9D3C8] bg-white/55"}`}
+      >
+        <CountryFlag code="ES" countryName="Spain" />
+      </button>
+    </div>
+  );
+}

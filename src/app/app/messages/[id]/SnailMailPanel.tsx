@@ -1,9 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { cancelSnailMail, markSnailMailRead, sendSnailMail } from "@/app/app/messages/actions";
 import { hasSnailMailArrived as hasArrived, isLostInTransit, lostInTransitCopy } from "@/app/app/messages/snailMailStory";
+import SnailMailJourneyMap from "@/app/app/messages/SnailMailJourneyMap";
 
 export type SnailMailLetter = {
   id: string;
@@ -75,7 +78,8 @@ function milestone(letter: SnailMailLetter, now: number) {
   return "Out for delivery";
 }
 
-export default function SnailMailPanel({ conversationId, userId, letters, now, canCompose = false, composeBlockedReason = null, compact = false }: { conversationId: string; userId: string; letters: SnailMailLetter[]; now: number; canCompose?: boolean; composeBlockedReason?: string | null; compact?: boolean }) {
+export default function SnailMailPanel({ conversationId, userId, letters, now, canCompose = false, composeBlockedReason = null, compact = false, viewerCountry = null, otherCountry = null }: { conversationId: string; userId: string; letters: SnailMailLetter[]; now: number; canCompose?: boolean; composeBlockedReason?: string | null; compact?: boolean; viewerCountry?: string | null; otherCountry?: string | null }) {
+  const t = useTranslations();
   const [composing, setComposing] = useState(false);
   const [body, setBody] = useState("");
   const [idempotencyKey, setIdempotencyKey] = useState<string | null>(null);
@@ -107,24 +111,25 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
       <section className="rounded-xl border border-[#deded5] bg-[#fbfaf6] p-5 sm:p-6" aria-labelledby="snail-mail-heading">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[#087456]">Optional slow mail</p>
-            <h2 id="snail-mail-heading" className="mt-1 font-serif text-2xl text-[#10231d]">Snail Mail</h2>
+            <p className="eyebrow">{t("app.snail.optional")}</p>
+            <h2 id="snail-mail-heading" className="section-title mt-1">{t("app.snail.title")}</h2>
           </div>
-          <span aria-hidden="true" className="text-xl text-[#075d46]/70">✉</span>
+          <span aria-hidden="true" className="text-xl text-brand/70">✉</span>
         </div>
-        <p className="mt-2 text-sm leading-6 text-black/55">Letters arrive over time.</p>
+        <p className="section-description mt-2">{t("app.snail.arrive")}</p>
         {latestLetter ? <div className="mt-5 border-t border-black/10 pt-4">
-          <p className="text-sm font-medium text-[#1c2d26]">{latestCancelled ? "Lost in transit" : latestInTransit ? (latestIsMine ? "Letter in transit" : "A letter is on its way") : latestIsMine ? "Your letter has arrived" : "Letter delivered"}</p>
-          <p className="mt-1 text-sm leading-6 text-black/55">{deliveryCopy(latestLetter, currentNow)}</p>
+          <p className="text-sm font-medium text-primary">{latestCancelled ? "Lost in transit" : latestInTransit ? (latestIsMine ? "Letter in transit" : "A letter is on its way") : latestIsMine ? "Your letter has arrived" : "Letter delivered"}</p>
+          <p className="section-description mt-1">{deliveryCopy(latestLetter, currentNow)}</p>
           <p className="mt-1 text-xs text-black/40">{transportLabel(latestLetter.transport_mode)} · {milestone(latestLetter, currentNow)}</p>
           {!latestCancelled && <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#e4e8df]" role="progressbar" aria-valuenow={Math.round(progress(latestLetter, currentNow))} aria-valuemin={0} aria-valuemax={100} aria-label={`Letter delivery progress ${Math.round(progress(latestLetter, currentNow))} percent`}><span className="block h-full rounded-full bg-[#087456]" style={{ width: `${progress(latestLetter, currentNow)}%` }} /></div>}
-          {latestLetter.body_available && latestLetter.body ? <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-[#075d46] underline underline-offset-2">Read letter</summary><p className="mt-3 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-3 text-sm leading-6 text-[#1c2d26]">{latestLetter.body}</p></details> : <p className="mt-4 text-xs italic text-black/45">{latestCancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
-          {!latestCancelled && !latestIsMine && latestLetter.body_available && !latestLetter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
-          {latestIsMine && latestInTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">Cancel letter</SubmitButton></form>}
-        </div> : <p className="mt-5 border-t border-black/10 pt-4 text-sm leading-6 text-black/50">No letters yet. Send one when you&apos;re ready.</p>}
-        {!composing && canWriteLetter && <button type="button" onClick={openComposer} className="mt-5 w-full rounded-md border border-[#087456]/30 px-3 py-2.5 text-sm text-[#075d46] hover:bg-[#087456]/[0.06]">Write a letter</button>}
-        {!composing && !canWriteLetter && <div className="mt-5 border-t border-black/10 pt-4"><button type="button" disabled aria-disabled="true" className="w-full rounded-md border border-[#087456]/20 px-3 py-2.5 text-sm text-[#075d46]/50 disabled:cursor-not-allowed disabled:opacity-70">Write a letter</button><p className="mt-2 text-xs leading-5 text-black/45" role="status">{blockedReason ?? "New letters aren&apos;t available with the current communication preferences."}</p></div>}
-        {composing && <form action={sendSnailMail} className="mt-5 border-t border-black/10 pt-5"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="idempotency_key" value={idempotencyKey ?? ""} /><label htmlFor="snail-mail-body" className="text-sm font-medium text-[#1c2d26]">Your letter</label>{composerBlocked && <p id="snail-mail-compose-status" className="mt-2 text-sm text-black/55" role="status">{blockedReason ?? "New letters aren&apos;t available right now."}</p>}<textarea id="snail-mail-body" name="body" value={body} onChange={(event) => setBody(event.target.value)} rows={5} maxLength={5000} required disabled={composerBlocked} aria-describedby={composerBlocked ? "snail-mail-compose-status" : undefined} className="field mt-2 min-h-28 w-full resize-y leading-7 disabled:cursor-not-allowed disabled:bg-black/[0.03]" placeholder="Write something thoughtful…" /><div className="mt-2 flex items-center justify-between text-xs text-black/45"><span>Up to 5,000 characters</span><span>{body.length}/5000</span></div><div className="mt-4 flex items-center gap-3"><SubmitButton disabled={composerBlocked} pendingLabel="Sending…" className="btn-primary flex-1">Send letter</SubmitButton><button type="button" onClick={() => { setComposing(false); setBody(""); }} className="rounded-md px-3 py-2 text-sm text-black/55 hover:bg-black/[0.04]">Cancel</button></div></form>}
+          {!latestCancelled && <SnailMailJourneyMap origin={latestIsMine ? viewerCountry : otherCountry} destination={latestIsMine ? otherCountry : viewerCountry} progress={progress(latestLetter, currentNow)} compact />}
+          {latestLetter.body_available && latestLetter.body ? <details className="mt-4"><summary className="cursor-pointer text-sm font-medium text-brand underline underline-offset-2">{t("app.snail.read")}</summary><p className="mt-3 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-3 text-sm leading-6 text-primary">{latestLetter.body}</p></details> : <p className="mt-4 text-xs italic text-black/45">{latestCancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
+          {!latestCancelled && !latestIsMine && latestLetter.body_available && !latestLetter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-brand">{t("app.snail.open")}</SubmitButton></form>}
+          {latestIsMine && latestInTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={latestLetter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">{t("app.snail.cancel")}</SubmitButton></form>}
+        </div> : <p className="mt-5 border-t border-black/10 pt-4 text-sm leading-6 text-black/50">{t("app.snail.empty")}</p>}
+        {!composing && canWriteLetter && <button type="button" onClick={openComposer} className="mt-5 w-full rounded-md border border-[#087456]/30 px-3 py-2.5 text-sm text-brand hover:bg-[#087456]/[0.06]">{t("app.snail.write")}</button>}
+        {!composing && !canWriteLetter && <div className="mt-5 border-t border-black/10 pt-4"><button type="button" disabled aria-disabled="true" className="w-full rounded-md border border-[#087456]/20 px-3 py-2.5 text-sm text-brand/50 disabled:cursor-not-allowed disabled:opacity-70">{t("app.snail.write")}</button><p className="mt-2 text-xs leading-5 text-black/45" role="status">{blockedReason ?? "New letters aren&apos;t available with the current communication preferences."}</p></div>}
+        {composing && <form action={sendSnailMail} className="mt-5 border-t border-black/10 pt-5"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="idempotency_key" value={idempotencyKey ?? ""} /><label htmlFor="snail-mail-body" className="text-sm font-medium text-primary">{t("app.snail.yourLetter")}</label>{composerBlocked && <p id="snail-mail-compose-status" className="mt-2 text-sm text-black/55" role="status">{blockedReason ?? "New letters aren&apos;t available right now."}</p>}<textarea id="snail-mail-body" name="body" value={body} onChange={(event) => setBody(event.target.value)} rows={5} maxLength={5000} required disabled={composerBlocked} aria-describedby={composerBlocked ? "snail-mail-compose-status" : undefined} className="field mt-2 min-h-28 w-full resize-y leading-7 disabled:cursor-not-allowed disabled:bg-black/[0.03]" placeholder="Write something thoughtful…" /><div className="mt-2 flex items-center justify-between text-xs text-black/45"><span>{t("app.snail.limit")}</span><span>{body.length}/5000</span></div><div className="mt-4 flex items-center gap-3"><SubmitButton disabled={composerBlocked} pendingLabel="Sending…" className="btn-primary flex-1">{t("app.snail.send")}</SubmitButton><button type="button" onClick={() => { setComposing(false); setBody(""); }} className="rounded-md px-3 py-2 text-sm text-black/55 hover:bg-black/[0.04]">{t("app.snail.cancelCompose")}</button></div></form>}
       </section>
     );
   }
@@ -133,13 +138,13 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
     <section className="mt-8 border-y border-[#087456]/15 py-5" aria-labelledby="snail-mail-heading">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[.18em] text-[#087456]">Optional slow mail</p>
-          <h2 id="snail-mail-heading" className="mt-1 font-serif text-2xl text-[#10231d]">Snail Mail</h2>
-          <p className="mt-1 max-w-xl text-sm leading-6 text-black/55">Send a digital letter. Its delivery time is set when you send it.</p>
+          <p className="eyebrow">{t("app.snail.optional")}</p>
+          <h2 id="snail-mail-heading" className="section-title mt-1">{t("app.snail.title")}</h2>
+          <p className="section-description mt-1 max-w-xl">{t("app.snail.description")}</p>
         </div>
-        {!composing && canWriteLetter && <button type="button" onClick={openComposer} className="rounded-md border border-[#087456]/30 px-3 py-2 text-sm text-[#075d46] hover:bg-[#087456]/[0.06]">Write a letter</button>}
+        {!composing && canWriteLetter && <button type="button" onClick={openComposer} className="rounded-md border border-[#087456]/30 px-3 py-2 text-sm text-brand hover:bg-[#087456]/[0.06]">{t("app.snail.write")}</button>}
         {!composing && !canWriteLetter && <div className="flex flex-col items-end gap-2 text-right">
-          <button type="button" disabled aria-disabled="true" className="rounded-md border border-[#087456]/20 px-3 py-2 text-sm text-[#075d46]/50 disabled:cursor-not-allowed disabled:opacity-70">Write a letter</button>
+          <button type="button" disabled aria-disabled="true" className="rounded-md border border-[#087456]/20 px-3 py-2 text-sm text-brand/50 disabled:cursor-not-allowed disabled:opacity-70">{t("app.snail.write")}</button>
           <p className="max-w-[18rem] text-xs leading-5 text-black/45" role="status">{blockedReason ?? "New letters aren&apos;t available with the current communication preferences."}</p>
         </div>}
       </div>
@@ -147,11 +152,11 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
       {composing && <form action={sendSnailMail} className="mt-5 border-t border-black/10 pt-5">
         <input type="hidden" name="conversation_id" value={conversationId} />
         <input type="hidden" name="idempotency_key" value={idempotencyKey ?? ""} />
-        <label htmlFor="snail-mail-body" className="text-sm font-medium text-[#1c2d26]">Your letter</label>
+        <label htmlFor="snail-mail-body" className="text-sm font-medium text-primary">{t("app.snail.yourLetter")}</label>
         {composerBlocked && <p id="snail-mail-compose-status" className="mt-2 text-sm text-black/55" role="status">{blockedReason ?? "New letters aren&apos;t available right now."}</p>}
         <textarea id="snail-mail-body" name="body" value={body} onChange={(event) => setBody(event.target.value)} rows={6} maxLength={5000} required disabled={composerBlocked} aria-describedby={composerBlocked ? "snail-mail-compose-status" : undefined} className="field mt-2 min-h-36 w-full resize-y leading-7 disabled:cursor-not-allowed disabled:bg-black/[0.03]" placeholder="Write something thoughtful…" />
-        <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-black/45"><span>Up to 5,000 characters</span><span>{body.length}/5000</span></div>
-        <div className="mt-4 flex items-center gap-3"><SubmitButton disabled={composerBlocked} pendingLabel="Sending…" className="btn-primary">Send letter</SubmitButton><button type="button" onClick={() => { setComposing(false); setBody(""); }} className="rounded-md px-3 py-2 text-sm text-black/55 hover:bg-black/[0.04]">Cancel</button></div>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-black/45"><span>{t("app.snail.limit")}</span><span>{body.length}/5000</span></div>
+        <div className="mt-4 flex items-center gap-3"><SubmitButton disabled={composerBlocked} pendingLabel="Sending…" className="btn-primary">{t("app.snail.send")}</SubmitButton><button type="button" onClick={() => { setComposing(false); setBody(""); }} className="rounded-md px-3 py-2 text-sm text-black/55 hover:bg-black/[0.04]">{t("app.snail.cancelCompose")}</button></div>
       </form>}
 
       {letters.length > 0 && <div className="mt-6 space-y-5" aria-live="polite">
@@ -162,15 +167,16 @@ export default function SnailMailPanel({ conversationId, userId, letters, now, c
           const value = progress(letter, currentNow);
           return <article key={letter.id} className="border-t border-black/[0.08] pt-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-medium text-[#1c2d26]">{cancelled ? "Lost in transit" : isMine ? "Your letter" : "Incoming letter"}</p>
+              <p className="text-sm font-medium text-primary">{cancelled ? "Lost in transit" : isMine ? "Your letter" : "Incoming letter"}</p>
               <time className="text-xs text-black/40" dateTime={letter.sent_at}>{new Date(letter.sent_at).toLocaleDateString()}</time>
             </div>
             <p className="mt-1 text-sm text-black/55">{deliveryCopy(letter, currentNow)}</p>
             <p className="mt-1 text-xs text-black/40" aria-label="Delivery milestone">{transportLabel(letter.transport_mode)} · {milestone(letter, currentNow)}</p>
             {!cancelled && <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#e4e8df]" role="progressbar" aria-valuenow={Math.round(value)} aria-valuemin={0} aria-valuemax={100} aria-label={`Letter delivery progress ${Math.round(value)} percent`}><span className="block h-full rounded-full bg-[#087456] transition-[width]" style={{ width: `${value}%` }} /></div>}
-            {letter.body_available && letter.body ? <div className="mt-4 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-4 text-[15px] leading-7 text-[#1c2d26]">{letter.body}</div> : <p className="mt-4 text-sm italic text-black/45">{cancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
-            {!cancelled && !isMine && letter.body_available && !letter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-[#075d46]">Open letter</SubmitButton></form>}
-            {isMine && inTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">Cancel letter</SubmitButton></form>}
+            {!cancelled && <SnailMailJourneyMap origin={isMine ? viewerCountry : otherCountry} destination={isMine ? otherCountry : viewerCountry} progress={value} />}
+            {letter.body_available && letter.body ? <div className="mt-4 whitespace-pre-wrap border-l-2 border-[#087456]/30 pl-4 text-[15px] leading-7 text-primary">{letter.body}</div> : <p className="mt-4 text-sm italic text-black/45">{cancelled ? "This letter was lost before it reached you." : "The letter is sealed until delivery."}</p>}
+            {!cancelled && !isMine && letter.body_available && !letter.recipient_read_at && <form action={markSnailMailRead} className="mt-3"><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Opening…" className="rounded-md border border-[#087456]/30 px-3 py-2 text-xs text-brand">{t("app.snail.open")}</SubmitButton></form>}
+            {isMine && inTransit && <form action={cancelSnailMail} className="mt-3" onSubmit={(event) => { if (!window.confirm("Stop this letter while it is still in transit? The recipient will see it as lost in transit.")) event.preventDefault(); }}><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="letter_id" value={letter.id} /><SubmitButton pendingLabel="Cancelling…" className="rounded-md border border-[#b05b4f]/35 px-3 py-2 text-xs text-[#8d443b]">{t("app.snail.cancel")}</SubmitButton></form>}
           </article>;
         })}
       </div>}

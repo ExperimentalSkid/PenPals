@@ -1,15 +1,18 @@
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
+
+const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   // Supabase's local email flow also supports the loopback-IP site origin.
   allowedDevOrigins: ["127.0.0.1"],
   images: { remotePatterns: [{ protocol: "https", hostname: "i.pravatar.cc" }] },
-  // Support submissions can include up to three 10 MB attachments. Keep the
-  // Server Action body limit above that aggregate while retaining the upload
-  // validation in submitSupportTicket and the database RPC.
+  // Support submissions can include several attachments. Keep the Server
+  // Action body limit above the validated aggregate while retaining the
+  // upload validation in the support action/database boundary.
   experimental: {
     serverActions: {
-      bodySizeLimit: "35mb",
+      bodySizeLimit: "20mb",
     },
   },
   async headers() {
@@ -26,4 +29,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+export default withNextIntl(nextConfig);

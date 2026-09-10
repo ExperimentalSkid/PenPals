@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 type Role = "admin" | "moderator" | "user" | null | undefined;
 type IconName = "compass" | "users" | "profile" | "message" | "bell" | "settings" | "help" | "shield" | "inbox" | "chart";
@@ -70,20 +71,21 @@ function Item({ item, pathname, mobile = false }: { item: NavItem; pathname: str
 
 export default function AppNavigation({ unreadCount, modInboxCount, supportInboxCount, contactInboxCount, role, mobile = false }: { unreadCount: number; modInboxCount: number; supportInboxCount: number; contactInboxCount: number; role: Role; mobile?: boolean }) {
   const pathname = usePathname();
-  const items = mainItems.map((item) => item.label === "Notifications"
-    ? { ...item, badge: unreadCount, badgeLabel: "unread notifications" }
-    : item);
+  const t = useTranslations();
+  const labels: Record<string, string> = { Discover: t("app.nav.discover"), Introductions: t("app.nav.introductions"), Messages: t("app.nav.messages"), Notifications: t("app.nav.notifications"), Settings: t("app.nav.settings"), "Help & support": t("app.nav.support") };
+  const items = mainItems.map((item) => ({ ...item, label: labels[item.label] ?? item.label, ...(item.href === "/app/notifications" ? { badge: unreadCount, badgeLabel: t("app.nav.unreadNotifications") } : {}) }));
   if (mobile) {
     const staffItems: NavItem[] = [
-      { href: "/app/profile/setup", label: "Profile", icon: "profile" },
+      { href: "/app/profile/setup", label: t("app.nav.profile"), icon: "profile" },
       ...(role === "admin" ? [{ href: "/app/admin", label: "Admin", icon: "shield" as const }] : []),
+      ...(role === "moderator" ? [{ href: "/app/moderation", label: "Moderator", icon: "shield" as const }] : []),
       ...(role === "admin" ? [{ href: "/app/admin/inbox", label: "Admin Inbox", icon: "inbox" as const }] : []),
       ...(role === "admin" || role === "moderator" ? [{ href: "/app/admin/cases", label: "Mod Inbox", icon: "inbox" as const, badge: modInboxCount, badgeLabel: "open moderation cases" }] : []),
       ...(role === "admin" || role === "moderator" ? [{ href: "/app/admin/support", label: "Support Inbox", icon: "inbox" as const, badge: supportInboxCount, badgeLabel: "open support tickets" }] : []),
       ...(role === "admin" || role === "moderator" ? [{ href: "/app/admin/contact", label: "Contact Inbox", icon: "inbox" as const, badge: contactInboxCount, badgeLabel: "open contact messages" }] : []),
       ...(role === "admin" || role === "moderator" ? [{ href: "/app/admin/analytics", label: "Analytics", icon: "chart" as const }] : []),
     ];
-    return <nav aria-label="Mobile navigation" className="app-mobile-nav">{[...items, ...staffItems].map((item) => <Item key={item.href} item={item} pathname={pathname} mobile />)}</nav>;
+    return <nav aria-label={t("app.nav.mobile")} className="app-mobile-nav">{[...items, ...staffItems].map((item) => <Item key={item.href} item={item} pathname={pathname} mobile />)}</nav>;
   }
-  return <nav aria-label="Main navigation" className="app-sidebar-nav"><p className="app-nav-label">Main</p><div className="space-y-1">{items.map((item) => <Item key={item.href} item={item} pathname={pathname} />)}</div>{(role === "admin" || role === "moderator") && <><p className="app-nav-label app-nav-label-staff">Staff workspace</p><div className="space-y-1">{role === "admin" && <><Item item={{ href: "/app/admin", label: "Admin", icon: "shield" }} pathname={pathname} /><Item item={{ href: "/app/admin/inbox", label: "Admin Inbox", icon: "inbox" }} pathname={pathname} /></>}{<Item item={{ href: "/app/admin/cases", label: "Mod Inbox", icon: "inbox", badge: modInboxCount, badgeLabel: "open moderation cases" }} pathname={pathname} />}<Item item={{ href: "/app/admin/support", label: "Support Inbox", icon: "inbox", badge: supportInboxCount, badgeLabel: "open support tickets" }} pathname={pathname} /><Item item={{ href: "/app/admin/contact", label: "Contact Inbox", icon: "inbox", badge: contactInboxCount, badgeLabel: "open contact messages" }} pathname={pathname} /><Item item={{ href: "/app/admin/analytics", label: "Analytics", icon: "chart" }} pathname={pathname} /></div></>}</nav>;
+  return <nav aria-label={t("app.nav.mainNav")} className="app-sidebar-nav"><p className="app-nav-label">{t("app.nav.main")}</p><div className="space-y-1">{items.map((item) => <Item key={item.href} item={item} pathname={pathname} />)}</div>{(role === "admin" || role === "moderator") && <><p className="app-nav-label app-nav-label-staff">Staff workspace</p><div className="space-y-1">{role === "admin" && <><Item item={{ href: "/app/admin", label: "Admin", icon: "shield" }} pathname={pathname} /><Item item={{ href: "/app/admin/inbox", label: "Admin Inbox", icon: "inbox" }} pathname={pathname} /></>}{role === "moderator" && <Item item={{ href: "/app/moderation", label: "Moderator", icon: "shield" }} pathname={pathname} />}{<Item item={{ href: "/app/admin/cases", label: "Mod Inbox", icon: "inbox", badge: modInboxCount, badgeLabel: "open moderation cases" }} pathname={pathname} />}<Item item={{ href: "/app/admin/support", label: "Support Inbox", icon: "inbox", badge: supportInboxCount, badgeLabel: "open support tickets" }} pathname={pathname} /><Item item={{ href: "/app/admin/contact", label: "Contact Inbox", icon: "inbox", badge: contactInboxCount, badgeLabel: "open contact messages" }} pathname={pathname} /><Item item={{ href: "/app/admin/analytics", label: "Analytics", icon: "chart" }} pathname={pathname} /></div></>}</nav>;
 }

@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import { useState } from "react";
 import { resolveMysteryPick } from "./actions";
 
@@ -7,7 +9,7 @@ type MysteryCard = { token: string; position: number };
 
 function SealedLetter() {
   return (
-    <svg aria-hidden="true" viewBox="0 0 96 72" className="h-16 w-20 text-[#087456] sm:h-20 sm:w-24">
+    <svg aria-hidden="true" viewBox="0 0 96 72" className="h-16 w-20 text-brand sm:h-20 sm:w-24">
       <rect x="8" y="10" width="80" height="52" rx="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
       <path d="m10 13 38 29 38-29M10 59l27-24M86 59 59 35" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
@@ -15,6 +17,7 @@ function SealedLetter() {
 }
 
 export default function MysteryPickBoard({ cards }: { cards: MysteryCard[] }) {
+  const t = useTranslations();
   const [chosen, setChosen] = useState<string | null>(null);
 
   return (
@@ -32,12 +35,12 @@ export default function MysteryPickBoard({ cards }: { cards: MysteryCard[] }) {
             >
               <span aria-hidden="true" className="absolute inset-x-5 top-4 border-t border-dashed border-[#c8cfc7]" />
               <span aria-hidden="true" className="absolute inset-x-5 bottom-4 border-t border-dashed border-[#c8cfc7]" />
-              <span className="mb-3 rounded-full border border-[#087456]/25 bg-[#e8eee8] p-3 text-[#087456] transition group-hover:bg-[#dfe9df]">
+              <span className="mb-3 rounded-full border border-[#087456]/25 bg-[#e8eee8] p-3 text-brand transition group-hover:bg-[#dfe9df]">
                 <SealedLetter />
               </span>
-              <span className="font-serif text-4xl leading-none text-[#10231d]">?</span>
-              <span className="mt-4 text-xs font-semibold uppercase tracking-[.18em] text-[#087456]">Sealed profile</span>
-              {chosen === card.token && <span className="mt-2 text-xs text-black/50" role="status" aria-live="polite">Opening your card…</span>}
+              <span className="font-serif text-4xl leading-none text-primary">?</span>
+              <span className="mt-4 text-xs font-semibold uppercase tracking-[.18em] text-brand">{t("app.mystery.sealed")}</span>
+              {chosen === card.token && <span className="mt-2 text-xs text-black/50" role="status" aria-live="polite">{t("app.mystery.opening")}</span>}
             </button>
           </form>
         );

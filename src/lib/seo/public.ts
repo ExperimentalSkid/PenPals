@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import type { AppLocale } from "@/i18n/config";
 
 export type SeoSurfaceDimension = "country" | "language" | "interest";
 
@@ -120,14 +121,43 @@ export async function loadPublicSeoSitemap(): Promise<SeoSitemapRoute[]> {
   });
 }
 
-export function seoSurfaceTitle(dimension: SeoSurfaceDimension, name: string): string {
+export function localizedPublicPath(path: string, locale: AppLocale): string {
+  if (locale === "en") return path;
+  return path === "/" ? "/es" : `/es${path}`;
+}
+
+export function localizedAlternates(path: string) {
+  const origin = seoSiteOrigin();
+  return {
+    canonical: `${origin}${path}`,
+    languages: {
+      en: `${origin}${localizedPublicPath(path, "en")}`,
+      es: `${origin}${localizedPublicPath(path, "es")}`,
+      "x-default": `${origin}${localizedPublicPath(path, "en")}`,
+    },
+  };
+}
+
+export function seoSurfaceTitle(dimension: SeoSurfaceDimension, name: string, locale: AppLocale = "en"): string {
+  if (locale === "es") {
+    if (dimension === "country") return `Amigos por correspondencia en ${name} | pen-pals.net`;
+    if (dimension === "language") return `Amigos por correspondencia que hablan ${name} | pen-pals.net`;
+    return `Amigos por correspondencia interesados en ${name} | pen-pals.net`;
+  }
   if (dimension === "country") return `Pen pals in ${name} | pen-pals.net`;
   if (dimension === "language") return `${name}-speaking pen pals | pen-pals.net`;
   return `Pen pals interested in ${name} | pen-pals.net`;
 }
 
-export function seoSurfaceDescription(dimension: SeoSurfaceDimension, name: string, memberCount: number): string {
-  const cohort = `${memberCount.toLocaleString("en-US")} Pen-Pals.net member${memberCount === 1 ? "" : "s"}`;
+export function seoSurfaceDescription(dimension: SeoSurfaceDimension, name: string, memberCount: number, locale: AppLocale = "en"): string {
+  const count = memberCount.toLocaleString(locale === "es" ? "es-ES" : "en-US");
+  if (locale === "es") {
+    const cohort = `${count} ${memberCount === 1 ? "miembro" : "miembros"} de Pen-Pals.net`;
+    if (dimension === "country") return `Descubre qué interesa a ${cohort} en ${name} y cómo conectan con otras personas.`;
+    if (dimension === "language") return `Descubre qué interesa a ${cohort} que hablan ${name} y cómo conectan con otras personas.`;
+    return `Descubre cómo conectan en Pen-Pals.net ${cohort} interesados en ${name}.`;
+  }
+  const cohort = `${count} Pen-Pals.net member${memberCount === 1 ? "" : "s"}`;
   if (dimension === "country") return `Discover what ${cohort} in ${name} are interested in and how they connect.`;
   if (dimension === "language") return `Discover what ${cohort} who speak ${name} are interested in and how they connect.`;
   return `Discover how ${cohort} interested in ${name} connect across the Pen-Pals.net community.`;
@@ -146,8 +176,9 @@ export function seoSiteOrigin(): string {
   return "http://localhost:3000";
 }
 
-export function seoSurfacePath(dimension: SeoSurfaceDimension, slug: string): string {
-  return `/${dimension}/${encodeURIComponent(slug)}`;
+export function seoSurfacePath(dimension: SeoSurfaceDimension, slug: string, locale: AppLocale = "en"): string {
+  const path = `/${dimension}/${encodeURIComponent(slug)}`;
+  return localizedPublicPath(path, locale);
 }
 
 export function seoSurfaceMetadata(
@@ -155,20 +186,35 @@ export function seoSurfaceMetadata(
   surface: SeoSurface | null,
   requestedSlug?: string,
   hasQueryParams = false,
+  locale: AppLocale = "en",
 ): Metadata {
   if (!surface) return { title: "pen-pals.net", robots: { index: false, follow: false } };
-  const path = seoSurfacePath(dimension, surface.canonical_slug);
+  const englishPath = `/${dimension}/${encodeURIComponent(surface.canonical_slug)}`;
+  const path = seoSurfacePath(dimension, surface.canonical_slug, locale);
   const isCanonicalRequest = requestedSlug === undefined || requestedSlug === surface.canonical_slug;
+  const title = seoSurfaceTitle(dimension, surface.canonical_name, locale);
+  const description = seoSurfaceDescription(dimension, surface.canonical_name, surface.member_count, locale);
   return {
-    title: seoSurfaceTitle(dimension, surface.canonical_name),
-    description: seoSurfaceDescription(dimension, surface.canonical_name, surface.member_count),
-    alternates: { canonical: `${seoSiteOrigin()}${path}` },
+    title,
+    description,
+    alternates: {
+      canonical: `${seoSiteOrigin()}${path}`,
+      languages: {
+        en: `${seoSiteOrigin()}${localizedPublicPath(englishPath, "en")}`,
+        es: `${seoSiteOrigin()}${localizedPublicPath(englishPath, "es")}`,
+        "x-default": `${seoSiteOrigin()}${localizedPublicPath(englishPath, "en")}`,
+      },
+    },
     robots: { index: isCanonicalRequest && !hasQueryParams, follow: true },
     openGraph: {
-      title: seoSurfaceTitle(dimension, surface.canonical_name),
-      description: seoSurfaceDescription(dimension, surface.canonical_name, surface.member_count),
+      title,
+      description,
       url: `${seoSiteOrigin()}${path}`,
       type: "website",
+      locale: locale === "es" ? "es_ES" : "en_US",
+      alternateLocale: [locale === "es" ? "en_US" : "es_ES"],
+      images: [{ url: "/assets/brand/social-preview-1200x630.png", width: 1200, height: 630, alt: "pen-pals.net" }],
     },
+    twitter: { card: "summary_large_image", title, description, images: ["/assets/brand/social-preview-1200x630.png"] },
   };
 }

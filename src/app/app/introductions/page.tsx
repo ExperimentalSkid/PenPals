@@ -10,6 +10,7 @@ import CountryFlag from "@/app/components/CountryFlag";
 import IntroductionSort from "./IntroductionSort";
 import { replyToIntroduction, declineIntroduction } from "@/app/app/messages/actions";
 import { submitReport } from "@/app/app/reports/actions";
+import { getPageI18n } from "@/i18n/server";
 
 type SearchValue = string | string[] | undefined;
 
@@ -36,6 +37,7 @@ function dateLabel(value: string) {
 }
 
 export default async function Introductions({ searchParams }: { searchParams?: Promise<Record<string, SearchValue>> }) {
+  const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
@@ -96,27 +98,27 @@ export default async function Introductions({ searchParams }: { searchParams?: P
   };
 
   return (
-    <main className="mx-auto min-h-full w-full max-w-[1580px] bg-[#f7f5ef] px-6 py-10 text-[#16251f] sm:px-8 sm:py-12 lg:px-10 lg:py-14 xl:px-12 2xl:px-16">
+    <main lang={locale} className="mx-auto min-h-full w-full max-w-[1580px] bg-[#f7f5ef] px-6 py-10 text-primary sm:px-8 sm:py-12 lg:px-10 lg:py-14 xl:px-12 2xl:px-16">
       <header>
-        <p className="text-xs font-bold uppercase tracking-[.22em] text-[#087456]">Your inbox</p>
-        <h1 className="mt-4 font-serif text-[clamp(3.2rem,5vw,5.2rem)] leading-[.95] tracking-[-0.045em] text-[#10231d]">Introductions</h1>
-        <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">Thoughtful first notes, kept separate from your conversations.</p>
+        <p className="eyebrow">{t("app.introductions.eyebrow")}</p>
+        <h1 className="page-title-display mt-4">{t("app.introductions.title")}</h1>
+        <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">{t("app.introductions.intro")}</p>
       </header>
-      {errorMessage && <p role="alert" className="mt-6 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">{errorMessage}</p>}
-      {first(params.reported) === "1" && <p role="status" className="mt-4 border-l-2 border-[#087456] px-3 py-2 text-sm text-[#075d46]">Thanks for letting us know. We&apos;ll review your report.</p>}
+      {errorMessage && <p role="alert" className="notice notice-error mt-6">{errorMessage}</p>}
+      {first(params.reported) === "1" && <p role="status" className="notice notice-success mt-4">{t("app.introductions.reported")}</p>}
 
       <section aria-label="How introductions work" className="mt-10 grid gap-0 rounded-[22px] border border-[#eeebe3] bg-[#fbfaf7]/80 px-5 py-2 shadow-sm md:grid-cols-4 md:px-3 md:py-5">
-        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="sprout" /></span><div><p className="text-sm font-semibold text-[#20372d]">They wrote first</p><p className="mt-1 text-sm leading-6 text-black/60">They&apos;re kept separate until you choose to reply.</p></div></div>
-        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="book" /></span><div><p className="text-sm font-semibold text-[#20372d]">Read at your pace</p><p className="mt-1 text-sm leading-6 text-black/60">Open an intro when you&apos;re ready.</p></div></div>
-        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="send" /></span><div><p className="text-sm font-semibold text-[#20372d]">Start a conversation</p><p className="mt-1 text-sm leading-6 text-black/60">Reply to continue.</p></div></div>
-        <div className="flex items-start gap-4 px-2 py-4 md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-[#39745f]"><IntroIcon name="shield" /></span><div><p className="text-sm font-semibold text-[#20372d]">You&apos;re in control</p><p className="mt-1 text-sm leading-6 text-black/60">Report or ignore anything that feels wrong.</p></div></div>
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-brand"><IntroIcon name="sprout" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.wroteFirst")}</p><p className="section-description mt-1">{t("app.introductions.wroteFirstBody")}</p></div></div>
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-brand"><IntroIcon name="book" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.pace")}</p><p className="section-description mt-1">{t("app.introductions.paceBody")}</p></div></div>
+        <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-brand"><IntroIcon name="send" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.start")}</p><p className="section-description mt-1">{t("app.introductions.startBody")}</p></div></div>
+        <div className="flex items-start gap-4 px-2 py-4 md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-brand"><IntroIcon name="shield" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.control")}</p><p className="section-description mt-1">{t("app.introductions.controlBody")}</p></div></div>
       </section>
 
       <div className="mt-8 flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
         <nav aria-label="Introduction filters" className="flex flex-wrap items-center gap-2 sm:gap-5">
-          <Link href={filterHref("all")} aria-current={activeStatus === "all" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeStatus === "all" ? "bg-[#fffdfa] text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>All ({allRows.length})</Link>
-          <Link href={filterHref("pending")} aria-current={activeStatus === "pending" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "pending" ? "bg-[#fffdfa] font-semibold text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>Pending ({pendingCount})</Link>
-          <Link href={filterHref("replied")} aria-current={activeStatus === "replied" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "replied" ? "bg-[#fffdfa] font-semibold text-[#075d46] shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-[#075d46]"}`}>Replied ({repliedCount})</Link>
+          <Link href={filterHref("all")} aria-current={activeStatus === "all" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeStatus === "all" ? "bg-[#fffdfa] text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>All ({allRows.length})</Link>
+          <Link href={filterHref("pending")} aria-current={activeStatus === "pending" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "pending" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>Pending ({pendingCount})</Link>
+          <Link href={filterHref("replied")} aria-current={activeStatus === "replied" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "replied" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>Replied ({repliedCount})</Link>
         </nav>
         <IntroductionSort activeSort={activeSort} activeStatus={activeStatus} />
       </div>
@@ -136,17 +138,17 @@ export default async function Introductions({ searchParams }: { searchParams?: P
               <div className="min-w-0 p-5 sm:p-7">
                 <div className="flex min-w-0 items-start gap-5">
                   <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full border border-[#ded8cc] bg-[#e8ece4] sm:h-32 sm:w-32">
-                    {person?.photo ? <Image src={person.photo} alt={`${displayName} profile photo`} fill sizes="128px" unoptimized={isSignedAvatarUrl(person.photo)} className="object-cover" /> : <span role="img" aria-label={`${displayName} profile photo unavailable`} className="flex h-full items-center justify-center font-serif text-4xl text-[#557264]">{displayName.trim().charAt(0).toUpperCase() || "·"}</span>}
+                    {person?.photo ? <Image src={person.photo} alt={`${displayName} profile photo`} fill sizes="128px" unoptimized={isSignedAvatarUrl(person.photo)} className="object-cover" /> : <span role="img" aria-label={`${displayName} profile photo unavailable`} className="flex h-full items-center justify-center font-serif text-4xl text-muted">{displayName.trim().charAt(0).toUpperCase() || "·"}</span>}
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-baseline justify-between gap-3">
-                      <h2 className="min-w-0 font-serif text-[clamp(1.7rem,2.4vw,2.35rem)] leading-tight tracking-[-0.025em] text-[#10231d]">
-                        {person?.username ? <Link href={`/app/profile/${encodeURIComponent(person.username)}?from=introductions`} className="break-words hover:text-[#075d46] hover:underline">{displayName}{ageLabel}</Link> : <span>{displayName}{ageLabel}</span>}
+                      <h2 className="min-w-0 font-serif text-[clamp(1.7rem,2.4vw,2.35rem)] leading-tight tracking-[-0.025em] text-primary">
+                        {person?.username ? <Link href={`/app/profile/${encodeURIComponent(person.username)}?from=introductions`} className="break-words hover:text-brand hover:underline">{displayName}{ageLabel}</Link> : <span>{displayName}{ageLabel}</span>}
                       </h2>
                       <time className="shrink-0 text-sm text-black/45" dateTime={row.created_at}>{dateLabel(row.created_at)}</time>
                     </div>
                     {person?.location_label && <p className="mt-2 flex items-center gap-2 text-sm text-black/60"><CountryFlag code={person.country_code} countryName={countryName} /><span>{person.location_label}</span></p>}
-                    <blockquote className="mt-6 whitespace-pre-wrap font-serif text-[clamp(1.25rem,1.8vw,1.6rem)] leading-8 tracking-[-0.01em] text-[#075d46]">“{row.icebreaker}”</blockquote>
+                    <blockquote className="mt-6 whitespace-pre-wrap font-serif text-[clamp(1.25rem,1.8vw,1.6rem)] leading-8 tracking-[-0.01em] text-brand">“{row.icebreaker}”</blockquote>
                     <div className="mt-5 flex flex-wrap items-center gap-3">
                       <span className={`inline-flex items-center gap-2 rounded-md px-3 py-1.5 text-xs font-semibold uppercase tracking-[.11em] ${pendingIntro ? "bg-[#fae3b8] text-[#93621b]" : replied ? "bg-[#e6f0e7] text-[#276b50]" : "bg-[#eef0ea] text-black/50"}`}><span aria-hidden="true" className="text-sm">{pendingIntro ? "◷" : replied ? "✓" : "·"}</span>{row.status}</span>
                       {replied && <span className="text-sm text-black/50">You replied{row.conversation_id_legacy ? ` on ${dateLabel(row.created_at)}` : ""}</span>}
@@ -154,40 +156,40 @@ export default async function Introductions({ searchParams }: { searchParams?: P
                   </div>
                 </div>
                 <details className="mt-7 text-sm">
-                  <summary className="cursor-pointer list-none text-black/45 transition hover:text-black/70"><span aria-hidden="true" className="mr-2">▸</span>Report introduction</summary>
+                  <summary className="cursor-pointer list-none text-black/45 transition hover:text-black/70"><span aria-hidden="true" className="mr-2">▸</span>{t("app.introductions.report")}</summary>
                   <form action={submitReport} className="mt-4 max-w-lg space-y-3 border-l border-black/10 pl-4">
                     <input type="hidden" name="target_type" value="introduction" />
                     <input type="hidden" name="target_id" value={row.id} />
                     <input type="hidden" name="return_to" value="/app/introductions" />
-                    <select name="reason" className="field w-full" aria-label="Report reason"><option value="spam">Spam</option><option value="scam/fraud">Scam or fraud</option><option value="harassment">Harassment</option><option value="sexual/inappropriate content">Sexual or inappropriate content</option><option value="hate/abuse">Hate or abuse</option><option value="fake profile/impersonation">Fake profile or impersonation</option><option value="underage concern">Underage concern</option><option value="other">Other</option></select>
-                    <textarea name="details" aria-label="Report details" className="field min-h-24 w-full" placeholder="Tell us what happened (optional)" />
-                    {pending && <label className="flex items-center gap-2 text-sm text-black/60"><input type="checkbox" name="decline_pending" /> Report and decline</label>}
-                    <button className="rounded-md border border-black/15 px-3 py-2 text-sm text-black/65 hover:bg-black/[0.04]">Submit introduction report</button>
+                    <select name="reason" className="field w-full" aria-label={t("app.reports.reason")}><option value="spam">{t("app.reports.spam")}</option><option value="scam/fraud">{t("app.reports.scam")}</option><option value="harassment">{t("app.reports.harassment")}</option><option value="sexual/inappropriate content">{t("app.reports.sexual")}</option><option value="hate/abuse">{t("app.reports.hate")}</option><option value="fake profile/impersonation">{t("app.reports.fake")}</option><option value="underage concern">{t("app.reports.underage")}</option><option value="other">{t("app.reports.other")}</option></select>
+                    <textarea name="details" aria-label={t("app.reports.details")} className="field min-h-24 w-full" placeholder={t("app.reports.details")} />
+                    {pending && <label className="flex items-center gap-2 text-sm text-black/60"><input type="checkbox" name="decline_pending" /> {t("app.introductions.reportDecline")}</label>}
+                    <button className="rounded-md border border-black/15 px-3 py-2 text-sm text-black/65 hover:bg-black/[0.04]">{t("app.introductions.report")}</button>
                   </form>
                 </details>
               </div>
 
               <aside className="flex flex-col justify-center border-t border-black/10 bg-[#fcfbf7] p-5 sm:p-7 lg:border-l lg:border-t-0">
                 {pending ? <>
-                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-[#087456]"><IntroIcon name="sparkle" /></span><div><p className="font-semibold text-[#20372d]">First impression</p><p className="mt-1 text-sm leading-6 text-black/60">They&apos;re curious about connecting with you.</p></div></div>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-brand"><IntroIcon name="sparkle" /></span><div><p className="font-semibold text-primary">{t("app.introductions.firstImpression")}</p><p className="section-description mt-1">{t("app.introductions.curious")}</p></div></div>
                   <details className="mt-7">
-                    <summary className="btn-primary flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md px-4 py-2.5 text-center text-sm font-medium">Open introduction</summary>
+                    <summary className="btn-primary flex min-h-11 cursor-pointer list-none items-center justify-center rounded-md px-4 py-2.5 text-center text-sm font-medium">{t("app.introductions.open")}</summary>
                     <form action={replyToIntroduction} className="mt-3 space-y-2">
                       <input type="hidden" name="introduction_id" value={row.id} />
-                      <label htmlFor={`reply-${row.id}`} className="sr-only">Reply to introduction</label>
+                      <label htmlFor={`reply-${row.id}`} className="sr-only">{t("app.introductions.reply")}</label>
                       <textarea id={`reply-${row.id}`} name="reply" required className="field min-h-24 w-full text-sm" placeholder="Write a reply…" />
-                      <button className="btn-primary w-full px-4 py-2.5 text-sm">Reply to introduction</button>
+                      <button className="btn-primary w-full px-4 py-2.5 text-sm">{t("app.introductions.reply")}</button>
                     </form>
                   </details>
-                  <form action={declineIntroduction} className="mt-3"><input type="hidden" name="introduction_id" value={row.id} /><button className="w-full px-4 py-2 text-sm text-black/55 hover:text-black/75">Not interested</button></form>
+                  <form action={declineIntroduction} className="mt-3"><input type="hidden" name="introduction_id" value={row.id} /><button className="w-full px-4 py-2 text-sm text-black/55 hover:text-black/75">{t("app.introductions.notInterested")}</button></form>
                 </> : pendingIntro ? <>
-                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-[#087456]"><IntroIcon name="clock" /></span><div><p className="font-semibold text-[#20372d]">Waiting for a reply</p><p className="mt-1 text-sm leading-6 text-black/60">Your introduction is on its way to them.</p></div></div>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#f5f0e7] text-brand"><IntroIcon name="clock" /></span><div><p className="font-semibold text-primary">{t("app.introductions.waiting")}</p><p className="section-description mt-1">{t("app.introductions.waitingBody")}</p></div></div>
                 </> : replied && row.conversation_id_legacy ? <>
-                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f0e8] text-[#087456]"><IntroIcon name="send" /></span><div><p className="font-semibold text-[#20372d]">Conversation started</p><p className="mt-1 text-sm leading-6 text-black/60">You replied. Continue the conversation.</p></div></div>
-                  <Link href={`/app/messages/${encodeURIComponent(row.conversation_id_legacy)}`} className="btn-secondary mt-7 inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm">Open conversation</Link>
-                  <span className="mt-3 text-center text-sm text-black/45">Not interested</span>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#e8f0e8] text-brand"><IntroIcon name="send" /></span><div><p className="font-semibold text-primary">{t("app.introductions.started")}</p><p className="section-description mt-1">{t("app.introductions.startedBody")}</p></div></div>
+                  <Link href={`/app/messages/${encodeURIComponent(row.conversation_id_legacy)}`} className="btn-secondary mt-7 inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm">{t("app.introductions.openConversation")}</Link>
+                  <span className="mt-3 text-center text-sm text-black/45">{t("app.introductions.notInterested")}</span>
                 </> : <>
-                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef0ea] text-[#557264]"><IntroIcon name="clock" /></span><div><p className="font-semibold text-[#20372d]">{row.status === "expired" ? "Introduction expired" : "Introduction closed"}</p><p className="mt-1 text-sm leading-6 text-black/60">This first note is no longer active.</p></div></div>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef0ea] text-muted"><IntroIcon name="clock" /></span><div><p className="font-semibold text-primary">{row.status === "expired" ? "Introduction expired" : "Introduction closed"}</p><p className="section-description mt-1">{t("app.introductions.inactive")}</p></div></div>
                 </>}
               </aside>
             </article>
@@ -196,7 +198,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
         {!visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? "No pending introductions right now." : activeStatus === "replied" ? "No replied introductions yet." : "No introductions yet."}</p>}
       </section>
 
-      <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-[#39745f]"><IntroIcon name="sprout" /></span>Kindness goes a long way. A thoughtful reply can be someone&apos;s favorite part of their day.</p></aside>
+      <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-brand"><IntroIcon name="sprout" /></span>{t("app.introductions.kindness")}</p></aside>
     </main>
   );
 }

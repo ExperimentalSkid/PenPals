@@ -39,25 +39,25 @@ export default async function AdminInbox({ searchParams }: { searchParams: Promi
     </AdminHeader>
     <form className="admin-toolbar flex flex-wrap items-end gap-3" aria-label="Admin escalation filters">
       <label className="text-sm text-black/60">Status<select name="status" defaultValue={status} className="field mt-2 block w-auto"><option value="open">Open escalations</option><option value="resolved">Resolved</option><option value="dismissed">Dismissed</option></select></label>
-      <button className="btn-primary px-4 py-2.5 text-sm">Apply inbox filter</button>
+      <button className="btn-primary px-4 py-2.5 text-sm">Apply filters</button>
     </form>
-    {filters.error && <p role="alert" className="mt-5 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">{filters.error}</p>}
-    {error && <p role="alert" className="mt-5 border-l-2 border-red-400 px-3 py-2 text-sm text-red-700">The Admin Inbox could not be loaded.</p>}
+    {filters.error && <p role="alert" className="notice notice-error mt-5">{filters.error}</p>}
+    {error && <p role="alert" className="notice notice-error mt-5">The Admin Inbox could not be loaded.</p>}
     <section className="admin-section mt-8" aria-label="Escalated moderation cases">
       {cases.length ? <div className="admin-table">
         <div className="admin-table-head md:grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_180px]"><span>Case / target</span><span>Escalation</span><span>Priority · status</span></div>
         {cases.map((item: any) => <Link key={item.id} href={withAdminReturnTo(`/app/admin/cases/${item.id}`, queueContext)} className="admin-row block">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.2fr)_180px] md:items-center">
             <div>
-              <div className="flex flex-wrap items-center gap-3"><p className="font-serif text-xl text-[#10231d]">{item.subject_display_name || item.subject_username || "Unidentified account"}</p><StatusChip value={labelFor(item.status)} tone={toneForStatus(item.status)} /></div>
+              <div className="flex flex-wrap items-center gap-3"><p className="subsection-title">{item.subject_display_name || item.subject_username || "Unidentified account"}</p><StatusChip value={labelFor(item.status)} tone={toneForStatus(item.status)} /></div>
               <p className="mt-1 text-sm text-black/60">{labelFor(item.primary_target_type)} · {item.report_count} report{item.report_count === 1 ? "" : "s"} · Case {String(item.id).slice(0, 8)}</p>
             </div>
-            <div className="text-sm"><p className="font-medium text-[#10231d]">{item.escalation_reason || "Reason not recorded"}</p><p className="mt-1 text-xs text-black/50">Escalated by {item.escalated_by_name || "Staff member"} · {dateLabel(item.escalated_at)}</p></div>
-            <div className="text-xs text-black/50"><p className="font-semibold text-[#10231d]">Priority {item.priority}</p><p className="mt-1">{item.assigned_staff_name ? `Owned by ${item.assigned_staff_name}` : "Unassigned"}</p><p className="mt-1 text-[#087456]">Open full case →</p></div>
+            <div className="text-sm"><p className="font-medium text-primary">{item.escalation_reason || "Reason not recorded"}</p><p className="mt-1 text-xs text-black/50">Escalated by {item.escalated_by_name || "Staff member"} · {dateLabel(item.escalated_at)}</p></div>
+            <div className="text-xs text-black/50"><p className="font-semibold text-primary">Priority {item.priority}</p><p className="mt-1">{item.assigned_staff_name ? `Owned by ${item.assigned_staff_name}` : "Unassigned"}</p><p className="mt-1 text-brand">Open full case →</p></div>
           </div>
         </Link>)}
       </div> : <div className="border-y border-black/10 py-12 text-sm text-black/50"><p>{status === "open" ? "No open administrator escalations." : `No ${status} escalations found.`}</p><p className="mt-2 text-xs text-black/40">Moderator escalations appear here after a moderator provides a reason. Closed cases remain in the case history.</p></div>}
     </section>
-    <nav className="mt-8 flex items-center justify-between border-t border-black/10 pt-5 text-sm" aria-label="Admin Inbox pagination"><span className="text-black/50">Page {page} of {pageCount}</span><div className="flex gap-4">{page > 1 && <Link href={listHref(page - 1)} className="text-[#087456] hover:underline">Previous</Link>}{page < pageCount && <Link href={listHref(page + 1)} className="text-[#087456] hover:underline">Next</Link>}</div></nav>
+    <nav className="mt-8 flex items-center justify-between border-t border-black/10 pt-5 text-sm" aria-label="Admin Inbox pagination"><span className="text-black/50">Page {page} of {pageCount}</span><div className="flex gap-4">{page > 1 && <Link href={listHref(page - 1)} className="text-brand hover:underline">Previous</Link>}{page < pageCount && <Link href={listHref(page + 1)} className="text-brand hover:underline">Next</Link>}</div></nav>
   </AdminPage>;
 }

@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import DiscoverResults from "./DiscoverResults";
 import DiscoverFilters from "./DiscoverFilters";
 import { COUNTRY_OPTIONS, countryCodeForName } from "@/lib/countries";
+import { getPageI18n } from "@/i18n/server";
 
 const PAGE_SIZE = 6;
 
@@ -91,6 +92,7 @@ function queryPath(filters: Record<string, string>, page: number) {
 }
 
 export default async function Discover({ searchParams }: { searchParams: Promise<Record<string, SearchValue>> }) {
+  const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
@@ -224,56 +226,56 @@ export default async function Discover({ searchParams }: { searchParams: Promise
   };
 
   return (
-    <main className="mx-auto min-h-full w-full max-w-[1580px] bg-[#f7f5ef] px-6 py-12 text-[#16251f] sm:px-8 sm:py-14 lg:px-12 lg:py-16 xl:px-16">
+    <main lang={locale} className="mx-auto min-h-full w-full max-w-[1580px] bg-[#f7f5ef] px-6 py-12 text-primary sm:px-8 sm:py-14 lg:px-12 lg:py-16 xl:px-16">
       <div className="flex flex-wrap items-end justify-between gap-6">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[.24em] text-[#087456]">Discover</p>
-          <h1 className="mt-4 max-w-3xl font-serif text-[clamp(3.25rem,5vw,5.4rem)] leading-[0.94] tracking-[-0.045em] text-[#10231d]">Discover new pen pals.</h1>
+          <p className="eyebrow">{t("app.discover.eyebrow")}</p>
+          <h1 className="page-title-display mt-4 max-w-3xl">{t("app.discover.title")}</h1>
         </div>
-        <Link href="/app/discover/mystery" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#087456]/35 bg-[#fbfaf6] px-4 py-2.5 text-sm font-semibold text-[#075d46] transition hover:border-[#087456]/65 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087456]">
+        <Link href="/app/discover/mystery" className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#087456]/35 bg-[#fbfaf6] px-4 py-2.5 text-sm font-semibold text-brand transition hover:border-[#087456]/65 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087456]">
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="m4 7 5-4 3 4 3-4 5 4-4 5 4 5-5 4-3-4-3 4-5-4 4-5-4-5Z" /><circle cx="12" cy="12" r="2" /></svg>
-          Mystery Pick
+          {t("app.discover.mystery")}
         </Link>
       </div>
-      <p className="mt-5 max-w-xl text-lg leading-7 text-black/60 sm:text-xl">Browse member profiles from around the world. Find shared interests along the way.</p>
+      <p className="mt-5 max-w-xl text-lg leading-7 text-black/60 sm:text-xl">{t("app.discover.intro")}</p>
 
       <DiscoverFilters key={queryString} filters={filters} {...filterOptions} />
 
       <div className="mt-10 flex flex-wrap items-baseline justify-between gap-3 text-[15px] text-black/55">
-        <span>{totalCount} {totalCount === 1 ? "person" : "people"} found</span>
-        <span>Page {page} of {pageCount}</span>
+        <span>{t("app.discover.found", { count: totalCount, noun: totalCount === 1 ? t("app.discover.person") : t("app.discover.people") })}</span>
+        <span>{t("app.discover.page", { page, pages: pageCount })}</span>
       </div>
       {discoveryError ? (
         <div role="alert" className="mt-8 border-y border-red-900/15 bg-red-50/40 px-5 py-10 text-[#6f2a22] sm:px-7">
-          <p className="font-serif text-2xl text-[#54211b]">We couldn&apos;t load Discover right now.</p>
-          <p className="mt-2 text-sm leading-6 text-black/60">Your filters are still here. Try again soon.</p>
-          <Link href={queryString ? `/app/discover?${queryString}` : "/app/discover"} className="mt-5 inline-flex min-h-10 items-center rounded-md border border-[#087456]/40 px-4 py-2 text-sm font-semibold text-[#075d46] transition hover:bg-white/70">Try again</Link>
+          <p className="font-serif text-2xl text-[#54211b]">{t("app.discover.loadError")}</p>
+          <p className="section-description mt-2">{t("app.discover.filtersKept")}</p>
+          <Link href={queryString ? `/app/discover?${queryString}` : "/app/discover"} className="mt-5 inline-flex min-h-10 items-center rounded-md border border-[#087456]/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-white/70">{t("app.discover.tryAgain")}</Link>
         </div>
       ) : pageRows.length ? (
         <DiscoverResults profiles={pageRows} queryString={queryString} />
       ) : (
-        <p className="mt-8 border-y border-black/10 py-14 text-black/50">No people match these filters. Clear one or two to broaden your search.</p>
+        <p className="mt-8 border-y border-black/10 py-14 text-black/50">{t("app.discover.empty")}</p>
       )}
-      {pageCount > 1 && <nav aria-label="Discover pagination" className="mt-8 flex items-center justify-between border-t border-black/10 pt-6">
+      {pageCount > 1 && <nav aria-label={t("app.discover.pagination")} className="mt-8 flex items-center justify-between border-t border-black/10 pt-6">
           {page > 1 ? (
-            <Link href={queryPath(filters, page - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#d7d7cf] bg-[#fbfaf6] px-5 py-2.5 text-[15px] font-medium text-[#33443e] transition hover:border-[#087456]/55 hover:text-[#075d46] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087456]">
+            <Link href={queryPath(filters, page - 1)} className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#d7d7cf] bg-[#fbfaf6] px-5 py-2.5 text-[15px] font-medium text-primary transition hover:border-[#087456]/55 hover:text-brand focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087456]">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m14.5 5-7 7 7 7M8 12h9" /></svg>
-              Previous
+              {t("app.discover.previous")}
             </Link>
           ) : (
             <span className="inline-flex min-h-11 items-center gap-2 rounded-md border border-[#e1e0d8] bg-[#f8f7f2] px-5 py-2.5 text-[15px] font-medium text-black/30" aria-disabled="true">
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m14.5 5-7 7 7 7M8 12h9" /></svg>
-              Previous
+              {t("app.discover.previous")}
             </span>
           )}
           {page < pageCount ? (
             <Link href={queryPath(filters, page + 1)} className="btn-primary inline-flex min-h-11 items-center gap-2 rounded-md px-6 py-2.5 text-[15px]">
-              Next
+              {t("app.discover.next")}
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m9.5 5 7 7-7 7M16 12H7" /></svg>
             </Link>
           ) : (
             <span className="inline-flex min-h-11 items-center gap-2 rounded-md bg-[#e1e8e1] px-6 py-2.5 text-[15px] font-medium text-[#6d8177]" aria-disabled="true">
-              Next
+              {t("app.discover.next")}
               <svg aria-hidden="true" viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="m9.5 5 7 7-7 7M16 12H7" /></svg>
             </span>
           )}

@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getPageI18n } from "@/i18n/server";
 
 const TOPICS: Record<string, string> = {
   account_access: "account_access",
@@ -24,6 +25,7 @@ function clientKeyFromHeaders(requestHeaders: Headers) {
 }
 
 export async function submitPublicContact(formData: FormData) {
+  const { t } = await getPageI18n();
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const topic = TOPICS[String(formData.get("topic") ?? "").trim().toLowerCase()];
@@ -32,11 +34,11 @@ export async function submitPublicContact(formData: FormData) {
   const website = String(formData.get("website") ?? "").trim();
 
   if (website) redirect("/contact?sent=1");
-  if (name.length > 120) contactError("Use a shorter name.");
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) contactError("Enter a valid email address.");
-  if (!topic) contactError("Choose a topic.");
-  if (subject.length < 3 || subject.length > 200) contactError("Subject must be between 3 and 200 characters.");
-  if (message.length < 10 || message.length > 4000) contactError("Message must be between 10 and 4,000 characters.");
+  if (name.length > 120) contactError(t("server.contact.nameShorter"));
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) contactError(t("server.contact.emailValid"));
+  if (!topic) contactError(t("server.contact.topic"));
+  if (subject.length < 3 || subject.length > 200) contactError(t("server.contact.subjectLength"));
+  if (message.length < 10 || message.length > 4000) contactError(t("server.contact.messageLength"));
 
   const db = await createClient();
   const requestHeaders = await headers();
@@ -52,8 +54,8 @@ export async function submitPublicContact(formData: FormData) {
   if (error) {
     const lower = error.message?.toLowerCase() ?? "";
     const messageText = lower.includes("wait")
-      ? "Please wait before sending another message."
-      : "We couldn't send that message. Please try again.";
+      ? t("server.contact.wait")
+      : t("server.contact.failed");
     contactError(messageText);
   }
 

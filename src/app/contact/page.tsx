@@ -1,84 +1,60 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 import PublicInfoPage from "@/app/components/PublicInfoPage";
-import { seoSiteOrigin } from "@/lib/seo/public";
 import { submitPublicContact } from "./actions";
 import ContactSubmitButton from "./ContactSubmitButton";
+import { getPageI18n, resolveLocale } from "@/i18n/server";
+import { localizedPublicMetadata } from "@/lib/seo/localized-metadata";
+import { localizedPublicPath } from "@/lib/seo/public";
 
-const topics = [
-  ["account_access", "Account access"],
-  ["privacy_safety", "Privacy or safety"],
-  ["bug_report", "Bug report"],
-  ["feedback", "Feedback"],
-  ["other", "Other"],
-] as const;
+export async function generateMetadata() {
+  const locale = await resolveLocale();
+  return localizedPublicMetadata(locale, "/contact", {
+    en: { title: "Contact | pen-pals.net", description: "Contact pen-pals.net about account access, privacy, safety, bugs, feedback, or general questions." },
+    es: { title: "Contacto | pen-pals.net", description: "Contacta con pen-pals.net sobre acceso a la cuenta, privacidad, seguridad, errores, comentarios o preguntas generales." },
+  });
+}
 
-export const metadata: Metadata = {
-  title: "Contact | pen-pals.net",
-  description: "Contact pen-pals.net about account access, privacy, safety, bugs, feedback, or general questions.",
-  alternates: { canonical: `${seoSiteOrigin()}/contact` },
-  openGraph: {
-    title: "Contact | pen-pals.net",
-    description: "Contact pen-pals.net about account access, privacy, safety, bugs, feedback, or general questions.",
-    url: `${seoSiteOrigin()}/contact`,
-    type: "website",
-  },
-};
+const topicValues = ["account_access", "privacy_safety", "bug_report", "feedback", "other"] as const;
 
 export default async function ContactPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string }> }) {
-  const query = await searchParams;
+  const [query, { locale, t }] = await Promise.all([searchParams, getPageI18n()]);
+  const topicLabels = {
+    account_access: t("contact.topics.account"),
+    privacy_safety: t("contact.topics.privacy"),
+    bug_report: t("contact.topics.bug"),
+    feedback: t("contact.topics.feedback"),
+    other: t("contact.topics.other"),
+  };
 
   return (
-    <PublicInfoPage
-      eyebrow="Contact"
-      title="Contact pen-pals.net"
-      intro="Send a message if you need help before you can sign in, or if you have a privacy, safety, bug, or account question."
-    >
+    <PublicInfoPage eyebrow={t("contact.eyebrow")} title={t("contact.title")} intro={t("contact.intro")}>
       {query.sent ? (
         <section className="rounded-2xl border border-[#D9D3C8] bg-white/55 p-6 shadow-[0_8px_24px_rgba(16,42,67,.035)]">
-          <p className="eyebrow">Message sent</p>
-          <h2 className="mt-2 font-serif text-3xl text-[#102A43]">Thanks, we have your message.</h2>
-          <p className="mt-3 max-w-2xl text-sm leading-7 text-[#66717C] sm:text-base">If a reply is needed, we will use the email address you provided.</p>
+          <p className="eyebrow">{t("contact.sentEyebrow")}</p>
+          <h2 className="section-title-large mt-2">{t("contact.sentTitle")}</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted sm:text-base">{t("contact.sentBody")}</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Link href="/" className="btn-primary">Back to home</Link>
-            <Link href="/faq" className="btn-secondary">Read the FAQ</Link>
+            <Link href={localizedPublicPath("/", locale)} className="btn-primary">{t("contact.backHome")}</Link>
+            <Link href={localizedPublicPath("/faq", locale)} className="btn-secondary">{t("contact.readFaq")}</Link>
           </div>
         </section>
       ) : (
         <section className="rounded-2xl border border-[#D9D3C8] bg-white/55 p-5 shadow-[0_8px_24px_rgba(16,42,67,.035)] sm:p-7">
           <div className="border-b border-[#D9D3C8] pb-5">
-            <h2 className="font-serif text-3xl text-[#102A43]">Send a message</h2>
-            <p className="mt-2 text-sm leading-6 text-[#66717C]">Do not include passwords, payment details, or private verification codes.</p>
+            <h2 className="section-title-large">{t("contact.formTitle")}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted">{t("contact.warning")}</p>
           </div>
-          {query.error && <p className="mt-6 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm leading-6 text-red-700" role="alert">{query.error}</p>}
+          {query.error && <p className="notice notice-error mt-6" role="alert">{query.error}</p>}
           <form action={submitPublicContact} className="mt-6 space-y-5">
             <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
-            <label className="field-label">
-              Name <span className="font-normal text-black/45">(optional)</span>
-              <input name="name" maxLength={120} autoComplete="name" className="field mt-2 block w-full" />
-            </label>
-            <label className="field-label">
-              Email
-              <input name="email" type="email" maxLength={254} autoComplete="email" required className="field mt-2 block w-full" />
-            </label>
-            <label className="field-label">
-              Topic
-              <select name="topic" required defaultValue="" className="field mt-2 block w-full">
-                <option value="" disabled>Choose a topic</option>
-                {topics.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-              </select>
-            </label>
-            <label className="field-label">
-              Subject
-              <input name="subject" required minLength={3} maxLength={200} className="field mt-2 block w-full" placeholder="A short summary" />
-            </label>
-            <label className="field-label">
-              Message
-              <textarea name="message" required minLength={10} maxLength={4000} rows={8} className="field mt-2 block w-full resize-y leading-7" placeholder="Tell us what happened or what you need help with." />
-            </label>
+            <label className="field-label">{t("contact.name")} <span className="font-normal text-black/45">({t("common.optional")})</span><input name="name" maxLength={120} autoComplete="name" className="field mt-2 block w-full" /></label>
+            <label className="field-label">{t("common.email")}<input name="email" type="email" maxLength={254} autoComplete="email" required className="field mt-2 block w-full" /></label>
+            <label className="field-label">{t("contact.topic")}<select name="topic" required defaultValue="" className="field mt-2 block w-full"><option value="" disabled>{t("contact.chooseTopic")}</option>{topicValues.map((value) => <option key={value} value={value}>{topicLabels[value]}</option>)}</select></label>
+            <label className="field-label">{t("contact.subject")}<input name="subject" required minLength={3} maxLength={200} className="field mt-2 block w-full" placeholder={t("contact.subjectPlaceholder")} /></label>
+            <label className="field-label">{t("contact.message")}<textarea name="message" required minLength={10} maxLength={4000} rows={8} className="field mt-2 block w-full resize-y leading-7" placeholder={t("contact.messagePlaceholder")} /></label>
             <div className="flex flex-wrap items-center justify-between gap-4 border-t border-[#D9D3C8] pt-5">
-              <p className="max-w-md text-xs leading-5 text-black/50">If you can already sign in, Help &amp; support inside the app is the best place for account-specific requests.</p>
-              <ContactSubmitButton />
+              <p className="max-w-md text-xs leading-5 text-black/50">{t("contact.supportHint")}</p>
+              <ContactSubmitButton sendingLabel={t("contact.sending")} sendLabel={t("contact.send")} />
             </div>
           </form>
         </section>

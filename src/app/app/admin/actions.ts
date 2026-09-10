@@ -195,3 +195,53 @@ export async function upsertModerationDetectionRule(formData: FormData) {
   if (error) redirect(`/app/admin/moderation-rules?error=${encodeURIComponent(error.message ?? "The detection rule could not be saved.")}`);
   redirect("/app/admin/moderation-rules?updated=1");
 }
+
+export async function setAdminRetentionPolicy(formData: FormData) {
+  const { db } = await requireAdmin();
+  const category = String(formData.get("category") ?? "");
+  const days = Number(formData.get("days") ?? 0);
+  const purpose = String(formData.get("purpose") ?? "").trim();
+  const legalBasis = String(formData.get("legal_basis") ?? "").trim();
+  const enabled = String(formData.get("enabled") ?? "") === "on";
+  if (!["auth_security", "moderation_audit", "moderation_evidence"].includes(category) || !Number.isInteger(days) || days < 1 || days > 36500 || !purpose || purpose.length > 2000 || !legalBasis || legalBasis.length > 2000) {
+    redirect(`/app/admin/privacy-retention?error=${encodeURIComponent("Choose a valid category and retention period, purpose, and legal basis.")}`);
+  }
+  const { error } = await db.rpc("set_data_retention_policy", {
+    policy_category: category,
+    policy_period: `${days} days`,
+    policy_purpose: purpose,
+    policy_legal_basis: legalBasis,
+    policy_enabled: enabled,
+  });
+  if (error) redirect(`/app/admin/privacy-retention?error=${encodeURIComponent(error.message ?? "Retention policy could not be saved.")}`);
+  revalidatePath("/app/admin/privacy-retention");
+  redirect("/app/admin/privacy-retention?updated=policy");
+}
+
+export async function createAdminRetentionHold(formData: FormData) {
+  const { db } = await requireAdmin();
+  const category = String(formData.get("category") ?? "");
+  const recordId = String(formData.get("record_id") ?? "").trim() || null;
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!["auth_security", "moderation_audit", "moderation_evidence"].includes(category) || reason.length < 1 || reason.length > 2000) {
+    redirect(`/app/admin/privacy-retention?error=${encodeURIComponent("Choose a valid category and provide a hold reason.")}`);
+  }
+  const { error } = await db.rpc("set_data_retention_hold", {
+    hold_category: category,
+    held_record_id: recordId,
+    hold_reason: reason,
+  });
+  if (error) redirect(`/app/admin/privacy-retention?error=${encodeURIComponent(error.message ?? "Retention hold could not be created.")}`);
+  revalidatePath("/app/admin/privacy-retention");
+  redirect("/app/admin/privacy-retention?updated=hold");
+}
+
+export async function releaseAdminRetentionHold(formData: FormData) {
+  const { db } = await requireAdmin();
+  const holdId = String(formData.get("hold_id") ?? "");
+  if (!holdId) redirect(`/app/admin/privacy-retention?error=${encodeURIComponent("Missing retention hold.")}`);
+  const { error } = await db.rpc("release_data_retention_hold", { hold_id: holdId });
+  if (error) redirect(`/app/admin/privacy-retention?error=${encodeURIComponent(error.message ?? "Retention hold could not be released.")}`);
+  revalidatePath("/app/admin/privacy-retention");
+  redirect("/app/admin/privacy-retention?updated=released");
+}

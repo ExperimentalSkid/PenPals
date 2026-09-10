@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslations } from "next-intl";
+
 import Link from "next/link";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -20,6 +22,7 @@ type Profile = {
 };
 
 export default function DiscoverResults({ profiles, queryString }: { profiles: Profile[]; queryString: string }) {
+  const t = useTranslations();
   const router = useRouter();
 
   useEffect(() => {
@@ -45,17 +48,17 @@ export default function DiscoverResults({ profiles, queryString }: { profiles: P
         const countryName = countryNameForCode(profile.country_code);
         return (
           <Link key={profile.id} href={`/profile/${encodeURIComponent(profile.username)}`} onClick={rememberFilters} className="group flex min-h-[148px] h-full flex-col rounded-md border border-[#deded5] bg-[#fbfaf6] px-6 py-6 transition-colors hover:border-[#087456]/60 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087456] md:px-7 md:py-7">
-            <h2 className="font-serif text-[1.55rem] font-normal leading-tight tracking-[-0.02em] text-[#10231d] group-hover:text-[#075d46]">
+            <h2 className="font-serif text-[1.55rem] font-normal leading-tight tracking-[-0.02em] text-primary group-hover:text-brand">
               {profile.display_name}{ageLabel}
             </h2>
             {location && <p className="mt-2 flex items-center gap-2 text-[14px] leading-5 text-black/55"><CountryFlag code={profile.country_code} countryName={countryName} /><span>{location}</span></p>}
-            <p className="mt-4 max-w-2xl font-serif text-[1.15rem] leading-7 text-[#075d46] md:text-[1.25rem]">
+            <p className="mt-4 max-w-2xl font-serif text-[1.15rem] leading-7 text-brand md:text-[1.25rem]">
               “{profile.quote || "Curious about the world and always happy to meet someone new."}”
             </p>
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
               {profile.interests.length ? profile.interests.map((interest) => (
-                <span key={interest} className="rounded-md bg-[#e9ede4] px-3 py-1.5 text-[13px] text-[#33443e]">{interest}</span>
-              )) : <span className="text-[13px] text-black/45">Open to new interests</span>}
+                <span key={interest} className="rounded-md bg-[#e9ede4] px-3 py-1.5 text-[13px] text-primary">{interest}</span>
+              )) : <span className="text-[13px] text-black/45">{t("app.discover.openInterests")}</span>}
             </div>
           </Link>
         );

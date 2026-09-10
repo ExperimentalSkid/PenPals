@@ -5,16 +5,28 @@ import { verificationSiteUrl, emailConfirmationOrigin } from "@/lib/verification
 import { cookies, headers } from "next/headers";
 import { createGoogleLoginIntent, googleLoginCallbackUrl, googleLoginIntentCookie, googleLoginIntentMaxAge, GoogleLoginConfigurationError } from "@/lib/auth/google-login";
 import { redirect } from "next/navigation";
+import { getPageI18n } from "@/i18n/server";
 
 const confirmationRedirect = async () => `${emailConfirmationOrigin(await headers())}/auth/confirm`;
 
+async function authClientIp() {
+  const requestHeaders = await headers();
+  const trusted = requestHeaders.get("x-real-ip")?.trim();
+  if (trusted) return trusted;
+  if (process.env.NODE_ENV !== "production") return requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() || null;
+  return null;
+}
+
 export async function signIn(formData: FormData) {
-  const supabase = await createClient();
+  const { t } = await getPageI18n();
+  const supabase = await createClient(await authClientIp());
+// After the login succeeds, before the redirect
+await supabase.auth.getSession();
   // Keep accepting the legacy `email` field while allowing the sign-in
   // surface to pass either a profile username or an email identifier.
   const identifier = String(formData.get("identifier") ?? formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
-  if (!identifier || !password) redirect("/sign-in?error=Enter%20your%20email%20or%20username%20and%20password.");
+  if (!identifier || !password) redirect(`/sign-in?error=${encodeURIComponent(t("server.auth.missingCredentials"))}`);
 
   // Let Supabase handle canonical email sign-ins first so its existing
   // confirmation/error semantics remain unchanged. Usernames and configured
@@ -41,7 +53,7 @@ export async function signIn(formData: FormData) {
     if (clientAddress) {
       const { data: clientAllowed, error: clientLimitError } = await supabase.rpc("consume_login_client_attempt", { p_client_key: clientAddress });
       if (clientLimitError || clientAllowed === false) {
-        redirect(`/sign-in?error=${encodeURIComponent("We couldn't sign you in. Please wait a moment and try again.")}`);
+        redirect(`/sign-in?error=${encodeURIComponent(t("server.auth.signInWait"))}`);
       }
     }
     const { data: resolvedEmail, error: resolveError } = await supabase.rpc("resolve_login_identifier", {
@@ -52,7 +64,7 @@ export async function signIn(formData: FormData) {
     if (resolveError || !canonicalEmail) {
       // Keep credential failures neutral so the sign-in surface does not
       // expose provider-specific details or account-enumeration hints.
-      redirect(`/sign-in?error=${encodeURIComponent("We couldn't sign you in. Check your email, username and password and try again.")}`);
+      redirect(`/sign-in?error=${encodeURIComponent(t("server.auth.signInCredentials"))}`);
     }
     ({ data, error } = await supabase.auth.signInWithPassword({ email: canonicalEmail, password }));
   }
@@ -61,33 +73,33 @@ export async function signIn(formData: FormData) {
     if (error.code === "email_not_confirmed" || error.message.toLowerCase().includes("email not confirmed")) redirect("/check-email");
     // Keep credential failures neutral so the sign-in surface does not expose
     // provider-specific details or account-enumeration hints.
-    redirect(`/sign-in?error=${encodeURIComponent("We couldn't sign you in. Check your email and password and try again.")}`);
+    redirect(`/sign-in?error=${encodeURIComponent(t("server.auth.signInEmailPassword"))}`);
   }
   if (!data.user?.email_confirmed_at) {
     await supabase.auth.signOut();
     redirect("/check-email");
   }
   const { data: ageRestricted, error: ageRestrictionError } = await supabase.rpc("is_current_user_age_restricted");
-  if (ageRestrictionError) redirect("/sign-in?error=Account%20unavailable");
+  if (ageRestrictionError) redirect(`/sign-in?error=${encodeURIComponent(t("server.auth.accountUnavailable"))}`);
   if (ageRestricted) redirect("/age-appeal");
   redirect("/app");
 }
 
 export async function signUp(formData: FormData) {
-  const supabase = await createClient();
+  const { locale, t } = await getPageI18n();
+  const supabase = await createClient(await authClientIp());
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const birthDate = String(formData.get("birth_date") ?? "");
   const { data: ageResult, error: ageError } = await supabase.rpc("age_gate_signup", { p_email: email, p_birth_date: birthDate || null });
-  if (ageError) redirect(`/sign-up?error=${encodeURIComponent("We couldn't verify your age right now. Please try again.")}`);
-  if (ageResult === "underage") redirect(`/sign-up?error=${encodeURIComponent("You must be at least 18 years old to use pen-pals.net.")}`);
-  if (ageResult === "restricted" || ageResult === "cooldown") redirect(`/sign-up?error=${encodeURIComponent("This email cannot currently be used to create an account.")}${ageResult === "restricted" ? "&appeal=1" : ""}`);
-  if (password.length < 8) redirect(`/sign-up?error=${encodeURIComponent("Choose a password with at least 8 characters.")}`);
+  if (ageError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.ageUnavailable"))}`);
+  if (ageResult === "underage") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.underage"))}`);
+  if (password.length < 8) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.passwordLength"))}`);
   try {
-    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect() } });
-    if (error) redirect(`/sign-up?error=${encodeURIComponent(error.message)}`);
+    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale } } });
+    if (error) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.signInEmailPassword"))}`);
   } catch (error) {
-    if (error instanceof VerificationConfigurationError) redirect("/sign-up?error=Email%20verification%20is%20temporarily%20unavailable.%20Please%20try%20again%20later.");
+    if (error instanceof VerificationConfigurationError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.emailVerificationUnavailable"))}`);
     throw error;
   }
   redirect("/check-email");
@@ -113,16 +125,17 @@ export async function requestPasswordReset(formData: FormData) {
 
 /** Updates a password from the authenticated recovery or settings session. */
 export async function updatePassword(formData: FormData) {
+  const { t } = await getPageI18n();
   const currentPassword = String(formData.get("current_password") ?? "");
   const password = String(formData.get("password") ?? "");
   const confirmation = String(formData.get("password_confirmation") ?? "");
-  if (password.length < 8) redirect("/update-password?error=Choose%20a%20password%20with%20at%20least%208%20characters.");
-  if (password !== confirmation) redirect("/update-password?error=Passwords%20do%20not%20match.");
+  if (password.length < 8) redirect(`/update-password?error=${encodeURIComponent(t("server.auth.passwordLength"))}`);
+  if (password !== confirmation) redirect(`/update-password?error=${encodeURIComponent(t("server.auth.passwordMismatch"))}`);
   const supabase = await createClient();
   const { data: userData, error: userError } = await supabase.auth.getUser();
   if (userError || !userData.user) redirect("/forgot-password?error=session");
   const { error } = await supabase.auth.updateUser(currentPassword ? { password, current_password: currentPassword } : { password });
-  if (error) redirect("/update-password?error=We%20couldn%27t%20update%20your%20password.%20Please%20try%20again.");
+  if (error) redirect(`/update-password?error=${encodeURIComponent(t("server.auth.passwordUpdateFailed"))}`);
   redirect("/update-password?updated=1");
 }
 
@@ -142,9 +155,10 @@ export async function changePassword(formData: FormData) {
 }
 
 export async function resendVerificationEmail(formData: FormData) {
+  const { t } = await getPageI18n();
   const supabase = await createClient();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  if (!email) redirect("/check-email?error=Enter the email you used to sign up.");
+  if (!email) redirect(`/check-email?error=${encodeURIComponent(t("server.auth.resendEmailRequired"))}`);
 
   // Keep the response generic so this endpoint cannot be used for account
   // enumeration. Supabase applies its own email-send rate limits as well.
@@ -154,9 +168,9 @@ export async function resendVerificationEmail(formData: FormData) {
       email,
       options: { emailRedirectTo: await confirmationRedirect() },
     });
-    if (error) redirect("/check-email?error=We couldn't resend that email yet. Please try again shortly.");
+    if (error) redirect(`/check-email?error=${encodeURIComponent(t("server.auth.resendFailed"))}`);
   } catch (error) {
-    if (error instanceof VerificationConfigurationError) redirect("/check-email?error=Email%20verification%20is%20temporarily%20unavailable.%20Please%20try%20again%20later.");
+    if (error instanceof VerificationConfigurationError) redirect(`/check-email?error=${encodeURIComponent(t("server.auth.emailVerificationUnavailable"))}`);
     throw error;
   }
   redirect("/check-email?sent=1");

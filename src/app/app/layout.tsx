@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -6,9 +7,16 @@ import PresenceProvider from "@/app/PresenceProvider";
 import AppNavigation from "./AppNavigation";
 import { ACTIONABLE_NOTIFICATION_TYPES } from "./notificationTypes";
 import BrandLogo from "@/app/components/BrandLogo";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 import { hasCompletedProfile } from "@/lib/profile-completeness";
+import { NextIntlClientProvider } from "next-intl";
+import { getPageI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 type UnreadNotificationRow = { type: string; related_id: string | null };
 type IntroductionState = { id: string; status: string | null; recipient_id: string | null };
@@ -18,6 +26,7 @@ function SignOutIcon() {
 }
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
+  const { locale, messages, t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
@@ -45,7 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   // every non-setup URL out of the normal app. This prevents the global
   // sidebar/content from distracting users during the gateway without
   // changing the completed-profile editing experience.
-  if (onboardingLocked) return <div className="min-h-screen bg-[#f7f5ef]">{children}</div>;
+  if (onboardingLocked) return <NextIntlClientProvider locale={locale} messages={messages}><div lang={locale} className="min-h-screen bg-[#f7f5ef]">{children}</div></NextIntlClientProvider>;
   // This is idempotent and only emits the existing actionable notification
   // once when a profile enters its TOTP re-verification grace period.
   await db.rpc("maybe_notify_profile_totp_reverification");
@@ -89,7 +98,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     .reduce((total, key) => total + Number(staffSummary?.[key] ?? 0), 0);
   const initial = (p?.display_name ?? p?.username ?? "P").trim().charAt(0).toUpperCase() || "P";
 
-  return <PresenceProvider userId={uid}><div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
+  return <NextIntlClientProvider locale={locale} messages={messages}><PresenceProvider userId={uid}><div lang={locale} className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
     <aside className="app-sidebar">
       <Link href="/app/discover" aria-label="pen-pals.net home" className="app-sidebar-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[9.5rem]" /></Link>
       {/* Staff routes remain deep-linkable: href="/app/admin/cases" is rendered by AppNavigation. */}
@@ -97,11 +106,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <div className="app-user-block">
         <Link href="/app/profile/setup" className="app-user-link">
           <span className="app-user-avatar" aria-hidden="true">{initial}</span>
-          <span className="min-w-0"><span className="block truncate text-sm font-semibold text-[#16251f]">{p?.display_name ?? "Your profile"}</span><span className="block truncate text-xs text-black/50">@{p?.username ?? "member"}</span></span>
+          <span className="min-w-0"><span className="block truncate text-sm font-semibold text-primary">{p?.display_name ?? t("app.shell.yourProfile")}</span><span className="block truncate text-xs text-black/50">@{p?.username ?? t("app.shell.member")}</span></span>
         </Link>
-        <form action={signOut} className="mt-3 border-t border-black/10 pt-3"><button className="app-signout" type="submit"><SignOutIcon /><span>Sign out</span></button></form>
+        <div className="mt-3 flex justify-center border-t border-black/10 pt-3"><LanguageSwitcher locale={locale} label={t("common.language")} /></div>
+        <form action={signOut} className="mt-3 border-t border-black/10 pt-3"><button className="app-signout" type="submit"><SignOutIcon /><span>{t("app.shell.signOut")}</span></button></form>
+        <div className="mt-3 flex items-center justify-center gap-2 border-t border-black/5 pt-3 text-[11px] text-black/40">
+          <Link href="/privacy" className="transition hover:text-[#073A73] hover:underline">{t("app.shell.privacy")}</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/gdpr" className="transition hover:text-[#073A73] hover:underline">{t("app.shell.gdpr")}</Link>
+          <span aria-hidden="true">·</span>
+          <Link href="/faq" className="transition hover:text-[#073A73] hover:underline">{t("app.shell.faq")}</Link>
+        </div>
       </div>
     </aside>
-    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label="pen-pals.net home" className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label="Open your profile">{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
-  </div></PresenceProvider>;
+    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label="pen-pals.net home" className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label={t("app.shell.openProfile")}>{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
+  </div></PresenceProvider></NextIntlClientProvider>;
 }
