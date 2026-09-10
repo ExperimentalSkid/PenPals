@@ -43,3 +43,19 @@ test("FAQ serves the legacy mark locally instead of making a third-party image r
   assert.match(faq, /\/assets\/legacy\/international-pen-friends-logo\.jpg/);
   assert.doesNotMatch(faq, /src=\"https:\/\/www\.ipf\.net\.au\/images\//);
 });
+
+test("homepage copy foregrounds friendship and delayed Snail Mail without dating-style CTA language", async () => {
+  const home = await read("src/app/page.tsx");
+  const en = JSON.parse(await read("src/i18n/messages/en.json"));
+  const es = JSON.parse(await read("src/i18n/messages/es.json"));
+
+  assert.match(home, /home\.snailMailIntro/);
+  assert.equal(en.home.findPeople, "Find someone worth writing to");
+  assert.match(en.home.snailMailIntro, /letters travel before they arrive/i);
+  assert.doesNotMatch(en.home.findPeople, /find your people/i);
+  assert.equal(es.home.findPeople, "Encuentra a alguien a quien escribir");
+  assert.match(es.home.snailMailIntro, /cartas viajan antes de llegar/i);
+  for (const value of [es.home.explore, es.home.countryLink, es.home.languageLink, es.home.interestLink, es.auth.signUp.description]) {
+    assert.doesNotMatch(value, /pen pals/i);
+  }
+});

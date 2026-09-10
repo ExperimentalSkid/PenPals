@@ -27,8 +27,8 @@
   "home": {
     "eyebrow": "Una forma más consciente de conocer el mundo",
     "title": "Conoce a personas curiosas de todo el mundo.",
-    "description": "Encuentra amigos por correspondencia internacionales, comparte historias cotidianas y crea amistades más allá de las fronteras.",
-    "findPeople": "Encuentra a tu gente",
+    "description": "Conoce amigos por correspondencia de todo el mundo, comparte historias cotidianas y crea amistades con tiempo para crecer.",
+    "findPeople": "Encuentra a alguien a quien escribir",
     "alreadyAccount": "Ya tengo una cuenta",
     "countries": "Más de 190 países",
     "conversations": "Conversaciones reales",
@@ -39,10 +39,11 @@
     "prompt": "«¿Qué pequeña cosa te hizo sonreír esta semana?»",
     "promptNote": "Una pregunta sencilla para empezar algo auténtico.",
     "noSwiping": "Sin deslizar. Sin seguidores. Solo personas.",
-    "explore": "Explora comunidades de pen pals",
-    "countryLink": "Pen pals en {name}",
-    "languageLink": "Pen pals que hablan {name}",
-    "interestLink": "Pen pals interesados en {name}"
+    "explore": "Explora comunidades de amigos por correspondencia",
+    "countryLink": "Amigos por correspondencia en {name}",
+    "languageLink": "Amigos por correspondencia que hablan {name}",
+    "interestLink": "Amigos por correspondencia interesados en {name}",
+    "snailMailIntro": "O baja el ritmo con Snail Mail digital: las cartas viajan antes de llegar."
   },
   "auth": {
     "signIn": {
@@ -59,7 +60,7 @@
     "signUp": {
       "eyebrow": "Únete a pen-pals.net",
       "title": "Empieza una nueva amistad",
-      "description": "Crea tu cuenta y conoce pen pals internacionales.",
+      "description": "Crea tu cuenta y conoce personas de todo el mundo que buscan amistad.",
       "birthDate": "Fecha de nacimiento",
       "passwordHint": "Usa al menos 8 caracteres.",
       "birthWrong": "¿Introdujiste mal tu fecha de nacimiento?",
@@ -235,7 +236,7 @@
         "items": {
           "1": {
             "q": "¿Qué es Pen-Pals.net?",
-            "a": "Pen-Pals.net ayuda a conocer pen pals internacionales mediante perfiles, presentaciones, mensajes privados y Snail Mail digital. Está pensado para amistades auténticas, correspondencia, idiomas, culturas y para tomarse el tiempo de conocer realmente a otra persona."
+            "a": "Pen-Pals.net ayuda a conocer amigos por correspondencia internacionales mediante perfiles, presentaciones, mensajes privados y Snail Mail digital. Está pensado para amistades auténticas, correspondencia, idiomas, culturas y para tomarse el tiempo de conocer realmente a otra persona."
           },
           "2": {
             "q": "¿Pen-Pals.net es un sitio de citas?",
@@ -1441,7 +1442,7 @@
   },
   "seo": {
     "homeTitle": "Amigos por correspondencia internacionales y amistad online | pen-pals.net",
-    "homeDescription": "Conoce amigos por correspondencia internacionales para crear amistades reales, practicar idiomas e intercambiar culturas, con mensajería privada y Snail Mail digital. Sin deslizar perfiles ni contar seguidores.",
+    "homeDescription": "Conoce amigos por correspondencia internacionales para crear amistades reales, practicar idiomas e intercambiar culturas, con mensajería privada y Snail Mail digital con entrega diferida. Sin deslizar perfiles ni contar seguidores.",
     "faqMetaTitle": "Preguntas frecuentes | pen-pals.net",
     "faqMetaDescription": "Respuestas a preguntas frecuentes sobre Pen-Pals.net, amistad internacional, presentaciones, mensajes, Snail Mail, verificación, privacidad, seguridad y controles de cuenta.",
     "privacyMetaTitle": "Privacidad y derechos sobre tus datos | pen-pals.net",

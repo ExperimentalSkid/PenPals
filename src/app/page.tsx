@@ -12,8 +12,8 @@ import { loadPublicSeoSitemap, loadPublicSeoSurface, localizedPublicPath, seoSur
 export async function generateMetadata() {
   const locale = await resolveLocale();
   return localizedPublicMetadata(locale, "/", {
-    en: { title: "International Pen Pals & Online Friendship | pen-pals.net", description: "Meet international pen pals for genuine friendship, language exchange, and cultural exchange, with private messaging and digital Snail Mail. No swiping or follower counts." },
-    es: { title: "Amigos por correspondencia internacionales y amistad online | pen-pals.net", description: "Conoce amigos por correspondencia internacionales para amistad genuina, intercambio de idiomas y culturas, con mensajería privada y Snail Mail digital. Sin deslizar ni contar seguidores." },
+    en: { title: "International Pen Pals & Online Friendship | pen-pals.net", description: "Meet international pen pals for genuine friendship, language exchange, and cultural exchange, with private messaging and delayed digital Snail Mail. No swiping or follower counts." },
+    es: { title: "Amigos por correspondencia internacionales y amistad online | pen-pals.net", description: "Conoce amigos por correspondencia internacionales para amistad genuina, intercambio de idiomas y culturas, con mensajería privada y Snail Mail digital con entrega diferida. Sin deslizar ni contar seguidores." },
   });
 }
 
@@ -77,6 +77,7 @@ export default async function Home() {
           <p className="mb-6 inline-flex rounded-full bg-orange-100 px-4 py-2 text-sm font-semibold text-orange-800">{t("home.eyebrow")}</p>
           <h1 className="max-w-3xl font-serif text-5xl leading-[.98] tracking-[-0.035em] text-primary sm:text-7xl">{t("home.title")}</h1>
           <p className="mt-7 max-w-xl text-lg leading-8 text-muted">{t("home.description")}</p>
+          <p className="mt-4 max-w-xl text-sm font-medium leading-6 text-primary/70">{t("home.snailMailIntro")}</p>
           <div className="mt-9 flex flex-wrap items-center gap-3 sm:gap-4">
             <Link href="/sign-up" className="motion-safe:transition-transform motion-safe:duration-300 motion-safe:hover:-translate-y-0.5 rounded-full bg-[#073A73] px-7 py-3.5 font-semibold text-white shadow-lg shadow-[#073A73]/15 hover:bg-[#052D59]">{t("home.findPeople")} <span aria-hidden>→</span></Link>
             <Link href="/sign-in" className="rounded-full border border-[#D9D3C8] bg-white/60 px-7 py-3.5 font-semibold text-primary hover:bg-white">{t("home.alreadyAccount")}</Link>

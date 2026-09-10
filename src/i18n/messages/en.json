@@ -27,8 +27,8 @@
   "home": {
     "eyebrow": "A thoughtful way to meet the world",
     "title": "Meet curious people around the world.",
-    "description": "Find international pen pals, share everyday stories, and build friendships across borders.",
-    "findPeople": "Find your people",
+    "description": "Meet international pen pals, share everyday stories, and build friendships that have room to grow.",
+    "findPeople": "Find someone worth writing to",
     "alreadyAccount": "I already have an account",
     "countries": "190+ countries",
     "conversations": "Real conversations",
@@ -42,7 +42,8 @@
     "explore": "Explore pen-pal communities",
     "countryLink": "Pen pals in {name}",
     "languageLink": "{name}-speaking pen pals",
-    "interestLink": "Pen pals interested in {name}"
+    "interestLink": "Pen pals interested in {name}",
+    "snailMailIntro": "Or slow things down with digital Snail Mail — letters travel before they arrive."
   },
   "auth": {
     "signIn": {
@@ -59,7 +60,7 @@
     "signUp": {
       "eyebrow": "Join pen-pals.net",
       "title": "Start a new friendship",
-      "description": "Create your account and meet international pen pals.",
+      "description": "Create your account and meet people around the world who are here for friendship.",
       "birthDate": "Date of birth",
       "passwordHint": "Use at least 8 characters.",
       "birthWrong": "Entered your date of birth incorrectly?",
@@ -1441,7 +1442,7 @@
   },
   "seo": {
     "homeTitle": "International Pen Pals & Online Friendship | pen-pals.net",
-    "homeDescription": "Meet international pen pals for genuine friendship, language exchange, and cultural exchange, with private messaging and digital Snail Mail. No swiping or follower counts.",
+    "homeDescription": "Meet international pen pals for genuine friendship, language exchange, and cultural exchange, with private messaging and delayed digital Snail Mail. No swiping or follower counts.",
     "faqMetaTitle": "FAQ | pen-pals.net",
     "faqMetaDescription": "Answers to common questions about Pen-Pals.net, international friendship, introductions, messaging, Snail Mail, verification, privacy, safety, and account controls.",
     "privacyMetaTitle": "Privacy & data rights | pen-pals.net",
