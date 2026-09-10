@@ -8,7 +8,10 @@ test("language switching preserves query state and performs a full reload", () =
   assert.match(source, /useSearchParams/);
   assert.match(source, /const query = searchParams\.toString\(\)/);
   assert.match(source, /`\$\{targetPath\}\?\$\{query\}`/);
-  assert.match(source, /window\.location\.assign\(target \?\? current\)/);
+  assert.match(source, /if \(!targetPath\)[\s\S]*window\.location\.reload\(\)/);
+  assert.match(source, /window\.location\.assign\(target\)/);
   assert.match(source, /window\.location\.reload\(\)/);
+  assert.match(source, /"\/terms"/);
+  assert.match(source, /"\/guidelines"/);
   assert.doesNotMatch(source, /router\.(?:push|refresh)\(/);
 });

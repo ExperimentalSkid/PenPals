@@ -7,7 +7,7 @@ import CountryFlag from "@/app/components/CountryFlag";
 
 function localizedPath(pathname: string, locale: AppLocale) {
   const englishPath = pathname === "/es" ? "/" : pathname.startsWith("/es/") ? pathname.slice(3) : pathname;
-  const publicPath = englishPath === "/" || ["/faq", "/privacy", "/contact"].includes(englishPath) || ["/country/", "/language/", "/interest/"].some((prefix) => englishPath.startsWith(prefix));
+  const publicPath = englishPath === "/" || ["/faq", "/privacy", "/terms", "/guidelines", "/contact"].includes(englishPath) || ["/country/", "/language/", "/interest/"].some((prefix) => englishPath.startsWith(prefix));
   if (!publicPath) return null;
   return locale === "es" ? (englishPath === "/" ? "/es" : `/es${englishPath}`) : englishPath;
 }
@@ -28,9 +28,12 @@ export default function LanguageSwitcher({ locale, label, paths }: { locale: App
     }
     const targetPath = paths?.[nextLocale] ?? localizedPath(pathname, nextLocale);
     const query = searchParams.toString();
-    const target = targetPath && query && !targetPath.includes("?") ? `${targetPath}?${query}` : targetPath;
-    const current = `${pathname}${query ? `?${query}` : ""}`;
-    window.location.assign(target ?? current);
+    if (!targetPath) {
+      window.location.reload();
+      return;
+    }
+    const target = query && !targetPath.includes("?") ? `${targetPath}?${query}` : targetPath;
+    window.location.assign(target);
   }
 
   return (
