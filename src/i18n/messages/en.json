@@ -1608,5 +1608,30 @@
       "enforcementTitle": "What happens when rules are broken",
       "enforcementBody": "Depending on severity, context, and history, Pen-Pals.net may restrict contact, remove content, suspend features, suspend an account, or terminate access. Safety signals can place content into staff review without automatically punishing a member. Serious or repeated violations may lead to stronger action, and available appeal or correction paths remain subject to their stated limits."
     }
+  },
+  "welcome": {
+    "eyebrow": "Welcome to Pen-Pals.net",
+    "title": "Welcome, {name}",
+    "friend": "friend",
+    "intro": "Your profile is ready. Before you start meeting people, here are the few rules that keep Pen-Pals.net thoughtful, safe, and focused on friendship.",
+    "rules": {
+      "friendshipTitle": "Friendship comes first",
+      "friendshipBody": "Pen-Pals.net is for friendship, correspondence, language and cultural exchange—not dating, hookups, followers, or promotion.",
+      "adultTitle": "Adults only",
+      "adultBody": "Everyone using the service must be at least 18 years old. Report an account if you have a genuine underage concern.",
+      "boundariesTitle": "Respect a no—or no reply",
+      "boundariesBody": "Nobody owes a reply. Do not pressure someone to continue a conversation, move elsewhere, share photos, or disclose personal information.",
+      "sexualTitle": "No unsolicited sexual content",
+      "sexualBody": "Do not place explicit material in profiles or send sexual or NSFW content unless it was clearly requested in an appropriate existing conversation.",
+      "spamTitle": "Do not flood people",
+      "spamBody": "Introductions and messages have anti-spam limits. Instant messages pause after three unanswered sends, and Snail Mail prevents stacking unread letters.",
+      "safetyTitle": "Use the safety tools",
+      "safetyBody": "Block someone whenever you want to end contact. Report scams, harassment, impersonation, abuse, sexual content, or other rule violations for review."
+    },
+    "controlsTitle": "You stay in control",
+    "controlsBody": "Your Settings let you control availability, who may introduce themselves, communication modes, profile visibility, location detail, and blocked users.",
+    "readMore": "For the complete rules and policies, read the",
+    "continue": "I understand — enter Pen-Pals.net",
+    "error": "We couldn't finish onboarding. Please try again."
   }
 }

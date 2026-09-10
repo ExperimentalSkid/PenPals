@@ -82,7 +82,9 @@ test("Google login routes missing or incomplete profiles through setup", () => {
 
 test("the app boundary cannot be bypassed before Google onboarding completes", () => {
   assert.match(sessionProxy, /request\.nextUrl\.pathname !== "\/app\/profile\/setup"/);
-  assert.match(sessionProxy, /if \(!completionProfile \|\| !hasCompletedProfile\(completionProfile, languageCount \?\? 0, interestCount \?\? 0\)\)/);
+  assert.match(sessionProxy, /const profileComplete = Boolean\(completionProfile && hasCompletedProfile\(completionProfile, languageCount \?\? 0, interestCount \?\? 0\)\)/);
+  assert.match(sessionProxy, /!profileComplete && request\.nextUrl\.pathname !== "\/app\/profile\/setup"/);
+  assert.match(sessionProxy, /profileComplete && !profile\?\.onboarding_welcome_completed_at/);
   assert.match(sessionProxy, /new URL\("\/app\/profile\/setup", request\.url\)/);
   assert.match(sessionProxy, /select\("username,display_name,birth_date,country"\)/);
 });

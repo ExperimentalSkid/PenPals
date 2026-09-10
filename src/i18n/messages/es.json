@@ -1608,5 +1608,30 @@
       "enforcementTitle": "Qué ocurre cuando se incumplen las normas",
       "enforcementBody": "Según la gravedad, el contexto y el historial, Pen-Pals.net puede restringir el contacto, retirar contenido, suspender funciones, suspender una cuenta o terminar el acceso. Las señales de seguridad pueden enviar contenido a revisión del personal sin castigar automáticamente a un miembro. Las infracciones graves o repetidas pueden dar lugar a medidas más estrictas, y los procesos de apelación o corrección disponibles siguen sujetos a sus límites indicados."
     }
+  },
+  "welcome": {
+    "eyebrow": "Te damos la bienvenida a Pen-Pals.net",
+    "title": "Te damos la bienvenida, {name}",
+    "friend": "amigo",
+    "intro": "Tu perfil está listo. Antes de empezar a conocer gente, estas son las pocas reglas que mantienen Pen-Pals.net respetuoso, seguro y centrado en la amistad.",
+    "rules": {
+      "friendshipTitle": "La amistad es lo primero",
+      "friendshipBody": "Pen-Pals.net es para amistad, correspondencia e intercambio cultural y de idiomas; no para citas, encuentros sexuales, seguidores ni promoción.",
+      "adultTitle": "Solo para adultos",
+      "adultBody": "Todas las personas que utilicen el servicio deben tener al menos 18 años. Denuncia una cuenta si tienes una preocupación real de que sea menor de edad.",
+      "boundariesTitle": "Respeta un no o la falta de respuesta",
+      "boundariesBody": "Nadie está obligado a responder. No presiones a otra persona para continuar una conversación, pasar a otra plataforma, compartir fotos o revelar información personal.",
+      "sexualTitle": "Nada sexual sin haber sido solicitado",
+      "sexualBody": "No publiques material explícito en perfiles ni envíes contenido sexual o NSFW salvo que se haya solicitado claramente dentro de una conversación existente apropiada.",
+      "spamTitle": "No satures a otras personas",
+      "spamBody": "Las presentaciones y los mensajes tienen límites contra el spam. Los mensajes instantáneos se detienen tras tres envíos sin respuesta y Snail Mail impide acumular cartas sin leer.",
+      "safetyTitle": "Utiliza las herramientas de seguridad",
+      "safetyBody": "Puedes bloquear a alguien cuando quieras terminar el contacto. Denuncia estafas, acoso, suplantación, abuso, contenido sexual u otras infracciones para que sean revisadas."
+    },
+    "controlsTitle": "Tú mantienes el control",
+    "controlsBody": "En Ajustes puedes controlar tu disponibilidad, quién puede presentarse, los modos de comunicación, la visibilidad del perfil, el detalle de ubicación y los usuarios bloqueados.",
+    "readMore": "Para consultar las reglas y políticas completas, lee las",
+    "continue": "Lo entiendo — entrar en Pen-Pals.net",
+    "error": "No hemos podido finalizar la incorporación. Inténtalo de nuevo."
   }
 }

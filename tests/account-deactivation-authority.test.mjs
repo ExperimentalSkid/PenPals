@@ -45,7 +45,7 @@ test("administrator accounts cannot self-deactivate through the protected RPC", 
 
 test("every app route rejects a deactivated profile before rendering app data", () => {
   assert.match(layout, /force-dynamic/);
-  assert.match(layout, /select\("username,display_name,role,deactivated_at,require_login_mfa"\)/);
+  assert.match(layout, /select\("username,display_name,role,deactivated_at,require_login_mfa,onboarding_welcome_completed_at"\)/);
   assert.match(layout, /if \(p\?\.deactivated_at\) redirect\("\/reactivate"\)/);
   assert.match(layout, /unread_notification_count/);
   assert.match(proxy, /select\("deactivated_at"\)/);

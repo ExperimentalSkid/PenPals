@@ -39,7 +39,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: ageRestricted, error: ageRestrictionError } = await db.rpc("is_current_user_age_restricted");
   if (ageRestrictionError) redirect("/sign-in?error=Account%20unavailable");
   if (ageRestricted) redirect("/age-appeal");
-  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,role,deactivated_at,require_login_mfa").eq("id", uid).maybeSingle();
+  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,role,deactivated_at,require_login_mfa,onboarding_welcome_completed_at").eq("id", uid).maybeSingle();
   if (profileError) redirect("/sign-in?error=Account%20unavailable");
   if (p?.deactivated_at) redirect("/reactivate");
   if (p?.require_login_mfa && String(data?.claims?.aal ?? "") !== "aal2") redirect("/auth/mfa");
@@ -55,11 +55,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (completionError || languageError || interestError) redirect("/sign-in?error=Account%20unavailable");
   const isBootstrapAdmin = p?.role === "admin" && p.username === "admin";
   const onboardingLocked = !isBootstrapAdmin && !hasCompletedProfile(completionProfile ?? {}, languageCount ?? 0, interestCount ?? 0);
+  const welcomeLocked = !isBootstrapAdmin && !onboardingLocked && !p?.onboarding_welcome_completed_at;
   // Incomplete members get a deliberately quiet shell while the proxy keeps
   // every non-setup URL out of the normal app. This prevents the global
   // sidebar/content from distracting users during the gateway without
   // changing the completed-profile editing experience.
-  if (onboardingLocked) return <NextIntlClientProvider locale={locale} messages={messages}><div lang={locale} className="min-h-screen bg-[#f7f5ef]">{children}</div></NextIntlClientProvider>;
+  if (onboardingLocked || welcomeLocked) return <NextIntlClientProvider locale={locale} messages={messages}><div lang={locale} className="min-h-screen bg-[#f7f5ef]">{children}</div></NextIntlClientProvider>;
   // This is idempotent and only emits the existing actionable notification
   // once when a profile enters its TOTP re-verification grace period.
   await db.rpc("maybe_notify_profile_totp_reverification");

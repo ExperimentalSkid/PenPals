@@ -29,7 +29,7 @@ export async function updateSession(request: NextRequest) {
     // the normal completion boundary.
     const { data: profile, error: identityError } = await supabase
       .from("profiles")
-      .select("username,role,deactivated_at,require_login_mfa")
+      .select("username,role,deactivated_at,require_login_mfa,onboarding_welcome_completed_at")
       .eq("id", claims.sub)
       .maybeSingle();
     if (identityError) return withSessionCookies(NextResponse.redirect(new URL("/sign-in?error=Account%20unavailable", request.url)));
@@ -38,15 +38,19 @@ export async function updateSession(request: NextRequest) {
     if (profile?.deactivated_at) return withSessionCookies(NextResponse.redirect(new URL("/reactivate", request.url)));
     if (profile?.require_login_mfa && String(claims?.aal ?? "") !== "aal2") return withSessionCookies(NextResponse.redirect(new URL("/auth/mfa", request.url)));
     const isBootstrapAdmin = profile?.role === "admin" && profile?.username === "admin";
-    if (request.nextUrl.pathname !== "/app/profile/setup" && !isBootstrapAdmin) {
+    if (!isBootstrapAdmin) {
       const [{ data: completionProfile, error: completionError }, { count: languageCount, error: languageError }, { count: interestCount, error: interestError }] = await Promise.all([
         supabase.from("profiles").select("username,display_name,birth_date,country").eq("id", claims.sub).maybeSingle(),
         supabase.from("profile_languages").select("language_id", { count: "exact", head: true }).eq("profile_id", claims.sub),
         supabase.from("profile_interests").select("interest_id", { count: "exact", head: true }).eq("profile_id", claims.sub),
       ]);
       if (completionError || languageError || interestError) return withSessionCookies(NextResponse.redirect(new URL("/sign-in?error=Account%20unavailable", request.url)));
-      if (!completionProfile || !hasCompletedProfile(completionProfile, languageCount ?? 0, interestCount ?? 0)) {
+      const profileComplete = Boolean(completionProfile && hasCompletedProfile(completionProfile, languageCount ?? 0, interestCount ?? 0));
+      if (!profileComplete && request.nextUrl.pathname !== "/app/profile/setup") {
         return withSessionCookies(NextResponse.redirect(new URL("/app/profile/setup", request.url)));
+      }
+      if (profileComplete && !profile?.onboarding_welcome_completed_at && request.nextUrl.pathname !== "/app/welcome") {
+        return withSessionCookies(NextResponse.redirect(new URL("/app/welcome", request.url)));
       }
     }
     if (Date.now() - Number(request.cookies.get("activity-ping")?.value ?? 0) > 5 * 60_000) { const { error: activityError } = await supabase.rpc("touch_activity"); if (!activityError) response.cookies.set("activity-ping", String(Date.now()), { maxAge: 600, httpOnly: true, sameSite: "lax", path: "/" }); }

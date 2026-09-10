@@ -19,14 +19,15 @@ const [setupPage, profileActions, profilePage, appPage, appNavigation, proxy, go
 test("incomplete authenticated profiles enter setup while completed saves exit to the app", () => {
   assert.match(proxyEntrypoint, /export function proxy/);
   assert.match(proxyEntrypoint, /"\/app\/:path\*"[\s\S]*"\/auth\/:path\*"/);
-  assert.match(proxy, /if \(request\.nextUrl\.pathname !== "\/app\/profile\/setup" && !isBootstrapAdmin\)/);
-  assert.match(proxy, /!completionProfile \|\| !hasCompletedProfile/);
+  assert.match(proxy, /if \(!isBootstrapAdmin\)/);
+  assert.match(proxy, /const profileComplete = Boolean\(completionProfile && hasCompletedProfile/);
+  assert.match(proxy, /!profileComplete && request\.nextUrl\.pathname !== "\/app\/profile\/setup"/);
   assert.match(proxy, /new URL\("\/app\/profile\/setup", request\.url\)/);
   assert.match(googleCallback, /if \(!profile\) return destination\(request, "\/app\/profile\/setup"\)/);
   assert.match(googleCallback, /!hasCompletedProfile\(profile/);
   assert.match(proxy, /profile\?\.role === "admin" && profile\?\.username === "admin"/);
   assert.match(googleCallback, /profile\?\.role === "admin" && profile\.username === "admin"/);
-  assert.match(profileActions, /redirect\("\/app"\)/);
+  assert.match(profileActions, /redirect\(existingProfile \? "\/app" : "\/app\/welcome"\)/);
   assert.match(completeness, /export function hasCompletedProfile/);
   assert.match(completeness, /export function profileCompletionProgress/);
   assert.match(setupPage, /profileCompletionProgress\(profile \?\? \{\}, selectedLanguages\.length, selectedInterests\.length\)/);
@@ -53,7 +54,7 @@ test("viewing the public profile from setup preserves a return link to profile e
 test("successful setup actions and setup errors stay in the setup context", () => {
   assert.match(profileActions, /profileErrorRedirect\(/);
   assert.match(profileActions, /`\/app\/profile\/setup\?error=/);
-  assert.match(profileActions, /redirect\("\/app"\)/);
+  assert.match(profileActions, /redirect\(existingProfile \? "\/app" : "\/app\/welcome"\)/);
   assert.match(setupPage, /searchParams: Promise<\{ error\?: string; appeal\?: string \}>/);
   assert.match(setupPage, /role="alert"/);
 });
