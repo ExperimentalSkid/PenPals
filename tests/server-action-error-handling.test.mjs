@@ -79,10 +79,12 @@ test("conversation read failures do not masquerade as empty history or enable Sn
   assert.match(conversationPage, /const messageHistoryLoadFailed = Boolean\(messagePageResult\.error\)/);
   assert.match(conversationPage, /const snailMailLoadFailed = Boolean\(snailMailResult\.error\)/);
   assert.match(conversationPage, /historyLoadFailed=\{messageHistoryLoadFailed\}/);
-  assert.match(conversationPage, /canCompose=\{!snailMailLoadFailed && canComposeSnailMail/);
+  assert.match(conversationPage, /canCompose=\{!snailMailLoadFailed && !pairBlockStateUnavailable && canComposeSnailMail/);
   assert.match(conversationPage, /app\.messages\.conversationLoadError/);
   assert.match(conversationPage, /if \(openingIntroductionResult\.error\) conversationDataLoadFailed = true/);
   assert.match(conversationPage, /if \(moderationReviewResult\.error\) conversationDataLoadFailed = true/);
+  assert.match(conversationPage, /pairBlockStateUnavailable = Boolean\(pairBlockResult\.error\)/);
+  assert.match(conversationPage, /messageSendBlocked=\{pairBlocked \|\| pairBlockStateUnavailable/);
 });
 
 
@@ -90,6 +92,8 @@ test("conversation membership read failures do not masquerade as missing convers
   assert.match(conversationPage, /const membershipResult = await db\.from\("conversation_participants"\)/);
   assert.match(conversationPage, /if \(membershipResult\.error\) throw membershipResult\.error/);
   assert.match(conversationPage, /if \(!membershipResult\.data\) notFound\(\)/);
+  assert.match(conversationPage, /if \(conversationModeResult\.error\) throw conversationModeResult\.error/);
+  assert.match(conversationPage, /if \(identityResult\.error\) throw identityResult\.error/);
 });
 
 

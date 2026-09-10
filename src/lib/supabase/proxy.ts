@@ -48,7 +48,7 @@ export async function updateSession(request: NextRequest) {
         return withSessionCookies(NextResponse.redirect(new URL("/app/profile/setup", request.url)));
       }
     }
-    if (Date.now() - Number(request.cookies.get("activity-ping")?.value ?? 0) > 5 * 60_000) { await supabase.rpc("touch_activity"); response.cookies.set("activity-ping", String(Date.now()), { maxAge: 600, httpOnly: true, sameSite: "lax", path: "/" }); }
+    if (Date.now() - Number(request.cookies.get("activity-ping")?.value ?? 0) > 5 * 60_000) { const { error: activityError } = await supabase.rpc("touch_activity"); if (!activityError) response.cookies.set("activity-ping", String(Date.now()), { maxAge: 600, httpOnly: true, sameSite: "lax", path: "/" }); }
   }
   return response;
 }

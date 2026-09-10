@@ -23,7 +23,7 @@ test("Both profiles expose both communication modes without duplicate actions", 
   assert.match(relationshipMigration, /if coalesce\(sender_allow_instant, false\) and coalesce\(recipient_allow_instant, false\) then[\s\S]*relationship_mode := 'instant'/i);
   assert.match(relationshipMigration, /elsif coalesce\(sender_allow_snail, false\) and coalesce\(recipient_allow_snail, false\) then[\s\S]*relationship_mode := 'snail_mail'/i);
   assert.match(profileView, /communicationPreference === "both"[\s\S]*\["Instant Messages", "Snail Mail"\]/);
-  assert.match(conversationPage, /const canComposeSnailMail = otherCommunicationMode !== "instant" && ownCommunicationMode !== "instant"/);
+  assert.match(conversationPage, /const canComposeSnailMail = !pairBlockStateUnavailable && otherCommunicationMode !== "instant" && ownCommunicationMode !== "instant"/);
   assert.match(conversationPage, /<ConversationThread conversationId=/);
   assert.equal((conversationPage.match(/<SnailMailPanel /g) ?? []).length, 1);
   assert.match(messagesPage, /rpc\("get_instant_message_inbox"\)/);

@@ -7,6 +7,7 @@ const migration = await readFile(new URL("supabase/migrations/20260903000000_act
 const settings = await readFile(new URL("src/app/app/settings/page.tsx", root), "utf8");
 const profileActions = await readFile(new URL("src/app/app/profile/actions.ts", root), "utf8");
 const presence = await readFile(new URL("src/app/PresenceProvider.tsx", root), "utf8");
+const proxy = await readFile(new URL("src/lib/supabase/proxy.ts", root), "utf8");
 const profileView = await readFile(new URL("src/app/app/profile/[username]/ProfileView.tsx", root), "utf8");
 const adminUser = await readFile(new URL("src/app/app/admin/users/[id]/page.tsx", root), "utf8");
 
@@ -55,6 +56,11 @@ test("paused accounts are excluded from discovery and new contact", () => {
   assert.match(migration, /create trigger introductions_inactive_guard/);
   assert.match(migration, /create trigger messages_inactive_guard/);
   assert.match(migration, /raise exception 'Conversation unavailable'/);
+});
+
+test("failed activity pings are not throttled as if they succeeded", () => {
+  assert.match(proxy, /const \{ error: activityError \} = await supabase\.rpc\("touch_activity"\)/);
+  assert.match(proxy, /if \(!activityError\) response\.cookies\.set\("activity-ping"/);
 });
 
 test("pause suppresses presence and activity earning", () => {

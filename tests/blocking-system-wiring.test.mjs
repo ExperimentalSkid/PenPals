@@ -51,8 +51,9 @@ test("photo access and presence stay unavailable across either-direction blocks"
 test("conversation UI detects a block created by either participant and fails closed", () => {
   assert.match(page, /rpc\("users_are_blocked",\s*\{ first_user: uid, second_user: targetId \}\)/s);
   assert.match(page, /const pairBlocked = Boolean\(pairBlockResult\.data\)/);
+  assert.match(page, /const pairBlockStateUnavailable = Boolean\(pairBlockResult\.error\)/);
   assert.match(page, /BlockControl blocked=\{blockedByMe\}/);
-  assert.match(page, /messageSendBlocked=\{pairBlocked \|\| messageStreak >= 3\}/);
+  assert.match(page, /messageSendBlocked=\{pairBlocked \|\| pairBlockStateUnavailable \|\| messageStreak >= 3\}/);
   assert.match(page, /pendingRequests=\{pairBlocked \|\| photoStateError \? \[\] : pendingTheirs\}/);
   assert.match(page, /Snail Mail is unavailable because one of you blocked the other\./);
   assert.match(page, /app\.messages\.photoUnavailable/);

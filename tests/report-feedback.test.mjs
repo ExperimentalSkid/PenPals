@@ -23,7 +23,7 @@ async function loadPage(path) {
         select() { return this; }, eq() { return this; }, is() { return this; }, order() { return this; },
         limit() { return this; }, or() { return this; },
         neq() { otherParticipant = true; return this; },
-        maybeSingle: async () => ({ data: table === "conversation_participants" && !otherParticipant ? { conversation_id: "test-conversation" } : null }),
+        maybeSingle: async () => ({ data: table === "conversation_participants" && !otherParticipant ? { conversation_id: "test-conversation" } : table === "conversations" ? { communication_mode: "instant" } : null, error: null }),
         then(resolve) { return Promise.resolve({ data: [], error: null }).then(resolve); },
       };
     },
