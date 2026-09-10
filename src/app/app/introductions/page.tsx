@@ -189,7 +189,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
                   <Link href={`/app/messages/${encodeURIComponent(row.conversation_id_legacy)}`} className="btn-secondary mt-7 inline-flex min-h-11 items-center justify-center rounded-md px-4 py-2.5 text-sm">{t("app.introductions.openConversation")}</Link>
                   <span className="mt-3 text-center text-sm text-black/45">{t("app.introductions.notInterested")}</span>
                 </> : <>
-                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef0ea] text-muted"><IntroIcon name="clock" /></span><div><p className="font-semibold text-primary">{row.status === "expired" ? "Introduction expired" : "Introduction closed"}</p><p className="section-description mt-1">{t("app.introductions.inactive")}</p></div></div>
+                  <div className="flex items-start gap-3"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef0ea] text-muted"><IntroIcon name="clock" /></span><div><p className="font-semibold text-primary">{row.status === "expired" ? t("app.introductions.expired") : t("app.introductions.closed")}</p><p className="section-description mt-1">{t("app.introductions.inactive")}</p></div></div>
                 </>}
               </aside>
             </article>

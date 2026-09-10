@@ -506,7 +506,9 @@
       "sortLabel": "Ordenar presentaciones",
       "newestFirst": "Más recientes primero",
       "oldestFirst": "Más antiguas primero",
-      "replyPlaceholder": "Escribe una respuesta…"
+      "replyPlaceholder": "Escribe una respuesta…",
+      "expired": "Presentación caducada",
+      "closed": "Presentación cerrada"
     },
     "reports": {
       "reason": "Motivo del reporte",
@@ -676,7 +678,9 @@
       "unavailable": "no disponible",
       "noMessagesYet": "Aún no hay mensajes",
       "viewPersonProfile": "Ver el perfil de {name}",
-      "personProfilePhoto": "Foto de perfil de {name}"
+      "personProfilePhoto": "Foto de perfil de {name}",
+      "unknownOrigin": "Una carta está viajando hacia ti",
+      "waitForReplyReason": "Espera una respuesta antes de enviar otro mensaje."
     },
     "snail": {
       "optional": "Correo lento opcional",

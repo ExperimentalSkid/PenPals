@@ -76,7 +76,7 @@ export default function ConversationThread({ conversationId, userId, messages, h
   const typingHideTimerRef = useRef<number | null>(null);
   const lastTypingSentAtRef = useRef(0);
   const supabase = useMemo(() => createClient(), []);
-  const blockedReason = messageSendBlockedReason ?? "Wait for a reply before sending another message.";
+  const blockedReason = messageSendBlockedReason ?? t("app.messages.waitForReplyReason");
   const messageLookup = useMemo(() => {
     const lookup = new Map<string, Message>();
     for (const message of liveMessages) lookup.set(message.id, message);

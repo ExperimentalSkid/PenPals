@@ -184,7 +184,7 @@ async function enrichLetter(profiles: ReturnType<typeof createInboxProfileLoader
   if (!identity?.username) return enriched;
   enriched.origin = await profiles.origin(letter.sender_id);
   if (letter.body_available || letter.letter_status === "delivered" || letter.delivered_at) {
-    enriched.senderName = identity.display_name || identity.username || "A pen pal";
+    enriched.senderName = identity.display_name || identity.username || null;
     enriched.senderAge = typeof identity.age === "number" ? identity.age : null;
   }
   return enriched;
@@ -293,7 +293,7 @@ export default async function Messages() {
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#ece9df] text-muted"><Icon name="mail" /></span>
                       <span className="min-w-0 flex-1">
                         <span className="block text-xs text-black/45">{t("app.messages.incomingLetter")}</span>
-                        <span className="mt-1 block truncate font-serif text-[22px] text-primary">{letter.origin || "A letter is travelling to you"}</span>
+                        <span className="mt-1 block truncate font-serif text-[22px] text-primary">{letter.origin || t("app.messages.unknownOrigin")}</span>
                         <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand">{isLostInTransit(letter) ? <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#f0e9e2] px-2.5 py-1"><Icon name="mail" />{t("app.messages.lost")}</span><span className="text-black/55">{lostInTransitCopy(letter, t)}</span></> : <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8eee8] px-2.5 py-1"><Icon name="plane" />{formatDeliveryEta(letter.deliver_at, now, t)}</span><span className="text-black/40">{deliveryMilestone(letter, now, t)}</span></>}</span>
                       </span>
                     </div>

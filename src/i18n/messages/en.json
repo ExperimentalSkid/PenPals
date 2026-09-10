@@ -506,7 +506,9 @@
       "sortLabel": "Sort introductions",
       "newestFirst": "Newest first",
       "oldestFirst": "Oldest first",
-      "replyPlaceholder": "Write a reply…"
+      "replyPlaceholder": "Write a reply…",
+      "expired": "Introduction expired",
+      "closed": "Introduction closed"
     },
     "reports": {
       "reason": "Report reason",
@@ -676,7 +678,9 @@
       "unavailable": "unavailable",
       "noMessagesYet": "No messages yet",
       "viewPersonProfile": "View {name} profile",
-      "personProfilePhoto": "{name} profile photo"
+      "personProfilePhoto": "{name} profile photo",
+      "unknownOrigin": "A letter is travelling to you",
+      "waitForReplyReason": "Wait for a reply before sending another message."
     },
     "snail": {
       "optional": "Optional slow mail",

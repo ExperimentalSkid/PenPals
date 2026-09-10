@@ -64,7 +64,7 @@ test("conversation UI disables blocked sends and explains pair-scoped Snail Mail
   assert.match(conversationPage, /currentMessage\.created_at > lastOtherMessageAt/);
   assert.match(conversationPage, /snailMailBlockedReason/);
   assert.match(conversationThread, /disabled=\{messageSendBlocked\}/);
-  assert.match(conversationThread, /Wait for a reply before sending another message\./);
+  assert.match(conversationThread, /app\.messages\.waitForReplyReason/);
   assert.match(snailMailPanel, /composeBlockedReason/);
   assert.match(snailMailPanel, /outgoingLetterIsBlocking/);
   assert.match(snailMailPanel, /canWriteLetter/);
