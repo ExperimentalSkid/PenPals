@@ -22,7 +22,9 @@
     "publicLinks": "Enlaces del sitio público",
     "skipToContent": "Saltar al contenido principal",
     "searchFor": "Buscar {label}",
-    "optionsFor": "Opciones de {label}"
+    "optionsFor": "Opciones de {label}",
+    "terms": "Términos",
+    "privacyPolicy": "Política de privacidad"
   },
   "home": {
     "eyebrow": "Una forma más consciente de conocer el mundo",
@@ -66,7 +68,10 @@
       "birthWrong": "¿Introdujiste mal tu fecha de nacimiento?",
       "correction": "Solicitar una corrección.",
       "create": "Crear cuenta",
-      "already": "¿Ya eres miembro?"
+      "already": "¿Ya eres miembro?",
+      "legalPrefix": "Acepto los",
+      "legalAnd": "y reconozco la",
+      "legalRequired": "Debes aceptar los Términos del servicio y reconocer la Política de privacidad para crear una cuenta."
     },
     "google": {
       "open": "Abriendo Google…",
@@ -193,7 +198,7 @@
     "dataTitle": "Datos que utiliza la aplicación",
     "cards": {
       "accountTitle": "Datos de la cuenta",
-      "accountBody": "Correo electrónico, fecha de creación de la cuenta, estado de inicio de sesión, estado de confirmación y actividad de autenticación disponible para la aplicación.",
+      "accountBody": "Correo electrónico, fecha de creación de la cuenta, estado de inicio de sesión, estado de confirmación, actividad de autenticación disponible para la aplicación y registros versionados de aceptación de Términos/Privacidad.",
       "profileTitle": "Datos del perfil",
       "profileBody": "Nombre visible, nombre de usuario, datos de fecha de nacimiento relacionados con la edad, ubicación, idiomas, intereses, biografía, fotos, insignias y ajustes del perfil.",
       "communicationTitle": "Datos de comunicación",
@@ -1342,7 +1347,8 @@
       "passwordMismatch": "Las contraseñas no coinciden.",
       "passwordUpdateFailed": "No pudimos actualizar tu contraseña. Inténtalo de nuevo.",
       "resendEmailRequired": "Introduce el correo electrónico que usaste para registrarte.",
-      "resendFailed": "Aún no pudimos reenviar ese correo. Inténtalo de nuevo en breve."
+      "resendFailed": "Aún no pudimos reenviar ese correo. Inténtalo de nuevo en breve.",
+      "legalAcceptanceRequired": "Debes aceptar los Términos del servicio y reconocer la Política de privacidad para crear una cuenta."
     },
     "age": {
       "signIn": "Inicia sesión para solicitar una corrección.",
@@ -1542,5 +1548,38 @@
     "ctaBody": "Únete a pen-pals.net para explorar perfiles y empezar una conversación.",
     "create": "Crear una cuenta",
     "explore": "Explorar Discover"
+  },
+  "terms": {
+    "eyebrow": "Términos",
+    "title": "Términos del servicio",
+    "intro": "Estos Términos explican las reglas para crear una cuenta y utilizar pen-pals.net.",
+    "effective": "En vigor desde: 10 de septiembre de 2026 · Versión 2026-09-10",
+    "acceptance": "Al crear una cuenta o utilizar pen-pals.net, aceptas estos Términos. Si no estás de acuerdo, no crees ni continúes utilizando una cuenta. Los derechos obligatorios que legalmente no puedan excluirse permanecen intactos.",
+    "sections": {
+      "eligibilityTitle": "Servicio para adultos",
+      "eligibilityBody": "Debes tener al menos 18 años para crear o utilizar una cuenta. Debes proporcionar información de edad correcta. Las cuentas identificadas como pertenecientes a una persona menor de 18 años pueden ser restringidas o suspendidas, con el proceso de corrección que ofrezca el servicio cuando corresponda.",
+      "purposeTitle": "Amistad, no citas",
+      "purposeBody": "pen-pals.net está diseñado para la amistad internacional, la correspondencia, el intercambio cultural y la conversación. No es un servicio de citas, una red de seguidores, un mercado ni una plataforma publicitaria. Utiliza el servicio respetando ese propósito.",
+      "accountTitle": "Tu cuenta",
+      "accountBody": "Eres responsable de la exactitud de la información que envías, de mantener seguras tus credenciales de acceso y de la actividad realizada desde tu cuenta. No suplantes a otra persona, no crees cuentas para eludir restricciones ni transfieras el acceso a otra persona.",
+      "conductTitle": "Seguridad y uso aceptable",
+      "conductBody": "No utilices pen-pals.net para acoso, amenazas, odio o abuso, estafas o fraude, spam, promoción comercial, suplantación, actividades ilegales ni intentos de eludir los controles de seguridad. El material sexual o explícito no puede aparecer en perfiles ni enviarse sin haber sido solicitado. Las denuncias y los bloqueos no deben utilizarse de forma abusiva contra otros miembros.",
+      "contentTitle": "Tu contenido",
+      "contentBody": "Conservas la propiedad del contenido que envías. Concedes a pen-pals.net un permiso limitado y no exclusivo para alojar, procesar, transmitir, mostrar y reproducir técnicamente ese contenido solo cuando sea necesario para operar, proteger, moderar y prestar el servicio. Este permiso termina cuando se elimina el contenido, salvo cuando sea necesaria una conservación limitada por seguridad, obligaciones legales, gestión de disputas o historial compartido de conversaciones descrito en la Política de privacidad.",
+      "privacyTitle": "Privacidad y moderación",
+      "privacyBody": "El uso de datos personales se describe en la Política de privacidad. Las comunicaciones privadas no son contenido público, pero las denuncias, las señales automáticas de seguridad o necesidades operativas legítimas pueden hacer que el contenido pertinente sea revisado por personal autorizado conforme a los controles de acceso del servicio.",
+      "availabilityTitle": "Disponibilidad del servicio",
+      "availabilityBody": "Las funciones pueden cambiar, interrumpirse o retirarse. Los tiempos de entrega mostrados para Snail Mail digital forman parte de la experiencia del producto y son estimaciones, no compromisos de correo postal real. Podemos realizar mantenimiento o limitar funciones para proteger la fiabilidad o la seguridad.",
+      "enforcementTitle": "Restricción, suspensión y terminación",
+      "enforcementBody": "Podemos limitar funciones, restringir contactos, suspender o terminar cuentas cuando sea razonablemente necesario para aplicar estos Términos, proteger a los miembros o al servicio, cumplir la ley o responder a riesgos de seguridad. Cuando el producto ofrezca un proceso de apelación o corrección, podrás utilizarlo conforme a los límites indicados.",
+      "liabilityTitle": "Responsabilidad",
+      "liabilityBody": "Los miembros son responsables de sus propias interacciones y decisiones. pen-pals.net no garantiza la identidad, intenciones, declaraciones, disponibilidad o conducta de otro miembro. En la máxima medida permitida por la ley aplicable, el servicio se presta sin garantías distintas de las que legalmente no puedan excluirse, y la responsabilidad no se excluye ni limita cuando la ley lo prohíba.",
+      "changesTitle": "Cambios en estos Términos",
+      "changesBody": "Podemos actualizar estos Términos cuando cambie el servicio o evolucionen los requisitos legales. La versión y fecha de entrada en vigor vigentes se publicarán aquí. Si un cambio afecta de forma material a miembros existentes, proporcionaremos un aviso razonable o solicitaremos una nueva aceptación cuando corresponda.",
+      "generalTitle": "Disposiciones generales",
+      "generalBody": "Si una disposición de estos Términos no fuera exigible, las demás seguirán siendo aplicables. El hecho de no exigir una disposición en una ocasión no implica renunciar a ella. Los derechos obligatorios de consumidores y protección de datos permanecen intactos. Las controversias quedan sujetas a la ley y los tribunales que resulten aplicables conforme a las normas imperativas de la relación concreta.",
+      "contactTitle": "Contacto",
+      "contactBody": "Puedes enviar preguntas sobre estos Términos mediante la página pública de Contacto o, si has iniciado sesión, mediante Ayuda y soporte."
+    }
   }
 }

@@ -6,6 +6,7 @@ import { cookies, headers } from "next/headers";
 import { createGoogleLoginIntent, googleLoginCallbackUrl, googleLoginIntentCookie, googleLoginIntentMaxAge, GoogleLoginConfigurationError } from "@/lib/auth/google-login";
 import { redirect } from "next/navigation";
 import { getPageI18n } from "@/i18n/server";
+import { createLegalAcceptanceIntent, legalAcceptanceCookie, legalAcceptanceMaxAge, PRIVACY_VERSION, TERMS_VERSION } from "@/lib/auth/legal-acceptance";
 
 const confirmationRedirect = async () => `${emailConfirmationOrigin(await headers())}/auth/confirm`;
 
@@ -91,6 +92,8 @@ export async function signUp(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const password = String(formData.get("password") ?? "");
   const birthDate = String(formData.get("birth_date") ?? "");
+  const legalAccepted = formData.get("legal_acceptance") === "accepted";
+  if (!legalAccepted) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.legalAcceptanceRequired"))}`);
   const { data: ageResult, error: ageError } = await supabase.rpc("age_gate_signup", { p_email: email, p_birth_date: birthDate || null });
   if (ageError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.ageUnavailable"))}`);
   if (ageResult === "underage") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.underage"))}`);
@@ -98,7 +101,7 @@ export async function signUp(formData: FormData) {
   if (ageResult === "cooldown") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.cooldown"))}`);
   if (password.length < 8) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.passwordLength"))}`);
   try {
-    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale } } });
+    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale, legal_acceptance: "accepted", terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION } } });
     if (error) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.signInEmailPassword"))}`);
   } catch (error) {
     if (error instanceof VerificationConfigurationError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.emailVerificationUnavailable"))}`);
@@ -176,6 +179,18 @@ export async function resendVerificationEmail(formData: FormData) {
     throw error;
   }
   redirect("/check-email?sent=1");
+}
+
+export async function prepareGoogleSignupLegalAcceptance() {
+  const { locale } = await getPageI18n();
+  const cookieStore = await cookies();
+  cookieStore.set(legalAcceptanceCookie, createLegalAcceptanceIntent(locale), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/auth/callback",
+    maxAge: legalAcceptanceMaxAge,
+  });
 }
 
 /**

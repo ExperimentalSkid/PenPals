@@ -37,6 +37,7 @@ test("export archive contains JSON, CSV, and a category README", () => {
   assert.match(route, /export\.json/);
   assert.match(route, /languages\.csv/);
   assert.match(route, /messages\.csv/);
+  assert.match(route, /legal-acceptances\.csv/);
   assert.match(route, /reports-about\.csv/);
   assert.match(route, /moderation-evidence\.csv/);
   assert.match(route, /application\/zip/);
@@ -65,6 +66,7 @@ test("export includes role/status, privacy exclusions, and redacted data about t
   assert.match(exportHardeningMigration, /details_redacted/);
   assert.match(exportHardeningMigration, /redacted protected moderation evidence/);
   assert.match(route, /reports_about: asArray\(supplementRecord\.reports_about\)/);
+  assert.match(route, /legal_acceptances: asArray\(legalAcceptanceResult\.data\)/);
 });
 
 test("reports about the requester exclude unrelated participants' messages", () => {

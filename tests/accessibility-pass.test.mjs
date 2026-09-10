@@ -22,7 +22,7 @@ test("the application exposes skip navigation and a visible high-contrast focus 
 });
 
 test("authentication errors are associated with their form", () => {
-  assert.match(signUp, /aria-describedby=\{error \? "sign-up-error"/);
+  assert.match(signUp, /aria-describedby=\{displayError \? "sign-up-error"/);
   assert.match(signUp, /id="sign-up-error" role="alert"/);
 });
 

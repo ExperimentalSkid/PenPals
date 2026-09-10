@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "./lib/supabase/proxy";
 
-const localizedPublicRoots = new Set(["/", "/faq", "/privacy", "/contact"]);
+const localizedPublicRoots = new Set(["/", "/faq", "/privacy", "/terms", "/contact"]);
 const localizedPublicPrefixes = ["/country/", "/language/", "/interest/"];
 
 function isLocalizedPublicPath(pathname: string) {
@@ -37,4 +37,4 @@ export function proxy(request: NextRequest) {
   return updateSession(request);
 }
 
-export const config = { matcher: ["/", "/faq", "/privacy", "/contact", "/country/:path*", "/language/:path*", "/interest/:path*", "/es/:path*", "/app/:path*", "/auth/:path*"] };
+export const config = { matcher: ["/", "/faq", "/privacy", "/terms", "/contact", "/country/:path*", "/language/:path*", "/interest/:path*", "/es/:path*", "/app/:path*", "/auth/:path*"] };

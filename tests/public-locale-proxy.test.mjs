@@ -13,5 +13,5 @@ test("Spanish public rewrites do not bounce back into the locale redirect", () =
 });
 
 test("contact remains in the localized public route set", () => {
-  assert.match(proxy, /localizedPublicRoots = new Set\(\["\/", "\/faq", "\/privacy", "\/contact"\]\)/);
+  for (const route of ["/", "/faq", "/privacy", "/terms", "/contact"]) assert.match(proxy, new RegExp(`"${route.replaceAll("/", "\\/")}"`));
 });

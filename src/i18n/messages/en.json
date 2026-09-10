@@ -22,7 +22,9 @@
     "publicLinks": "Public site links",
     "skipToContent": "Skip to main content",
     "searchFor": "Search {label}",
-    "optionsFor": "{label} options"
+    "optionsFor": "{label} options",
+    "terms": "Terms",
+    "privacyPolicy": "Privacy Policy"
   },
   "home": {
     "eyebrow": "A thoughtful way to meet the world",
@@ -66,7 +68,10 @@
       "birthWrong": "Entered your date of birth incorrectly?",
       "correction": "Request a correction.",
       "create": "Create account",
-      "already": "Already a member?"
+      "already": "Already a member?",
+      "legalPrefix": "I agree to the",
+      "legalAnd": "and acknowledge the",
+      "legalRequired": "You must agree to the Terms of Service and acknowledge the Privacy Policy to create an account."
     },
     "google": {
       "open": "Opening Google…",
@@ -193,7 +198,7 @@
     "dataTitle": "Data the app uses",
     "cards": {
       "accountTitle": "Account data",
-      "accountBody": "Email, account creation time, login state, confirmation state, and authentication activity available to the app.",
+      "accountBody": "Email, account creation time, login state, confirmation state, authentication activity available to the app, and versioned Terms/Privacy acceptance records.",
       "profileTitle": "Profile data",
       "profileBody": "Display name, username, age-related birth-date data, location choices, languages, interests, bio, photos, badges, and profile settings.",
       "communicationTitle": "Communication data",
@@ -1342,7 +1347,8 @@
       "passwordMismatch": "Passwords do not match.",
       "passwordUpdateFailed": "We couldn’t update your password. Please try again.",
       "resendEmailRequired": "Enter the email you used to sign up.",
-      "resendFailed": "We couldn’t resend that email yet. Please try again shortly."
+      "resendFailed": "We couldn’t resend that email yet. Please try again shortly.",
+      "legalAcceptanceRequired": "You must agree to the Terms of Service and acknowledge the Privacy Policy to create an account."
     },
     "age": {
       "signIn": "Sign in to request a correction.",
@@ -1542,5 +1548,38 @@
     "ctaBody": "Join pen-pals.net to browse member profiles and start a conversation.",
     "create": "Create an account",
     "explore": "Explore Discover"
+  },
+  "terms": {
+    "eyebrow": "Terms",
+    "title": "Terms of Service",
+    "intro": "These Terms explain the rules for creating an account and using pen-pals.net.",
+    "effective": "Effective: September 10, 2026 · Version 2026-09-10",
+    "acceptance": "By creating an account or using pen-pals.net, you agree to these Terms. If you do not agree, do not create or continue using an account. Mandatory rights that cannot legally be waived remain unaffected.",
+    "sections": {
+      "eligibilityTitle": "Adult service",
+      "eligibilityBody": "You must be at least 18 years old to create or use an account. You must provide accurate age information. Accounts identified as belonging to a person under 18 may be restricted or suspended, with the correction process provided by the service where applicable.",
+      "purposeTitle": "Friendship, not dating",
+      "purposeBody": "pen-pals.net is designed for international friendship, correspondence, cultural exchange, and conversation. It is not a dating service, follower network, marketplace, or advertising platform. Use the service in a way that respects that purpose.",
+      "accountTitle": "Your account",
+      "accountBody": "You are responsible for the accuracy of information you submit, for keeping your login credentials secure, and for activity performed through your account. Do not impersonate another person, create accounts to evade restrictions, or transfer access to someone else.",
+      "conductTitle": "Safety and acceptable use",
+      "conductBody": "Do not use pen-pals.net for harassment, threats, hate or abuse, scams or fraud, spam, commercial solicitation, impersonation, illegal activity, or attempts to defeat safety controls. Sexual or explicit material must not be placed in profiles or sent unsolicited. Reports and blocks must not be abused to target other members.",
+      "contentTitle": "Your content",
+      "contentBody": "You retain ownership of content you submit. You give pen-pals.net a limited, non-exclusive permission to host, process, transmit, display, and technically reproduce that content only as needed to operate, secure, moderate, and provide the service. This permission ends when the content is deleted except where limited retention is necessary for safety, legal obligations, dispute handling, or preserved shared conversation history described in the Privacy Policy.",
+      "privacyTitle": "Privacy and moderation",
+      "privacyBody": "Use of personal data is described in the Privacy Policy. Private communications are not public content, but reports, automated safety signals, or lawful operational needs may cause relevant content to be reviewed by authorized staff under the service’s access controls.",
+      "availabilityTitle": "Service availability",
+      "availabilityBody": "Features may change, be interrupted, or be withdrawn. Delivery times shown for digital Snail Mail are part of the product experience and are estimates, not guaranteed real-world postal commitments. We may perform maintenance or limit features to protect reliability or safety.",
+      "enforcementTitle": "Restriction, suspension, and termination",
+      "enforcementBody": "We may limit features, restrict contact, suspend, or terminate accounts when reasonably necessary to enforce these Terms, protect members or the service, comply with law, or respond to security risk. Where the product provides an appeal or correction process, you may use it subject to its stated limits.",
+      "liabilityTitle": "Responsibility and liability",
+      "liabilityBody": "Members are responsible for their own interactions and decisions. pen-pals.net does not guarantee the identity, intentions, statements, availability, or conduct of another member. To the maximum extent permitted by applicable law, the service is provided without guarantees beyond those that cannot legally be excluded, and liability is not excluded or limited where the law prohibits doing so.",
+      "changesTitle": "Changes to these Terms",
+      "changesBody": "We may update these Terms as the service changes or legal requirements evolve. The current version and effective date will be published here. If a change materially affects existing members, we will provide reasonable notice or request renewed acceptance where appropriate.",
+      "generalTitle": "General",
+      "generalBody": "If a provision of these Terms is unenforceable, the remaining provisions continue to apply. Failure to enforce a provision once does not waive it. Applicable mandatory consumer and data-protection rights remain unaffected. Disputes are subject to the law and courts that apply under mandatory rules to the particular relationship.",
+      "contactTitle": "Contact",
+      "contactBody": "Questions about these Terms can be sent through the public Contact page or, for signed-in members, through Help & support."
+    }
   }
 }

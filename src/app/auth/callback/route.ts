@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { googleLoginIntentCookie, verifyGoogleLoginIntent } from "@/lib/auth/google-login";
 import { hasCompletedProfile } from "@/lib/profile-completeness";
 import { verificationSiteUrl } from "@/lib/verification/server";
+import { legalAcceptanceCookie, verifyLegalAcceptanceIntent } from "@/lib/auth/legal-acceptance";
 
 export const runtime = "nodejs";
 
@@ -63,6 +64,7 @@ function failure(request: NextRequest, mode: "login" | "link", reason: "cancelle
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams;
   const mode: "login" | "link" = query.get("mode") === "link" ? "link" : "login";
+  const signupEntry = mode === "login" && query.get("entry") === "signup";
   const providerError = query.get("error");
   if (providerError) return failure(request, mode, "cancelled");
 
@@ -91,6 +93,23 @@ export async function GET(request: NextRequest) {
     if (!user.email_confirmed_at) {
       await db.auth.signOut();
       return destination(request, "/check-email", mode === "link");
+    }
+
+    if (signupEntry) {
+      const legalIntent = verifyLegalAcceptanceIntent(request.cookies.get(legalAcceptanceCookie)?.value);
+      if (!legalIntent) {
+        await db.auth.signOut();
+        return destination(request, "/sign-up?legal=required");
+      }
+      const { error: legalError } = await db.rpc("record_my_google_signup_legal_acceptance", {
+        p_terms_version: legalIntent.termsVersion,
+        p_privacy_version: legalIntent.privacyVersion,
+        p_locale: legalIntent.locale,
+      });
+      if (legalError) {
+        await db.auth.signOut();
+        return destination(request, "/sign-up?legal=required");
+      }
     }
 
     const { data: ageRestricted, error: ageError } = await db.rpc("is_current_user_age_restricted");

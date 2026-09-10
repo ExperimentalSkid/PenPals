@@ -12,9 +12,10 @@ export const metadata: Metadata = {
 };
 
 
-export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; appeal?: string }> }) {
-  const { error, message, appeal } = await searchParams;
+export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; appeal?: string; legal?: string }> }) {
+  const { error, message, appeal, legal } = await searchParams;
   const { locale, t } = await getPageI18n();
+  const displayError = legal === "required" ? t("auth.signUp.legalRequired") : error;
 
   return (
     <main lang={locale} className="min-h-screen bg-[#f7f5ef] px-6 py-12 text-primary sm:py-20">
@@ -33,7 +34,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
         </header>
 
         <div className="mt-9 space-y-4">
-          <GoogleAuthButton errorPath="/sign-up" openingLabel={t("auth.google.open")} continueLabel={t("auth.google.continue")} errorMessage={t("auth.google.error")} />
+          <GoogleAuthButton errorPath="/sign-up" openingLabel={t("auth.google.open")} continueLabel={t("auth.google.continue")} errorMessage={t("auth.google.error")} legalSignup legalPrefix={t("auth.signUp.legalPrefix")} legalAnd={t("auth.signUp.legalAnd")} termsLabel={t("common.terms")} privacyLabel={t("common.privacyPolicy")} />
           <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[.16em] text-black/40">
             <span className="h-px flex-1 bg-black/10" />
             <span>{t("common.or")}</span>
@@ -41,7 +42,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
           </div>
         </div>
 
-        <form action={signUp} className="mt-4 space-y-5" aria-describedby={error ? "sign-up-error" : undefined}>
+        <form action={signUp} className="mt-4 space-y-5" aria-describedby={displayError ? "sign-up-error" : undefined}>
           <label className="field-label">
             {t("common.email")}
             <input name="email" type="email" autoComplete="email" required className="field mt-2 block w-full" />
@@ -55,9 +56,13 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
             <input name="password" type="password" autoComplete="new-password" minLength={8} required className="field mt-2 block w-full" />
             <span className="mt-1 block text-xs font-normal text-black/45">{t("auth.signUp.passwordHint")}</span>
           </label>
-          {error && (
+          <label className="flex items-start gap-3 text-sm leading-6 text-black/60">
+            <input name="legal_acceptance" value="accepted" type="checkbox" required className="mt-1 h-4 w-4 shrink-0" />
+            <span>{t("auth.signUp.legalPrefix")} <Link href="/terms" className="font-semibold text-brand underline underline-offset-2">{t("common.terms")}</Link> {t("auth.signUp.legalAnd")} <Link href="/privacy" className="font-semibold text-brand underline underline-offset-2">{t("common.privacyPolicy")}</Link>.</span>
+          </label>
+          {displayError && (
             <p id="sign-up-error" role="alert" aria-live="assertive" className="notice notice-error">
-              {error}
+              {displayError}
             </p>
           )}
           {appeal === "1" && (
