@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createInboxProfileLoader } from "./inbox-profiles";
 import { redirect } from "next/navigation";
 import { isLostInTransit, lostInTransitCopy } from "@/app/app/messages/snailMailStory";
+import { isPrivateAvatarPath } from "@/lib/avatar";
 
 const currentTimestamp = () => Date.now();
 
@@ -103,26 +104,25 @@ export default async function Messages() {
   const profiles = createInboxProfileLoader(db, uid);
 
   const memberships = (await db.from("conversation_participants").select("conversation_id,last_read_at,conversations(communication_mode)").eq("user_id", uid)).data ?? [];
-  const instantMemberships = memberships.filter((membership: any) => {
-    const conversation = Array.isArray(membership.conversations) ? membership.conversations[0] : membership.conversations;
-    return conversation?.communication_mode !== "snail_mail";
-  });
-  const rows = await Promise.all(instantMemberships.map(async (m: any) => {
-    const [participantResult, latestResult] = await Promise.all([
-      db.from("conversation_participants").select("user_id").eq("conversation_id", m.conversation_id).neq("user_id", uid).limit(1),
-      db.from("messages").select("body,created_at,sender_id").eq("conversation_id", m.conversation_id).order("created_at", { ascending: false }).limit(1),
-    ]);
-    const participant = participantResult.data?.[0];
-    const other = participant ? await profiles.identity(participant.user_id) : null;
-    const photo = participant ? await profiles.photo(participant.user_id) : null;
-    const latest = latestResult.data?.[0];
+  const instantSummaryResult = await db.rpc("get_instant_message_inbox");
+  const rows = await Promise.all((instantSummaryResult.data ?? []).map(async (row: any) => {
+    const other = row.other_user_id ? {
+      id: row.other_user_id,
+      username: row.other_username,
+      display_name: row.other_display_name,
+      age: row.other_age,
+      avatar_path: row.other_avatar_path,
+    } : null;
+    const photo = other?.avatar_path && isPrivateAvatarPath(other.avatar_path, other.id)
+      ? (await db.storage.from("avatars").createSignedUrl(other.avatar_path, 3600)).data?.signedUrl ?? null
+      : null;
     return {
-      id: m.conversation_id,
+      id: row.conversation_id,
       other,
       photo,
-      latest,
-      deletedOther: !participant,
-      unread: Boolean(latest && latest.sender_id && latest.sender_id !== uid && (!m.last_read_at || new Date(latest.created_at) > new Date(m.last_read_at))),
+      latest: row.latest_created_at ? { body: row.latest_body, created_at: row.latest_created_at, sender_id: row.latest_sender_id } : null,
+      deletedOther: !row.other_user_id,
+      unread: Boolean(row.unread),
     };
   }));
 

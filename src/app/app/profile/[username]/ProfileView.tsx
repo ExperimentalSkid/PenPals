@@ -148,8 +148,8 @@ export default function ProfileView({ profile, displayName, age, location, activ
             <div className="mt-6 max-w-[720px] border-t border-black/10" aria-hidden="true" />
             {badges.length > 0 && <section aria-labelledby="badges-heading" className="mt-7 max-w-[720px]">
               <h2 id="badges-heading" className="font-serif text-[30px] tracking-[-0.025em] text-[#10231d]">Badges</h2>
-              <div className="mt-4 flex max-w-full flex-wrap gap-2" aria-label="Profile badges">
-                {badges.map((badge) => <ProfileBadge key={badge} badge={badge} />)}
+              <div className="mt-3 flex max-w-full flex-wrap gap-1.5" aria-label="Profile badges">
+                {badges.map((badge) => <ProfileBadge key={badge} badge={badge} compact />)}
               </div>
             </section>}
             {profile.quote && <blockquote className="relative mt-8 max-w-[720px] pl-6 font-serif text-[clamp(2.1rem,2.8vw,2.5rem)] leading-[1.2] tracking-[-0.04em] text-[#075d46]"><span aria-hidden="true" className="absolute left-0 top-[-.15em] text-[2.7rem] text-[#4f806e]">“</span>{profile.quote}<span aria-hidden="true">”</span></blockquote>}

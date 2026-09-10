@@ -159,9 +159,10 @@ export type ProfileBadgeProps = {
   badge: ProfileBadgeKey | ProfileBadgeDefinition;
   trailing?: ReactNode;
   className?: string;
+  compact?: boolean;
 };
 
-export default function ProfileBadge({ badge, trailing, className = "" }: ProfileBadgeProps) {
+export default function ProfileBadge({ badge, trailing, className = "", compact = false }: ProfileBadgeProps) {
   const definition = typeof badge === "string" ? PROFILE_BADGE_DEFINITIONS[badge] : badge;
   const explanation = badgeExplanation(definition);
   const assetPath = badgeAssetPath(definition);
@@ -178,11 +179,11 @@ export default function ProfileBadge({ badge, trailing, className = "" }: Profil
       {fullAsset ? (
         // These are local, pre-optimized SVG artwork exports from the supplied badge pack.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={assetPath} alt="" aria-hidden="true" className="block h-12 w-auto max-w-full" />
+        <img src={assetPath} alt="" aria-hidden="true" className={`block w-auto max-w-full ${compact ? "h-9" : "h-12"}`} />
       ) : (
-        <span className="inline-flex min-h-12 max-w-full items-center gap-2 rounded-full border border-[#AFCBE0] bg-[#F3F8FC] px-3 py-1.5 text-xs font-semibold leading-5 text-[#103B61]">
+        <span className={`inline-flex max-w-full items-center rounded-full border border-[#AFCBE0] bg-[#F3F8FC] font-semibold text-[#103B61] ${compact ? "min-h-9 gap-1.5 px-2.5 py-1 text-[11px] leading-4" : "min-h-12 gap-2 px-3 py-1.5 text-xs leading-5"}`}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={assetPath} alt="" aria-hidden="true" className="h-8 w-8 shrink-0" />
+          <img src={assetPath} alt="" aria-hidden="true" className={`${compact ? "h-6 w-6" : "h-8 w-8"} shrink-0`} />
           <span className="min-w-0 whitespace-normal break-words">{definition.label}</span>
         </span>
       )}

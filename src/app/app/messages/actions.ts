@@ -71,15 +71,16 @@ export async function sendMessage(formData: FormData) {
   if (!data?.claims?.sub) redirect("/sign-in");
   const conversationId = String(formData.get("conversation_id"));
   const body = String(formData.get("body") ?? "").trim();
+  const replyToMessageId = String(formData.get("reply_to_message_id") ?? "").trim() || null;
   if (!body) redirect(`/app/messages/${conversationId}`);
   // The message trigger maintains conversation activity atomically; there is
   // no second write that can fail after the message has already been sent.
-  const { error } = await db.from("messages").insert({ conversation_id: conversationId, sender_id: data.claims.sub, body });
+  const { error } = await db.from("messages").insert({ conversation_id: conversationId, sender_id: data.claims.sub, body, reply_to_message_id: replyToMessageId });
   if (error) {
     const message = error.message?.includes("Wait for a reply") ? "Wait for a reply before sending another message." : "We couldn't send that message. Please try again.";
     redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(message)}`);
   }
-  redirect(`/app/messages/${conversationId}`);
+  redirect(`/app/messages/${conversationId}?sent=1`);
 }
 export async function markRead(conversationId: string) { const db = await createClient(); const { data } = await db.auth.getClaims(); if (!data?.claims?.sub) return { error: "We couldn't update the conversation read state. Please refresh." }; const { error } = await db.from("conversation_participants").update({ last_read_at: new Date().toISOString() }).eq("conversation_id", conversationId).eq("user_id", data.claims.sub); return error ? { error: "We couldn't update the conversation read state. Please refresh." } : { error: null }; }
 export async function requestPhotoAccess(formData: FormData) { const db = await createClient(); const { data } = await db.auth.getClaims(); if (!data?.claims?.sub) redirect("/sign-in"); const conversationId = String(formData.get("conversation_id")); const ownerId = String(formData.get("owner_id")); const { error } = await db.rpc("request_photo_access", { owner_user: ownerId, conversation: conversationId }); if (error) redirect(`/app/messages/${conversationId}?error=${encodeURIComponent("Photo access isn't available right now. Please try again.")}`); redirect(`/app/messages/${conversationId}?message=Photo access requested`); }
