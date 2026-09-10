@@ -36,3 +36,10 @@ test("public pages are linked from the front page and generated sitemap", async 
     assert.match(sitemap, new RegExp(`\"${escaped}\"`));
   }
 });
+
+
+test("FAQ serves the legacy mark locally instead of making a third-party image request", async () => {
+  const faq = await read("src/app/faq/page.tsx");
+  assert.match(faq, /\/assets\/legacy\/international-pen-friends-logo\.jpg/);
+  assert.doesNotMatch(faq, /src=\"https:\/\/www\.ipf\.net\.au\/images\//);
+});

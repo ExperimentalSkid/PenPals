@@ -45,6 +45,15 @@ test("identifier login has database and proxy-facing abuse limits", () => {
   assert.match(actions, /x-forwarded-for/);
 });
 
+test("security hardening keeps CSP report-only and browser assets first-party", () => {
+  assert.match(nextConfig, /Content-Security-Policy-Report-Only/);
+  assert.match(nextConfig, /default-src 'self'/);
+  assert.match(nextConfig, /object-src 'none'/);
+  assert.match(nextConfig, /frame-ancestors 'none'/);
+  assert.match(nextConfig, /https:\/\/\*\.tile\.openstreetmap\.org/);
+  assert.doesNotMatch(nextConfig, /i\.pravatar\.cc/);
+});
+
 test("production responses include baseline security headers", () => {
   assert.match(nextConfig, /X-Content-Type-Options/);
   assert.match(nextConfig, /X-Frame-Options/);

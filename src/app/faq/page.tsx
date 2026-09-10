@@ -46,9 +46,9 @@ export default async function FaqPage() {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqStructuredData).replace(/</g, "\\u003c") }} />
       <PublicInfoPage eyebrow={t("faq.eyebrow")} title={t("faq.title")} intro={t("faq.intro")}>
         <section className="relative mb-10 overflow-hidden rounded-2xl border border-[#D9D3C8] bg-[#FFF9EA] p-5 text-center shadow-[0_8px_24px_rgba(16,42,67,.035)] sm:p-6">
-          {/* External legacy mark is decorative and intentionally bypasses Next image optimization. */}
+          {/* Legacy mark is decorative and served locally to avoid a third-party browser request. */}
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="https://www.ipf.net.au/images/internationalpenfriends-logo.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-0 w-[260px] max-w-[70%] -translate-x-1/2 -translate-y-1/2 opacity-[0.06]" />
+          <img src="/assets/legacy/international-pen-friends-logo.jpg" alt="" aria-hidden="true" className="pointer-events-none absolute left-1/2 top-1/2 z-0 w-[260px] max-w-[70%] -translate-x-1/2 -translate-y-1/2 opacity-[0.06]" />
           <p className="eyebrow relative z-10">{t("faq.historyEyebrow")}</p>
           <h2 className="relative z-10 mt-2 font-serif text-2xl text-[#102A43]">{t("faq.historyTitle")}</h2>
           <div className="relative z-10 mx-auto mt-4 max-w-[72ch] space-y-3 text-pretty text-center text-sm leading-7 text-muted sm:text-base">
