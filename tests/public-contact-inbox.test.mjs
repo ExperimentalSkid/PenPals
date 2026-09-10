@@ -106,6 +106,8 @@ test("public contact requires email verification before entering the staff queue
   assert.doesNotMatch(migration, /grant execute on function public\.create_public_contact_verification[\s\S]*to anon/);
   assert.match(contactAction, /redirect\("\/contact\?verify=1"\)/);
   assert.match(verifyRoute, /verify_public_contact_submission/);
+  assert.match(verifyRoute, /NEXT_PUBLIC_SITE_URL/);
+  assert.match(verifyRoute, /contactDestination\(request, "\/contact\?verified=1"\)/);
   assert.match(verifyRoute, /\/contact\?verified=1/);
   assert.match(contactPage, /contact\.verifyTitle/);
   assert.match(supportDetail, /Abuse context/);

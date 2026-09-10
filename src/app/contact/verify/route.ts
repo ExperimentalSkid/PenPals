@@ -3,11 +3,16 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createContactVerificationServiceClient, hashContactVerificationToken } from "@/lib/contact-verification";
 import { publicContactRequestMetadata } from "../request-metadata";
 
+function contactDestination(request: NextRequest, path: string) {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  return new URL(path, configured || request.url);
+}
+
 export async function GET(request: NextRequest) {
   const submission = request.nextUrl.searchParams.get("submission")?.trim() ?? "";
   const token = request.nextUrl.searchParams.get("token")?.trim() ?? "";
   if (!/^[0-9a-f-]{36}$/i.test(submission) || !/^[A-Za-z0-9_-]{40,80}$/.test(token)) {
-    return NextResponse.redirect(new URL("/contact?verification=invalid", request.url));
+    return NextResponse.redirect(contactDestination(request, "/contact?verification=invalid"));
   }
 
   const service = createContactVerificationServiceClient();
@@ -18,7 +23,7 @@ export async function GET(request: NextRequest) {
   });
   if (error) {
     const reason = /expired/i.test(error.message ?? "") ? "expired" : /invalid/i.test(error.message ?? "") ? "invalid" : "failed";
-    return NextResponse.redirect(new URL(`/contact?verification=${reason}`, request.url));
+    return NextResponse.redirect(contactDestination(request, `/contact?verification=${reason}`));
   }
-  return NextResponse.redirect(new URL("/contact?verified=1", request.url));
+  return NextResponse.redirect(contactDestination(request, "/contact?verified=1"));
 }
