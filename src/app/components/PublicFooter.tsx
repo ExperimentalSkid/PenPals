@@ -15,6 +15,7 @@ export default async function PublicFooter({ className = "" }: { className?: str
         <Link href={localizedPublicPath("/faq", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.faq")}</Link>
         <Link href={localizedPublicPath("/privacy", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.privacy")}</Link>
         <Link href={localizedPublicPath("/terms", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.terms")}</Link>
+        <Link href={localizedPublicPath("/guidelines", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.guidelines")}</Link>
         <Link href={localizedPublicPath("/privacy", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.gdpr")}</Link>
         {!signedIn && <Link href={localizedPublicPath("/contact", locale)} className="font-medium text-[#073A73] underline-offset-4 hover:underline">{t("common.contact")}</Link>}
         <LanguageSwitcher locale={locale} label={t("common.language")} />

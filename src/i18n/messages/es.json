@@ -24,7 +24,8 @@
     "searchFor": "Buscar {label}",
     "optionsFor": "Opciones de {label}",
     "terms": "Términos",
-    "privacyPolicy": "Política de privacidad"
+    "privacyPolicy": "Política de privacidad",
+    "guidelines": "Normas"
   },
   "home": {
     "eyebrow": "Una forma más consciente de conocer el mundo",
@@ -1580,6 +1581,32 @@
       "generalBody": "Si una disposición de estos Términos no fuera exigible, las demás seguirán siendo aplicables. El hecho de no exigir una disposición en una ocasión no implica renunciar a ella. Los derechos obligatorios de consumidores y protección de datos permanecen intactos. Las controversias quedan sujetas a la ley y los tribunales que resulten aplicables conforme a las normas imperativas de la relación concreta.",
       "contactTitle": "Contacto",
       "contactBody": "Puedes enviar preguntas sobre estos Términos mediante la página pública de Contacto o, si has iniciado sesión, mediante Ayuda y soporte."
+    }
+  },
+  "guidelines": {
+    "eyebrow": "Comunidad",
+    "title": "Normas de la comunidad",
+    "intro": "Pen-Pals.net está pensado para amistades auténticas y correspondencia reflexiva. Estas normas explican la conducta que se espera de todas las personas que forman parte de la comunidad.",
+    "summary": "Sé curioso, respetuoso y recuerda que hay una persona real detrás de cada perfil, mensaje y carta. Nunca estás obligado a responder a otro miembro y nadie tiene derecho a exigir que continúe el contacto.",
+    "sections": {
+      "friendshipTitle": "La amistad es lo primero",
+      "friendshipBody": "Pen-Pals.net es para amistad internacional, correspondencia, intercambio cultural y conversación. No lo utilices como servicio de citas, aplicación para encuentros, red de seguidores, canal publicitario o mercado. Una conversación amistosa puede hacerse naturalmente más personal, pero la presión, la búsqueda sexual o utilizar las funciones de amistad como pretexto para citas no forman parte del propósito del servicio.",
+      "adultsTitle": "Solo para adultos",
+      "adultsBody": "Debes tener al menos 18 años para utilizar Pen-Pals.net. No crees una cuenta para un menor, no falsees tu edad ni ayudes a una persona menor de 18 años a eludir el control de edad. Si crees que un miembro puede ser menor, denuncia la situación en lugar de investigarlo por tu cuenta.",
+      "respectTitle": "Respeta los límites",
+      "respectBody": "No se permiten el acoso, las amenazas, el odio, el abuso dirigido, la intimidación, la coacción ni el contacto no deseado repetido. Una persona puede dejar de responder, rechazar una presentación, bloquearte o terminar una conversación en cualquier momento. Respeta esa decisión sin utilizar otra cuenta o vía de contacto para seguir persiguiéndola.",
+      "sexualTitle": "Nada de contenido sexual o explícito no solicitado",
+      "sexualBody": "El material sexual, pornográfico u otro contenido explícito no está permitido en los perfiles y no debe enviarse a otro miembro sin un contexto establecido y voluntario. Están prohibidos los mensajes sexuales no solicitados, las imágenes explícitas, las ofertas de servicios sexuales y los intentos de presionar a otra persona para mantener conversaciones sexuales.",
+      "spamTitle": "No hagas spam ni presiones para obtener respuesta",
+      "spamBody": "No satures a otros miembros con presentaciones repetidas, mensajes copiados, promociones, enlaces o seguimientos insistentes. Los límites del producto refuerzan esta norma: la mensajería instantánea puede pausarse después de tres mensajes consecutivos sin respuesta, y Snail Mail impide enviar otra carta a la misma persona mientras la anterior sigue viajando o permanece sin leer. Estos límites son medidas de seguridad, no objetivos que deban eludirse.",
+      "identityTitle": "Sé auténtico y no te aproveches de otras personas",
+      "identityBody": "No suplantes a otra persona, no utilices perfiles engañosos, no estafes, defraudes, solicites dinero de forma deshonesta, anuncies servicios comerciales, reclutes para actividades ilegales ni manipules a miembros para que revelen credenciales u otra información sensible. No crees cuentas de sustitución para eludir restricciones o medidas de moderación.",
+      "privacyTitle": "Protege la privacidad",
+      "privacyBody": "No publiques ni distribuyas información privada, mensajes privados, imágenes o datos identificativos de otra persona sin permiso. No utilices la plataforma para rastrear, desanonimizar, intimidar o investigar a otro miembro. Trata el acceso a fotos privadas y otras funciones basadas en la confianza como un permiso, no como propiedad.",
+      "reportingTitle": "Utiliza el bloqueo y las denuncias de forma responsable",
+      "reportingBody": "Bloquea a una persona cuando no quieras más contacto. Denuncia perfiles, presentaciones o mensajes cuando corresponda una revisión por parte del equipo. Las denuncias deben hacerse de buena fe; no coordines denuncias falsas, no las utilices como represalia ni amenaces con denunciar a alguien para controlar su comportamiento.",
+      "enforcementTitle": "Qué ocurre cuando se incumplen las normas",
+      "enforcementBody": "Según la gravedad, el contexto y el historial, Pen-Pals.net puede restringir el contacto, retirar contenido, suspender funciones, suspender una cuenta o terminar el acceso. Las señales de seguridad pueden enviar contenido a revisión del personal sin castigar automáticamente a un miembro. Las infracciones graves o repetidas pueden dar lugar a medidas más estrictas, y los procesos de apelación o corrección disponibles siguen sujetos a sus límites indicados."
     }
   }
 }

@@ -24,7 +24,8 @@
     "searchFor": "Search {label}",
     "optionsFor": "{label} options",
     "terms": "Terms",
-    "privacyPolicy": "Privacy Policy"
+    "privacyPolicy": "Privacy Policy",
+    "guidelines": "Community Guidelines"
   },
   "home": {
     "eyebrow": "A thoughtful way to meet the world",
@@ -1580,6 +1581,32 @@
       "generalBody": "If a provision of these Terms is unenforceable, the remaining provisions continue to apply. Failure to enforce a provision once does not waive it. Applicable mandatory consumer and data-protection rights remain unaffected. Disputes are subject to the law and courts that apply under mandatory rules to the particular relationship.",
       "contactTitle": "Contact",
       "contactBody": "Questions about these Terms can be sent through the public Contact page or, for signed-in members, through Help & support."
+    }
+  },
+  "guidelines": {
+    "eyebrow": "Community",
+    "title": "Community Guidelines",
+    "intro": "Pen-Pals.net is built for genuine friendship and thoughtful correspondence. These guidelines explain the conduct expected from everyone who uses the community.",
+    "summary": "Be curious, be respectful, and remember there is a real person on the other side of every profile, message, and letter. You never owe another member a reply, and nobody is entitled to continued contact.",
+    "sections": {
+      "friendshipTitle": "Friendship comes first",
+      "friendshipBody": "Pen-Pals.net is for international friendship, correspondence, cultural exchange, and conversation. Do not use it as a dating service, hookup app, follower network, advertising channel, or marketplace. Friendly conversation can naturally become personal, but pressure, sexual pursuit, or using friendship features as a pretext for dating is not the purpose of the service.",
+      "adultsTitle": "Adults only",
+      "adultsBody": "You must be at least 18 years old to use Pen-Pals.net. Do not create an account for a minor, misstate your age, or help someone under 18 bypass the age gate. If you believe a member may be underage, report the concern rather than investigating them yourself.",
+      "respectTitle": "Respect boundaries",
+      "respectBody": "Harassment, threats, hate, targeted abuse, intimidation, coercion, or repeated unwanted contact are not allowed. A person may stop replying, decline an introduction, block you, or end a conversation at any time. Respect that decision without moving to another account or contact route to continue pursuing them.",
+      "sexualTitle": "No unsolicited sexual or explicit content",
+      "sexualBody": "Sexual, pornographic, or other explicit material is not allowed in profiles and must not be sent to another member without an established, willing context. Unsolicited sexual messages, explicit images, sexual-service offers, and attempts to pressure another member into sexual conversation are prohibited.",
+      "spamTitle": "Do not spam or pressure for replies",
+      "spamBody": "Do not flood members with repeated introductions, copied messages, promotions, links, or persistent follow-ups. Product limits reinforce this rule: instant messaging can pause after three consecutive unanswered messages, and Snail Mail prevents another letter to the same person while the previous one is still travelling or remains unread. These limits are safety boundaries, not targets to work around.",
+      "identityTitle": "Be authentic and do not exploit people",
+      "identityBody": "Do not impersonate another person, operate deceptive profiles, scam, defraud, solicit money dishonestly, advertise commercial services, recruit for illegal activity, or manipulate members into revealing credentials or other sensitive information. Do not create replacement accounts to evade restrictions or moderation.",
+      "privacyTitle": "Protect privacy",
+      "privacyBody": "Do not publish or distribute another person’s private information, private messages, images, or identifying details without permission. Do not use the platform to track, deanonymize, intimidate, or investigate another member. Treat private-photo access and other trust-based features as permission, not ownership.",
+      "reportingTitle": "Use block and report tools responsibly",
+      "reportingBody": "Block someone when you do not want further contact. Report profiles, introductions, or messages when staff review is appropriate. Reports should be made in good faith; do not coordinate false reports, misuse reporting as retaliation, or threaten someone with reports to control their behaviour.",
+      "enforcementTitle": "What happens when rules are broken",
+      "enforcementBody": "Depending on severity, context, and history, Pen-Pals.net may restrict contact, remove content, suspend features, suspend an account, or terminate access. Safety signals can place content into staff review without automatically punishing a member. Serious or repeated violations may lead to stronger action, and available appeal or correction paths remain subject to their stated limits."
     }
   }
 }

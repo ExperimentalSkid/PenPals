@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const origin = seoSiteOrigin();
   const routes = await loadPublicSeoSitemap();
-  const publicRoutes = ["/", "/faq", "/privacy", "/terms", "/contact"];
+  const publicRoutes = ["/", "/faq", "/privacy", "/terms", "/guidelines", "/contact"];
   return [
     ...publicRoutes.flatMap((path) => ([
       { url: `${origin}${localizedPublicPath(path, "en")}` },
