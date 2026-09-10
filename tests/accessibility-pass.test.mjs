@@ -42,7 +42,7 @@ test("profile selectors expose unique controls and context-specific labels", () 
 
 test("message history and unread state have non-colour semantics", () => {
   assert.match(conversation, /role="log" aria-live="polite" aria-relevant="additions"/);
-  assert.match(conversation, /className="sr-only">\{mine \? "You"/);
+  assert.match(conversation, /className="sr-only">\{mine \? t\("app\.messages\.you"\)/);
   assert.match(conversation, /aria-describedby=\{messageSendBlocked \? "message-composer-status"/);
   assert.match(messages, /className="sr-only">\{t\("app\.messages\.unread"\)\}<\/span>/);
   assert.match(notifications, /className="sr-only">\{t\("app\.notifications\.unreadNotification"\)\}<\/span>/);

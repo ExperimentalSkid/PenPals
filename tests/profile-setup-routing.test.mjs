@@ -44,7 +44,7 @@ test("setup remains a valid edit destination for completed profiles without trap
 test("viewing the public profile from setup preserves a return link to profile editing", () => {
   assert.match(profilePage, /navigation\.from === "setup"/);
   assert.match(profilePage, /\? "\/app\/profile\/setup"/);
-  assert.match(profilePage, /Back to profile editing/);
+  assert.match(profilePage, /app\.profile\.backEditing/);
   assert.match(profilePage, /navigation\.from === "conversation"/);
   assert.match(profilePage, /navigation\.from === "introductions"/);
   assert.match(profilePage, /\/app\/discover/);

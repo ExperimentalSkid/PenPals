@@ -55,7 +55,7 @@ test("server action and conversation UI expose Snail Mail without changing insta
   assert.match(conversationPage, /db\.rpc\("list_snail_mail"/);
   assert.match(conversationPage, /<SnailMailPanel/);
   assert.match(panel, /app\.snail\.write/);
-  assert.match(panel, /The letter is sealed until delivery/);
+  assert.match(panel, /app\.snail\.sealedUntilDelivery/);
   assert.match(panel, /role="progressbar"/);
   assert.match(panel, /app\.snail\.open/);
 });
@@ -130,14 +130,14 @@ test("list/get RPCs return transport and story metadata while retaining particip
 
 test("delivery stories derive from progress and include the rare pigeon copy", () => {
   assert.match(panel, /function milestone\(/i);
-  assert.match(panel, /Posted/);
-  assert.match(panel, /Sorting/);
-  assert.match(panel, /Crossing the border/);
-  assert.match(panel, /Crossing the sea/);
-  assert.match(panel, /In transit/);
-  assert.match(panel, /Out for delivery/);
-  assert.match(panel, /Delivered/);
-  assert.match(panel, /A very determined pigeon has accepted the assignment\./i);
+  assert.match(panel, /app\.snail\.posted/);
+  assert.match(panel, /app\.snail\.sorting/);
+  assert.match(panel, /app\.snail\.crossingBorder/);
+  assert.match(panel, /app\.snail\.crossingSea/);
+  assert.match(panel, /app\.snail\.inTransit/);
+  assert.match(panel, /app\.snail\.outForDelivery/);
+  assert.match(panel, /app\.snail\.delivered/);
+  assert.match(panel, /app\.snail\.pigeonAccepted/);
   assert.match(panel, /transportLabel\(/i);
   assert.match(panel, /progress\(letter, now\)/i);
   assert.match(panel, /setInterval\(\(\) => setCurrentNow\(Date\.now\(\)\), 60_000\)/i);

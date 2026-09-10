@@ -1,4 +1,5 @@
 import LanguageFlag from "@/app/components/LanguageFlag";
+import { useTranslations } from "next-intl";
 import { formatLanguageProficiency, languageNameFromRelation } from "@/lib/language-compatibility";
 
 export type LanguageRelation = { name?: string | null };
@@ -16,6 +17,7 @@ export function humanProficiency(proficiency?: string | null, purpose?: string |
 }
 
 export default function LanguagesSection({ languages }: { languages: ProfileLanguage[] }) {
+  const t = useTranslations();
   if (languages.length === 0) return null;
 
   return (
@@ -25,12 +27,16 @@ export default function LanguagesSection({ languages }: { languages: ProfileLang
           <circle cx="12" cy="12" r="8.5" />
           <path d="M3.8 12h16.4M12 3.5c2.2 2.4 3.3 5.2 3.3 8.5S14.2 18.1 12 20.5c-2.2-2.4-3.3-5.9-3.3-8.5S9.8 5.9 12 3.5Z" />
         </svg>
-        Languages
+        {t("app.profile.languages")}
       </h2>
       <div className="mt-5 divide-y divide-black/[0.08]">
         {languages.map((language) => {
           const name = languageNameFromRelation(language.languages);
-          const level = humanProficiency(language.proficiency, language.purpose);
+          const level = language.purpose === "learning"
+            ? t("app.profile.learningLevel")
+            : language.proficiency && ["native", "fluent", "intermediate", "beginner"].includes(language.proficiency)
+              ? t(`app.profile.levels.${language.proficiency}`)
+              : humanProficiency(language.proficiency, language.purpose);
           return (
             <div key={`${language.language_id}-${language.purpose ?? "unknown"}`} className="flex items-center justify-between gap-4 py-3 text-[15px]">
               <span className="flex min-w-0 items-center gap-3 text-black/75">

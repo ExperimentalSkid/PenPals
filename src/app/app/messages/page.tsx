@@ -33,7 +33,7 @@ type SnailMailInboxLetter = {
   senderAge?: number | null;
 };
 
-function formatConversationTime(value: string | null | undefined) {
+function formatConversationTime(value: string | null | undefined, t: (key: string, values?: Record<string, string | number>) => string) {
   if (!value) return null;
   const date = new Date(value);
   if (!Number.isFinite(date.getTime())) return null;
@@ -43,33 +43,33 @@ function formatConversationTime(value: string | null | undefined) {
   }
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
-  if (date.toDateString() === yesterday.toDateString()) return "Yesterday";
+  if (date.toDateString() === yesterday.toDateString()) return t("app.messages.yesterday");
   const days = Math.floor((now.getTime() - date.getTime()) / 86_400_000);
   if (days < 7 && days >= 0) return date.toLocaleDateString(undefined, { weekday: "short" });
   return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-function formatDeliveryEta(value: string, now: number) {
+function formatDeliveryEta(value: string, now: number, t: (key: string, values?: Record<string, string | number>) => string) {
   const remaining = new Date(value).getTime() - now;
-  if (!Number.isFinite(remaining) || remaining <= 0) return "Delivered";
+  if (!Number.isFinite(remaining) || remaining <= 0) return t("app.messages.delivered");
   const hours = Math.ceil(remaining / 3_600_000);
-  if (hours < 24) return `Arriving in ${hours} ${hours === 1 ? "hour" : "hours"}`;
-  if (hours < 48) return "Arriving tomorrow";
+  if (hours < 24) return t("app.messages.arrivingHours", { count: hours });
+  if (hours < 48) return t("app.messages.arrivingTomorrow");
   const days = Math.ceil(hours / 24);
-  return `Arriving in ${days} days`;
+  return t("app.messages.arrivingDays", { count: days });
 }
 
-function deliveryMilestone(letter: SnailMailInboxLetter, now: number) {
-  if (isLostInTransit(letter)) return "Lost in transit";
+function deliveryMilestone(letter: SnailMailInboxLetter, now: number, t: (key: string) => string) {
+  if (isLostInTransit(letter)) return t("app.messages.lost");
   const start = new Date(letter.sent_at).getTime();
   const end = new Date(letter.deliver_at).getTime();
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return "Delivered";
+  if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start) return t("app.messages.delivered");
   const progress = Math.max(0, Math.min(100, ((now - start) / (end - start)) * 100));
-  if (progress < 18) return "Posted";
-  if (progress < 42) return "Sorting";
-  if (progress < 78) return letter.transport_mode === "sea_mail" || letter.distance_band === "long_distance" ? "Crossing the sea" : "In transit";
-  if (progress < 100) return "Out for delivery";
-  return "Delivered";
+  if (progress < 18) return t("app.messages.posted");
+  if (progress < 42) return t("app.messages.sorting");
+  if (progress < 78) return letter.transport_mode === "sea_mail" || letter.distance_band === "long_distance" ? t("app.messages.crossingSea") : t("app.messages.inTransit");
+  if (progress < 100) return t("app.messages.outForDelivery");
+  return t("app.messages.delivered");
 }
 
 function compactJourneyProgress(letter: SnailMailInboxLetter, now: number) {
@@ -86,24 +86,24 @@ function seededChoice(letter: SnailMailInboxLetter, salt: number, choices: strin
   return choices[Math.abs(seed) % choices.length];
 }
 
-function journeyCheckpoints(letter: SnailMailInboxLetter): JourneyCheckpoint[] {
+function journeyCheckpoints(letter: SnailMailInboxLetter, t: (key: string) => string): JourneyCheckpoint[] {
   const crossing = letter.transport_mode === "sea_mail"
-    ? seededChoice(letter, 3, ["The envelope has sea legs now.", "The captain confirms the letter is not allowed to steer.", "Still dry. Mostly."])
+    ? seededChoice(letter, 3, [t("app.messages.storySea1"), t("app.messages.storySea2"), t("app.messages.storySea3")])
     : letter.transport_mode === "rail"
-      ? seededChoice(letter, 3, ["Changed trains without missing the connection.", "Rail transfer complete. Better punctuality than expected.", "The letter has found the correct platform."])
+      ? seededChoice(letter, 3, [t("app.messages.storyRail1"), t("app.messages.storyRail2"), t("app.messages.storyRail3")])
       : letter.transport_mode === "rare_pigeon"
-        ? seededChoice(letter, 3, ["The pigeon remains suspiciously confident.", "Wing-powered logistics are proceeding to plan.", "The courier stopped for crumbs, then resumed duty."])
+        ? seededChoice(letter, 3, [t("app.messages.storyPigeon1"), t("app.messages.storyPigeon2"), t("app.messages.storyPigeon3")])
         : letter.distance_band === "long_distance"
-          ? seededChoice(letter, 3, ["International transit accepted it without an argument.", "The letter has crossed into the long-haul part of the journey.", "Somewhere between time zones, still heading the right way."])
-          : seededChoice(letter, 3, ["It has left the local network and is moving on.", "Transfer complete. The envelope appears to know the route.", "Onward it goes, with unreasonable confidence for a piece of paper."]);
+          ? seededChoice(letter, 3, [t("app.messages.storyLong1"), t("app.messages.storyLong2"), t("app.messages.storyLong3")])
+          : seededChoice(letter, 3, [t("app.messages.storyLocal1"), t("app.messages.storyLocal2"), t("app.messages.storyLocal3")]);
 
   return [
-    { progress: 0, label: "Posted", copy: seededChoice(letter, 0, ["Letter accepted. No questions asked.", "Stamped, sealed, and officially somebody else’s problem.", "The journey begins with excellent envelope posture."]) },
-    { progress: 18, label: "Sorting", copy: seededChoice(letter, 1, ["Sorting complete. It appears to know where it’s going.", "It survived the sorting room with its dignity intact.", "Correct pile, correct direction. Promising start."]) },
-    { progress: 42, label: "Departed", copy: crossing },
-    { progress: 70, label: "In transit", copy: seededChoice(letter, 4, ["Still travelling. No dramatic incidents to report.", "Steady progress. The envelope refuses to discuss mileage.", "The route continues. Morale remains inexplicably high."]) },
-    { progress: 88, label: "Near destination", copy: seededChoice(letter, 5, ["Almost there. The letter is rehearsing its entrance.", "Final stretch. It can practically see the mailbox.", "Near destination and trying not to look too excited."]) },
-    { progress: 100, label: "Delivered", copy: "Journey complete. The letter has arrived." },
+    { progress: 0, label: t("app.messages.posted"), copy: seededChoice(letter, 0, [t("app.messages.storyPosted1"), t("app.messages.storyPosted2"), t("app.messages.storyPosted3")]) },
+    { progress: 18, label: t("app.messages.sorting"), copy: seededChoice(letter, 1, [t("app.messages.storySorting1"), t("app.messages.storySorting2"), t("app.messages.storySorting3")]) },
+    { progress: 42, label: t("app.messages.departed"), copy: crossing },
+    { progress: 70, label: t("app.messages.inTransit"), copy: seededChoice(letter, 4, [t("app.messages.storyTransit1"), t("app.messages.storyTransit2"), t("app.messages.storyTransit3")]) },
+    { progress: 88, label: t("app.messages.nearDestination"), copy: seededChoice(letter, 5, [t("app.messages.storyNear1"), t("app.messages.storyNear2"), t("app.messages.storyNear3")]) },
+    { progress: 100, label: t("app.messages.delivered"), copy: t("app.messages.storyDelivered") },
   ];
 }
 
@@ -119,15 +119,15 @@ function formatCheckpointTime(value: Date | null) {
   return value.toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
 }
 
-function SnailMailTrackingStory({ letter, now }: { letter: SnailMailInboxLetter; now: number }) {
+function SnailMailTrackingStory({ letter, now, t }: { letter: SnailMailInboxLetter; now: number; t: (key: string, values?: Record<string, string | number>) => string }) {
   const value = compactJourneyProgress(letter, now);
-  const checkpoints = journeyCheckpoints(letter);
+  const checkpoints = journeyCheckpoints(letter, t);
   const reached = checkpoints.filter((checkpoint) => checkpoint.progress <= value);
   const next = checkpoints.find((checkpoint) => checkpoint.progress > value);
   const visibleLog = reached.slice(-3).reverse();
 
   return <div className="mt-4 rounded-xl border border-[#d8d0c2] bg-white/72 px-4 py-4 shadow-[inset_0_1px_0_rgba(255,255,255,.8)]">
-    <div className="relative pt-1" aria-label={`Letter tracking progress ${Math.round(value)} percent`}>
+    <div className="relative pt-1" aria-label={t("app.messages.trackingProgress", { percent: Math.round(value) })}>
       <div className="absolute left-2 right-2 top-[9px] h-px bg-black/15" aria-hidden="true" />
       <div className="absolute left-2 top-[9px] h-px bg-[#073A73]" style={{ width: `calc((100% - 1rem) * ${value / 100})` }} aria-hidden="true" />
       <div className="relative flex justify-between">
@@ -139,19 +139,19 @@ function SnailMailTrackingStory({ letter, now }: { letter: SnailMailInboxLetter;
         })}
       </div>
       <div className="mt-2 flex justify-between text-[9px] font-semibold uppercase tracking-[.08em] text-black/40">
-        <span>Posted</span><span>Sorting</span><span>Departed</span><span>Transit</span><span>Near</span><span>Arrived</span>
+        <span>{t("app.messages.posted")}</span><span>{t("app.messages.sorting")}</span><span>{t("app.messages.departed")}</span><span>{t("app.messages.transit")}</span><span>{t("app.messages.near")}</span><span>{t("app.messages.arrived")}</span>
       </div>
     </div>
     <div className="mt-4 border-t border-black/[0.08] pt-3">
-      <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-brand">Journey log</p>
+      <p className="text-[10px] font-semibold uppercase tracking-[.14em] text-brand">{t("app.messages.journeyLog")}</p>
       <div className="mt-2.5 space-y-2.5">
         {visibleLog.map((checkpoint) => <div key={checkpoint.progress} className="grid grid-cols-[5rem_minmax(0,1fr)] gap-2.5 text-xs leading-5">
           <time className="text-black/40" dateTime={checkpointTime(letter, checkpoint.progress)?.toISOString()}>{formatCheckpointTime(checkpointTime(letter, checkpoint.progress))}</time>
           <p><span className="font-medium text-primary">{checkpoint.label}</span><span className="text-black/55"> · {checkpoint.copy}</span></p>
         </div>)}
         {next && <div className="grid grid-cols-[5rem_minmax(0,1fr)] gap-2.5 text-xs leading-5">
-          <span className="text-black/35">Next</span>
-          <p className="text-black/45"><span className="font-medium text-primary/75">{next.label}</span> · Expected {formatCheckpointTime(checkpointTime(letter, next.progress))}</p>
+          <span className="text-black/35">{t("app.messages.nextCheckpoint")}</span>
+          <p className="text-black/45"><span className="font-medium text-primary/75">{next.label}</span> · {t("app.messages.expected", { time: formatCheckpointTime(checkpointTime(letter, next.progress)) })}</p>
         </div>}
       </div>
     </div>
@@ -257,8 +257,8 @@ export default async function Messages() {
 
             <div className="mt-7 space-y-3">
               {rows.map((r: any) => {
-                const name = r.deletedOther ? "Deleted user" : r.other?.display_name ? `${r.other.display_name}${typeof r.other.age === "number" ? `, ${r.other.age}` : ""}` : "Conversation";
-                const time = formatConversationTime(r.latest?.created_at);
+                const name = r.deletedOther ? t("app.messages.deletedUser") : r.other?.display_name ? `${r.other.display_name}${typeof r.other.age === "number" ? `, ${r.other.age}` : ""}` : t("app.messages.conversation");
+                const time = formatConversationTime(r.latest?.created_at, t);
                 return (
                   <Link key={r.id} href={`/app/messages/${r.id}`} className={`group flex min-w-0 items-center gap-4 rounded-xl border border-black/[0.08] bg-white/62 px-4 py-4 shadow-[0_1px_0_rgba(35,57,47,.03)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:bg-white hover:shadow-[0_10px_24px_rgba(35,57,47,.07)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 ${r.unread ? "" : "text-black/60"}`}>
                     <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-full bg-[#e5e9df]" aria-hidden="true">
@@ -269,7 +269,7 @@ export default async function Messages() {
                         <p className={`truncate text-[16px] text-primary group-hover:text-brand ${r.unread ? "font-semibold" : "font-medium"}`}>{name}</p>
                         {time && <time className="shrink-0 text-xs text-black/45" dateTime={r.latest?.created_at}>{time}</time>}
                       </div>
-                      <p className="mt-1 line-clamp-2 text-[15px] leading-6 text-black/55">{r.latest?.body ?? "No messages yet"}</p>
+                      <p className="mt-1 line-clamp-2 text-[15px] leading-6 text-black/55">{r.latest?.body ?? t("app.messages.noMessagesYet")}</p>
                     </div>
                     {r.unread && <span className="flex h-2.5 w-2.5 shrink-0 items-center justify-center rounded-full bg-[#16745a]" aria-hidden="true"><span className="sr-only">{t("app.messages.unread")}</span></span>}
                   </Link>
@@ -294,7 +294,7 @@ export default async function Messages() {
                       <span className="min-w-0 flex-1">
                         <span className="block text-xs text-black/45">{t("app.messages.incomingLetter")}</span>
                         <span className="mt-1 block truncate font-serif text-[22px] text-primary">{letter.origin || "A letter is travelling to you"}</span>
-                        <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand">{isLostInTransit(letter) ? <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#f0e9e2] px-2.5 py-1"><Icon name="mail" />{t("app.messages.lost")}</span><span className="text-black/55">{lostInTransitCopy(letter)}</span></> : <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8eee8] px-2.5 py-1"><Icon name="plane" />{formatDeliveryEta(letter.deliver_at, now)}</span><span className="text-black/40">{deliveryMilestone(letter, now)}</span></>}</span>
+                        <span className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-brand">{isLostInTransit(letter) ? <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#f0e9e2] px-2.5 py-1"><Icon name="mail" />{t("app.messages.lost")}</span><span className="text-black/55">{lostInTransitCopy(letter, t)}</span></> : <><span className="inline-flex items-center gap-1.5 rounded-full bg-[#e8eee8] px-2.5 py-1"><Icon name="plane" />{formatDeliveryEta(letter.deliver_at, now, t)}</span><span className="text-black/40">{deliveryMilestone(letter, now, t)}</span></>}</span>
                       </span>
                     </div>
                   </Link>
@@ -307,12 +307,12 @@ export default async function Messages() {
               <div className="flex items-center gap-3 text-brand"><Icon name="mail" /><h3 id="delivered-mail-heading" className="text-[11px] font-semibold uppercase tracking-[.19em]">{t("app.messages.delivered")}</h3></div>
               <p className="section-description mt-2">{t("app.messages.deliveredBody")}</p>
               <div className="mt-5 space-y-3">
-                {delivered.map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="group flex items-center gap-4 rounded-xl border border-[#dfe2da] bg-white/72 px-4 py-4 shadow-[0_2px_10px_rgba(35,57,47,.035)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:bg-white hover:shadow-[0_9px_22px_rgba(35,57,47,.065)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e8eee8] text-muted"><Icon name="mail" /></span><span className="min-w-0 flex-1"><span className="block text-xs text-black/45">{t("app.messages.from")}</span><span className="mt-0.5 block truncate font-serif text-[20px] text-primary">{letter.senderName || "A pen pal"}{typeof letter.senderAge === "number" ? `, ${letter.senderAge}` : ""}</span><span className="mt-1 block text-xs text-black/50">Received {formatConversationTime(letter.delivered_at || letter.deliver_at) || "recently"}</span></span><Icon name="arrow" /></Link>)}
+                {delivered.map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="group flex items-center gap-4 rounded-xl border border-[#dfe2da] bg-white/72 px-4 py-4 shadow-[0_2px_10px_rgba(35,57,47,.035)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:bg-white hover:shadow-[0_9px_22px_rgba(35,57,47,.065)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e8eee8] text-muted"><Icon name="mail" /></span><span className="min-w-0 flex-1"><span className="block text-xs text-black/45">{t("app.messages.from")}</span><span className="mt-0.5 block truncate font-serif text-[20px] text-primary">{letter.senderName || t("app.messages.aPenPal")}{typeof letter.senderAge === "number" ? `, ${letter.senderAge}` : ""}</span><span className="mt-1 block text-xs text-black/50">{t("app.messages.received", { time: formatConversationTime(letter.delivered_at || letter.deliver_at, t) || t("app.messages.recently") })}</span></span><Icon name="arrow" /></Link>)}
                 {!snailMailLoadFailed && !delivered.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.deliveredEmpty")}</p>}
               </div>
             </section>
 
-            {outgoing.length > 0 && <section aria-labelledby="sent-mail-heading" className="mt-5 rounded-2xl border border-[#d4c8b5] bg-[#fffaf0]/82 p-5 shadow-[0_14px_36px_rgba(92,70,44,.075)] sm:p-6"><div className="flex items-center gap-3 text-brand"><Icon name="mail" /><h3 id="sent-mail-heading" className="text-[11px] font-semibold uppercase tracking-[.19em]">{t("app.messages.sent")}</h3></div><p className="section-description mt-2">{t("app.messages.sentBody")}</p><div className="mt-5 space-y-4">{outgoing.slice(0, 3).map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="block rounded-2xl border border-[#d9cdbb] bg-[#fffdf8] p-4 text-sm shadow-[0_5px_18px_rgba(92,70,44,.055)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:shadow-[0_14px_30px_rgba(74,63,43,.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 sm:p-5"><div className="flex items-center justify-between gap-4">{isLostInTransit(letter) ? <span className="min-w-0"><span className="block">{t("app.messages.lost")}</span><span className="mt-0.5 block truncate text-xs text-black/45">{lostInTransitCopy(letter)}</span></span> : <span>{formatDeliveryEta(letter.deliver_at, now)}</span>}<span className="shrink-0 text-xs text-black/45">{deliveryMilestone(letter, now)}</span></div>{!isLostInTransit(letter) && compactJourneyProgress(letter, now) < 100 ? <><SnailMailTrackingStory letter={letter} now={now} /><SnailMailJourneyMap origin={letter.origin ?? null} destination={letter.destination ?? null} progress={compactJourneyProgress(letter, now)} compact /></> : null}</Link>)}</div></section>}
+            {outgoing.length > 0 && <section aria-labelledby="sent-mail-heading" className="mt-5 rounded-2xl border border-[#d4c8b5] bg-[#fffaf0]/82 p-5 shadow-[0_14px_36px_rgba(92,70,44,.075)] sm:p-6"><div className="flex items-center gap-3 text-brand"><Icon name="mail" /><h3 id="sent-mail-heading" className="text-[11px] font-semibold uppercase tracking-[.19em]">{t("app.messages.sent")}</h3></div><p className="section-description mt-2">{t("app.messages.sentBody")}</p><div className="mt-5 space-y-4">{outgoing.slice(0, 3).map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="block rounded-2xl border border-[#d9cdbb] bg-[#fffdf8] p-4 text-sm shadow-[0_5px_18px_rgba(92,70,44,.055)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:bg-white hover:shadow-[0_14px_30px_rgba(74,63,43,.09)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35 sm:p-5"><div className="flex items-center justify-between gap-4">{isLostInTransit(letter) ? <span className="min-w-0"><span className="block">{t("app.messages.lost")}</span><span className="mt-0.5 block truncate text-xs text-black/45">{lostInTransitCopy(letter, t)}</span></span> : <span>{formatDeliveryEta(letter.deliver_at, now, t)}</span>}<span className="shrink-0 text-xs text-black/45">{deliveryMilestone(letter, now, t)}</span></div>{!isLostInTransit(letter) && compactJourneyProgress(letter, now) < 100 ? <><SnailMailTrackingStory letter={letter} now={now} t={t} /><SnailMailJourneyMap origin={letter.origin ?? null} destination={letter.destination ?? null} progress={compactJourneyProgress(letter, now)} compact /></> : null}</Link>)}</div></section>}
           </section>
         </section>
       </div>

@@ -7,6 +7,7 @@ import { safeAdminReturnTo } from "@/app/app/admin/investigation-context";
 import { deriveLanguageCompatibility, languageNameFromRelation, type LanguageCompatibilityEntry, type LanguageRelation } from "@/lib/language-compatibility";
 import { PROFILE_BADGE_DEFINITIONS, type ProfileBadgeKey } from "@/lib/profile-badges";
 import ProfileView from "./ProfileView";
+import { getPageI18n } from "@/i18n/server";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +47,7 @@ function badgeKeys(rows: unknown): ProfileBadgeKey[] {
 }
 
 export default async function ProfilePage({ params, searchParams }: { params: Promise<{ username: string }>; searchParams?: Promise<ProfileNavigation> }) {
+  const { t } = await getPageI18n();
   const db = await createClient();
   const { data: auth } = await db.auth.getClaims();
   if (!auth?.claims?.sub) redirect("/sign-in");
@@ -77,7 +79,7 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   const languageCompatibility = isOwn
     ? null
     : deriveLanguageCompatibility(compatibilityEntries(viewerLanguageResult.data), compatibilityEntries(languageResult.data));
-  const reportControl: ReactNode = isOwn ? null : <details><summary className="cursor-pointer px-2 py-1 text-xs text-muted">Report this profile</summary><form action={submitReport} className="mt-2 space-y-2"><input type="hidden" name="target_type" value="profile" /><input type="hidden" name="target_id" value={targetId ?? ""} /><input type="hidden" name="return_to" value={`/app/profile/${encodeURIComponent(profile.username)}`} /><select name="reason" className="field w-full" aria-label="Report reason"><option value="spam">Spam</option><option value="scam/fraud">Scam or fraud</option><option value="harassment">Harassment</option><option value="sexual/inappropriate content">Sexual or inappropriate content</option><option value="hate/abuse">Hate or abuse</option><option value="fake profile/impersonation">Fake profile or impersonation</option><option value="underage concern">Underage concern</option><option value="other">Other</option></select><textarea name="details" aria-label="Report details" className="field w-full" placeholder="Tell us what happened (optional)" /><button className="underline">Report profile</button></form></details>;
+  const reportControl: ReactNode = isOwn ? null : <details><summary className="cursor-pointer px-2 py-1 text-xs text-muted">{t("app.reports.profile")}</summary><form action={submitReport} className="mt-2 space-y-2"><input type="hidden" name="target_type" value="profile" /><input type="hidden" name="target_id" value={targetId ?? ""} /><input type="hidden" name="return_to" value={`/app/profile/${encodeURIComponent(profile.username)}`} /><select name="reason" className="field w-full" aria-label={t("app.reports.reason")}><option value="spam">{t("app.reports.spam")}</option><option value="scam/fraud">{t("app.reports.scam")}</option><option value="harassment">{t("app.reports.harassment")}</option><option value="sexual/inappropriate content">{t("app.reports.sexual")}</option><option value="hate/abuse">{t("app.reports.hate")}</option><option value="fake profile/impersonation">{t("app.reports.fake")}</option><option value="underage concern">{t("app.reports.underage")}</option><option value="other">{t("app.reports.other")}</option></select><textarea name="details" aria-label={t("app.reports.details")} className="field w-full" placeholder={t("app.profile.reportDetailsPlaceholder")} /><button className="underline">{t("app.reports.profile")}</button></form></details>;
   const displayName = profile.display_name?.replace(/\b\w/g, (character: string) => character.toUpperCase()) ?? profile.username;
   const age = typeof profile.age === "number" ? profile.age : (typeof identity.age === "number" ? identity.age : null);
   let photo: string | null = null;
@@ -103,16 +105,16 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
           ? "/app/admin"
           : "/app/discover";
   const backLabel = adminReturnTo
-    ? "Back to investigation"
+    ? t("app.profile.backInvestigation")
     : navigation.from === "conversation"
-      ? "Back to conversation"
+      ? t("app.profile.backConversation")
     : navigation.from === "introductions"
-      ? "Back to introductions"
+      ? t("app.profile.backIntroductions")
       : navigation.from === "setup"
-        ? "Back to profile editing"
+        ? t("app.profile.backEditing")
         : navigation.from === "admin"
-          ? "Back to Admin Center"
-          : "Back to discover";
+          ? t("app.profile.backAdmin")
+          : t("app.profile.backDiscover");
   const location = typeof profile.location_label === "string" && profile.location_label.trim()
     ? profile.location_label.trim()
     : typeof profile.country === "string" && profile.country.trim()

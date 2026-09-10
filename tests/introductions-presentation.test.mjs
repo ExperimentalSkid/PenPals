@@ -15,8 +15,8 @@ test("Introduction filters and sorting use real rows and preserve query state", 
   assert.match(page, /app\.introductions\.all[\s\S]*allRows\.length/);
   assert.match(page, /app\.introductions\.pending[\s\S]*pendingCount/);
   assert.match(page, /app\.introductions\.replied[\s\S]*repliedCount/);
-  assert.match(sort, /Newest first/);
-  assert.match(sort, /Oldest first/);
+  assert.match(sort, /app\.introductions\.newestFirst/);
+  assert.match(sort, /app\.introductions\.oldestFirst/);
   assert.match(sort, /requestSubmit/);
   assert.match(page, /filterHref\(\"pending\"\)/);
   assert.match(page, /filterHref\(\"replied\"\)/);

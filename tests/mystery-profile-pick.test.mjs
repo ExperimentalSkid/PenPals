@@ -79,7 +79,7 @@ test("mystery UI exposes only anonymous cards before selection", () => {
     assert.doesNotMatch(board, new RegExp(privateField, "i"), `board leaked ${privateField}`);
   }
   assert.match(board, /<button[\s\S]*type="submit"/);
-  assert.match(board, /aria-label=\{`Mystery card \$\{card\.position\}`\}/);
+  assert.match(board, /app\.mystery\.card/);
   assert.match(board, /motion-reduce:/);
   assert.match(board, /setChosen\(card\.token\)/);
   assert.match(board, /disabled=\{disabled\}/);

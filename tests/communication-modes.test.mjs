@@ -35,9 +35,9 @@ test("only a privacy-aware public mode is exposed on profiles", () => {
   assert.match(migration, /when p\.allow_instant_messages and p\.allow_snail_mail then 'both'/i);
   assert.match(migration, /grant execute on function public\.get_public_communication_mode\(uuid\)\s+to authenticated/i);
   assert.match(profilePage, /get_public_communication_mode/);
-  assert.match(profileView, /Prefers Snail Mail/);
-  assert.match(profileView, /Prefers Instant Messaging/);
-  assert.match(profileView, /Open to both/);
+  assert.match(profileView, /app\.profile\.prefersSnailMail/);
+  assert.match(profileView, /app\.profile\.prefersInstant/);
+  assert.match(profileView, /app\.profile\.openToBoth/);
 });
 
 test("new contact paths enforce recipient modes without changing existing records", () => {
@@ -50,6 +50,6 @@ test("new contact paths enforce recipient modes without changing existing record
   assert.match(migration, /not p\.allow_snail_mail/);
   assert.match(conversation, /canComposeSnailMail/);
   assert.match(conversation, /get_public_communication_mode/);
-  assert.match(snailMailPanel, /communication preferences/);
+  assert.match(snailMailPanel, /app\.snail\.unavailablePreferences/);
   assert.match(snailMailPanel, /canCompose/);
 });

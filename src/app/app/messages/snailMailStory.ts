@@ -37,9 +37,12 @@ export function hasSnailMailArrived(letter: SnailMailStoryLetter & { deliver_at:
   return !isLostInTransit(letter) && Boolean(letter.delivered_at || new Date(letter.deliver_at).getTime() <= now);
 }
 
-export function lostInTransitCopy(letter: SnailMailStoryLetter) {
-  const variants = LOST_IN_TRANSIT_COPY[letter.transport_mode ?? ""] ?? LOST_IN_TRANSIT_COPY.default;
+export function lostInTransitCopy(letter: SnailMailStoryLetter, t?: (key: string) => string) {
+  const mode = ["sea_mail", "rail", "air_mail", "rare_pigeon"].includes(letter.transport_mode ?? "") ? String(letter.transport_mode) : "default";
+  const variants = LOST_IN_TRANSIT_COPY[mode] ?? LOST_IN_TRANSIT_COPY.default;
   const numericVariant = Number(letter.story_variant ?? 0);
   const variant = Number.isFinite(numericVariant) ? Math.abs(Math.trunc(numericVariant)) % variants.length : 0;
-  return variants[variant];
+  if (!t) return variants[variant];
+  const key = { sea_mail: "lostSea", rail: "lostRail", air_mail: "lostAir", rare_pigeon: "lostPigeon", default: "lostDefault" }[mode] ?? "lostDefault";
+  return t(`app.snail.${key}${variant + 1}`);
 }

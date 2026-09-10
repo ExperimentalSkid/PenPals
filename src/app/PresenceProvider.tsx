@@ -152,12 +152,12 @@ export function usePresence(userId: string, enabled = true) {
   return context?.online(userId) ?? false;
 }
 
-export function PresenceStatus({ userId, fallback, visible = true, blocked = false, availability }: { userId: string; fallback?: string | null; visible?: boolean; blocked?: boolean; availability?: string | null }) {
+export function PresenceStatus({ userId, fallback, visible = true, blocked = false, availability, awayLabel = "Away", onlineLabel = "Online now" }: { userId: string; fallback?: string | null; visible?: boolean; blocked?: boolean; availability?: string | null; awayLabel?: string; onlineLabel?: string }) {
   const isOnline = usePresence(userId, visible && !blocked);
   const context = useContext(PresenceContext);
   const live = context?.info(userId);
   if (!visible || blocked || live?.visible === false) return null;
   const currentAvailability = live?.availability ?? availability;
-  const status = currentAvailability === "away" ? "Away" : isOnline ? "Online now" : fallback; if (!status) return null;
+  const status = currentAvailability === "away" ? awayLabel : isOnline ? onlineLabel : fallback; if (!status) return null;
   return <span className="inline-flex items-center gap-2 text-emerald-700"><span className="h-2 w-2 rounded-full bg-[#27a875]" />{status}</span>;
 }

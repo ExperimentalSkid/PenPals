@@ -77,24 +77,24 @@ function interestName(value: ProfileInterest["interests"]) {
   return relation?.name?.trim() || null;
 }
 
-export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "Back to discover", reportError = null, reportSubmitted = false }: ProfileViewProps) {
+export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "", reportError = null, reportSubmitted = false }: ProfileViewProps) {
   const { t } = await getPageI18n();
   const initial = displayName.trim().charAt(0).toUpperCase() || "·";
   const communicationModes = communicationPreference === "snail_mail"
-    ? ["Snail Mail"]
+    ? [t("app.profile.snailMail")]
     : communicationPreference === "instant"
-      ? ["Instant Messages"]
+      ? [t("app.profile.instantMessages")]
       : communicationPreference === "both"
-        ? ["Instant Messages", "Snail Mail"]
+        ? [t("app.profile.instantMessages"), t("app.profile.snailMail")]
         : [];
   const communicationPreferenceSummary = communicationPreference === "snail_mail"
-    ? "Prefers Snail Mail"
+    ? t("app.profile.prefersSnailMail")
     : communicationPreference === "instant"
-      ? "Prefers Instant Messaging"
+      ? t("app.profile.prefersInstant")
       : communicationPreference === "both"
-        ? "Open to both"
+        ? t("app.profile.openToBoth")
         : null;
-  const responseCopy = responseRate?.includes("%") ? `Replies to ${responseRate} of introductions` : responseRate;
+  const responseCopy = responseRate?.includes("%") ? t("app.profile.repliesToIntroductions", { rate: responseRate }) : responseRate;
 
   return (
     <main className="min-h-screen w-full bg-[#f7f5ef] px-5 py-6 text-primary sm:px-8 lg:px-10 lg:py-8">
@@ -107,7 +107,7 @@ export default async function ProfileView({ profile, displayName, age, location,
           <aside className="w-full max-w-[300px] justify-self-center lg:max-w-[280px] lg:justify-self-start xl:max-w-[260px] 2xl:max-w-[300px]">
             <div className="relative aspect-[0.68] w-full overflow-hidden rounded-[20px] border border-[#d9cdb9] bg-[#f1e8d9] p-2 shadow-[0_3px_0_#e4d8c6]">
               <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-[#e9e8df]">
-                {photo ? <Image src={photo} alt={displayName} fill priority sizes="(min-width: 1280px) 300px, 240px" unoptimized={isSignedAvatarUrl(photo)} className="object-cover" /> : <div role="img" aria-label={`${displayName} profile photo unavailable`} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
+                {photo ? <Image src={photo} alt={displayName} fill priority sizes="(min-width: 1280px) 300px, 240px" unoptimized={isSignedAvatarUrl(photo)} className="object-cover" /> : <div role="img" aria-label={t("app.profile.photoUnavailableFor", { name: displayName })} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
               </div>
               {photo && <div className="absolute bottom-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-[#fbfaf7]/95 px-3 py-1.5 text-xs font-medium text-brand shadow-sm"><DetailIcon name="eye" />{t("app.profile.photoVisible")}</div>}
             </div>
@@ -116,7 +116,7 @@ export default async function ProfileView({ profile, displayName, age, location,
                 badge="verified"
                 className="group"
                 trailing={<>
-                  <button type="button" aria-label="About profile verification" aria-describedby="profile-verification-tooltip" className="relative flex h-5 w-5 items-center justify-center rounded-full border border-[#087456]/35 text-[11px] font-semibold text-brand outline-none transition hover:bg-white/70 focus-visible:ring-2 focus-visible:ring-[#087456]/40">
+                  <button type="button" aria-label={t("app.profile.aboutVerification")} aria-describedby="profile-verification-tooltip" className="relative flex h-5 w-5 items-center justify-center rounded-full border border-[#087456]/35 text-[11px] font-semibold text-brand outline-none transition hover:bg-white/70 focus-visible:ring-2 focus-visible:ring-[#087456]/40">
                     <span aria-hidden="true">?</span>
                   </button>
                   <span id="profile-verification-tooltip" role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 w-64 -translate-x-1/2 rounded-md border border-black/10 bg-[#fffdfa] px-3 py-2 text-left text-xs font-normal leading-5 text-primary opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">{t("app.profile.verifiedTooltip")}</span>
@@ -133,14 +133,14 @@ export default async function ProfileView({ profile, displayName, age, location,
             <h1 className="font-serif text-[clamp(3.1rem,3.6vw,3.75rem)] leading-[.96] tracking-[-0.045em] text-primary">{displayName}{age !== null ? `, ${age}` : ""}</h1>
             {location && <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-black/10 bg-[#fbfaf7]/95 px-3 py-1.5 text-sm text-black/65 shadow-sm"><DetailIcon name="location" /><span>{location}</span></div>}
             <div className="mt-5 flex min-h-5 flex-wrap items-center gap-x-4 gap-y-2 text-sm text-black/60">
-              <PresenceStatus userId={targetId} fallback={profile.availability === "away" ? "Away" : "Available"} visible={profile.show_activity_status !== false} blocked={blocked} availability={profile.availability} />
+              <PresenceStatus userId={targetId} fallback={profile.availability === "away" ? t("app.profile.away") : t("app.profile.available")} visible={profile.show_activity_status !== false} blocked={blocked} availability={profile.availability} awayLabel={t("app.presence.away")} onlineLabel={t("app.presence.onlineNow")} />
               {profile.show_activity_status !== false && activity && <><span className="text-black/25" aria-hidden="true">•</span><span>{activity}</span></>}
               {(profile.role === "admin" || profile.role === "moderator") && <>
                 <span className="text-black/25" aria-hidden="true">•</span>
                 <span className="inline-flex items-center gap-1 font-medium text-black/60">
-                  {profile.role === "admin" ? "Admin" : "Moderator"}
+                  {profile.role === "admin" ? t("app.profile.admin") : t("app.profile.moderator")}
                   {profile.role === "admin" && ["admin", "mentalclay"].includes(username.toLowerCase()) && <span className="group relative inline-flex items-center">
-                    <button type="button" aria-label="About the site owner and developer" aria-describedby="site-owner-tooltip" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[13px] leading-none text-black/60 outline-none transition hover:text-brand focus-visible:ring-2 focus-visible:ring-[#087456]/40"><span aria-hidden="true">♛</span></button>
+                    <button type="button" aria-label={t("app.profile.aboutOwner")} aria-describedby="site-owner-tooltip" className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[13px] leading-none text-black/60 outline-none transition hover:text-brand focus-visible:ring-2 focus-visible:ring-[#087456]/40"><span aria-hidden="true">♛</span></button>
                     <span id="site-owner-tooltip" role="tooltip" className="pointer-events-none absolute bottom-[calc(100%+8px)] left-1/2 z-20 w-56 -translate-x-1/2 rounded-md border border-black/10 bg-[#fffdfa] px-3 py-2 text-left text-xs font-normal leading-5 text-primary opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">{t("app.profile.ownerTooltip")}</span>
                   </span>}
                 </span>
@@ -150,7 +150,7 @@ export default async function ProfileView({ profile, displayName, age, location,
             <div className="mt-6 max-w-[720px] border-t border-black/10" aria-hidden="true" />
             {badges.length > 0 && <section aria-labelledby="badges-heading" className="mt-7 max-w-[720px]">
               <h2 id="badges-heading" className="font-serif text-[30px] tracking-[-0.025em] text-primary">{t("app.profile.badges")}</h2>
-              <div className="mt-3 flex max-w-full flex-wrap gap-1.5" aria-label="Profile badges">
+              <div className="mt-3 flex max-w-full flex-wrap gap-1.5" aria-label={t("app.profile.profileBadges")}>
                 {badges.map((badge) => <ProfileBadge key={badge} badge={badge} compact />)}
               </div>
             </section>}
@@ -159,7 +159,7 @@ export default async function ProfileView({ profile, displayName, age, location,
 
           <aside className="order-4 border-t border-black/10 pt-8 lg:col-span-2 xl:order-none xl:col-span-1 xl:row-span-2 xl:border-l xl:border-t-0 xl:pl-10 xl:pt-1 2xl:pl-12">
             <LanguagesSection languages={languages} />
-            {languageCompatibility && (languageCompatibility.sharedLanguages.length > 0 || languageCompatibility.exchangeLanguages.length > 0) && <div className="mt-4 border-t border-black/[0.08] pt-4 text-sm leading-6 text-brand" aria-label="Language compatibility">
+            {languageCompatibility && (languageCompatibility.sharedLanguages.length > 0 || languageCompatibility.exchangeLanguages.length > 0) && <div className="mt-4 border-t border-black/[0.08] pt-4 text-sm leading-6 text-brand" aria-label={t("app.profile.languageCompatibility")}>
               {languageCompatibility.sharedLanguages.length > 0 && <p><span className="font-medium">{t("app.profile.bothSpeak")}</span> {languageCompatibility.sharedLanguages.join(", ")}</p>}
               {languageCompatibility.exchangeLanguages.length > 0 && <p className={languageCompatibility.sharedLanguages.length > 0 ? "mt-1 text-black/55" : "text-brand"}><span className="font-medium">{t("app.profile.languageExchange")}</span> {languageCompatibility.exchangeLanguages.join(", ")}</p>}
             </div>}

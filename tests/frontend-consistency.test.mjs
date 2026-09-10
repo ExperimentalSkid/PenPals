@@ -47,7 +47,7 @@ test("profile setup section navigation and public destination naming are consist
   assert.match(setup, /href: "#preferences"/);
   assert.match(setup, /id="about-heading"/);
   assert.doesNotMatch(setup, /id="looking-heading"|name="looking_for"/);
-  assert.match(destinations, /Places they&apos;d like to connect with/);
+  assert.match(destinations, /app\.profile\.destinationsTitle/);
 });
 
 test("messages does not present a non-interactive all-conversations affordance", () => {

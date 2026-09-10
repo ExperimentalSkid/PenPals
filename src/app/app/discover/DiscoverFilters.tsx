@@ -60,6 +60,7 @@ type ToolbarButtonProps = {
 };
 
 function ToolbarButton({ id, label, icon, value, open, onOpen, onClear }: ToolbarButtonProps) {
+  const t = useTranslations();
   const active = Boolean(value);
   return (
     <div className="flex items-stretch">
@@ -78,7 +79,7 @@ function ToolbarButton({ id, label, icon, value, open, onOpen, onClear }: Toolba
         <button
           type="button"
           onClick={onClear}
-          aria-label={`Clear ${label}`}
+          aria-label={t("app.discover.clearFilter", { label })}
           className="rounded-r-md border border-[#087456]/45 bg-[#e8eee8] px-2.5 text-brand transition hover:bg-[#dfe9df] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#087456]"
         >
           <span aria-hidden="true">×</span>

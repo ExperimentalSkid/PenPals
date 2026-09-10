@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { useTranslations } from "next-intl";
 
 export type InterestRelation = { name?: string | null };
 export type ProfileInterest = {
@@ -6,9 +7,9 @@ export type ProfileInterest = {
   interests?: InterestRelation | InterestRelation[] | null;
 };
 
-function interestName(value: InterestRelation | InterestRelation[] | null | undefined) {
+function interestName(value: InterestRelation | InterestRelation[] | null | undefined, fallback: string) {
   const name = Array.isArray(value) ? value[0]?.name : value?.name;
-  return name?.trim() || "Interest";
+  return name?.trim() || fallback;
 }
 
 function InterestIcon() {
@@ -20,11 +21,12 @@ function InterestIcon() {
   );
 }
 
-function Chips({ interests }: { interests: ProfileInterest[] }) {
-  return <div className="flex flex-wrap gap-2">{interests.map((interest) => <span key={interest.interest_id} className="rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary">{interestName(interest.interests)}</span>)}</div>;
+function Chips({ interests, fallback }: { interests: ProfileInterest[]; fallback: string }) {
+  return <div className="flex flex-wrap gap-2">{interests.map((interest) => <span key={interest.interest_id} className="rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary">{interestName(interest.interests, fallback)}</span>)}</div>;
 }
 
 export default function InterestsSection({ interests }: { interests: ProfileInterest[] }): ReactNode {
+  const t = useTranslations();
   if (interests.length === 0) return null;
 
   const visibleInterests = interests.slice(0, 8);
@@ -32,10 +34,10 @@ export default function InterestsSection({ interests }: { interests: ProfileInte
 
   return (
     <section aria-labelledby="interests-heading" className="mt-9 border-t border-black/10 pt-7">
-      <h2 id="interests-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-primary"><InterestIcon />Interests</h2>
+      <h2 id="interests-heading" className="flex items-center gap-3 font-sans text-[11px] font-semibold uppercase tracking-[.18em] text-primary"><InterestIcon />{t("app.profile.interests")}</h2>
       <div className="mt-5">
-        <Chips interests={visibleInterests} />
-        {additionalInterests.length > 0 && <details className="mt-3"><summary className="inline-flex cursor-pointer list-none rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary underline decoration-[#33443e]/35 underline-offset-2">+{additionalInterests.length} more</summary><div className="mt-3"><Chips interests={additionalInterests} /></div></details>}
+        <Chips interests={visibleInterests} fallback={t("app.profile.interest")} />
+        {additionalInterests.length > 0 && <details className="mt-3"><summary className="inline-flex cursor-pointer list-none rounded-full border border-[#d7d0c3] bg-[#fbfaf6] px-3.5 py-1.5 text-sm text-primary underline decoration-[#33443e]/35 underline-offset-2">+{additionalInterests.length} {t("app.profile.more")}</summary><div className="mt-3"><Chips interests={additionalInterests} fallback={t("app.profile.interest")} /></div></details>}
       </div>
     </section>
   );

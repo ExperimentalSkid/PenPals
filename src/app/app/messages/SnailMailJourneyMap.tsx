@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTranslations } from "next-intl";
 import countries from "world-countries";
 
 type Country = (typeof countries)[number];
@@ -37,6 +38,7 @@ function routePoints(from: [number, number], to: [number, number]) {
 }
 
 export default function SnailMailJourneyMap({ origin, destination, progress, compact = false }: { origin: string | null; destination: string | null; progress: number; compact?: boolean }) {
+  const t = useTranslations();
   const ref = useRef<HTMLDivElement>(null);
   const safeProgress = Math.max(0, Math.min(100, progress));
 
@@ -87,6 +89,6 @@ export default function SnailMailJourneyMap({ origin, destination, progress, com
     <div className="flex items-center justify-between gap-3 bg-[#fbfaf6]/95 px-3 py-2 text-[10px] font-semibold uppercase tracking-[.12em] text-black/50">
       <span className="truncate">{origin}</span><span className="shrink-0">{Math.round(safeProgress)}%</span><span className="truncate text-right">{destination}</span>
     </div>
-    <div ref={ref} className={compact ? "h-36 w-full pointer-events-none" : "h-52 w-full pointer-events-none"} role="img" aria-label={`Approximate letter journey from ${origin} to ${destination}, ${Math.round(safeProgress)} percent complete`} />
+    <div ref={ref} className={compact ? "h-36 w-full pointer-events-none" : "h-52 w-full pointer-events-none"} role="img" aria-label={t("app.snail.journeyMapLabel", { origin: origin ?? "", destination: destination ?? "", percent: Math.round(safeProgress) })} />
   </div>;
 }

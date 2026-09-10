@@ -4,8 +4,11 @@ import { readFile } from "node:fs/promises";
 
 const source = await readFile(new URL("../src/app/components/LanguageSwitcher.tsx", import.meta.url), "utf8");
 
-test("language switching preserves public-page query state", () => {
+test("language switching preserves query state and performs a full reload", () => {
   assert.match(source, /useSearchParams/);
   assert.match(source, /const query = searchParams\.toString\(\)/);
   assert.match(source, /`\$\{targetPath\}\?\$\{query\}`/);
+  assert.match(source, /window\.location\.assign\(target \?\? current\)/);
+  assert.match(source, /window\.location\.reload\(\)/);
+  assert.doesNotMatch(source, /router\.(?:push|refresh)\(/);
 });

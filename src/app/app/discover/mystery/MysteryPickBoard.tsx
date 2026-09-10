@@ -21,7 +21,7 @@ export default function MysteryPickBoard({ cards }: { cards: MysteryCard[] }) {
   const [chosen, setChosen] = useState<string | null>(null);
 
   return (
-    <div className="grid gap-4 sm:grid-cols-3 sm:gap-5" aria-label="Mystery profile cards">
+    <div className="grid gap-4 sm:grid-cols-3 sm:gap-5" aria-label={t("app.mystery.cards")}>
       {cards.map((card) => {
         const disabled = chosen !== null;
         return (
@@ -30,7 +30,7 @@ export default function MysteryPickBoard({ cards }: { cards: MysteryCard[] }) {
             <button
               type="submit"
               disabled={disabled}
-              aria-label={`Mystery card ${card.position}`}
+              aria-label={t("app.mystery.card", { position: card.position })}
               className={`group relative flex min-h-64 w-full flex-col items-center justify-center overflow-hidden rounded-lg border border-[#d7d7cf] bg-[#fbfaf6] px-6 py-8 text-center transition hover:-translate-y-1 hover:border-[#087456]/60 hover:bg-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#087456] motion-reduce:transform-none motion-reduce:transition-none disabled:cursor-wait disabled:opacity-70 sm:min-h-72`}
             >
               <span aria-hidden="true" className="absolute inset-x-5 top-4 border-t border-dashed border-[#c8cfc7]" />

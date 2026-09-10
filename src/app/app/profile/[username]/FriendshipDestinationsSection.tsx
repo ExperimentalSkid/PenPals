@@ -1,4 +1,5 @@
 import CountryFlag from "@/app/components/CountryFlag";
+import { useTranslations } from "next-intl";
 
 export type ProfileFriendshipDestination = {
   country_code?: string | null;
@@ -8,6 +9,7 @@ export type ProfileFriendshipDestination = {
 };
 
 export default function FriendshipDestinationsSection({ destinations }: { destinations: ProfileFriendshipDestination[] }) {
+  const t = useTranslations();
   const visibleDestinations = destinations.filter((destination) => destination.country_name?.trim() || destination.country_code?.trim());
   if (visibleDestinations.length === 0) return null;
 
@@ -18,12 +20,12 @@ export default function FriendshipDestinationsSection({ destinations }: { destin
           <path d="m4 12 16-8-4.5 16-3.5-6-8-2Z" />
           <path d="m12 14 3.5-3.5" />
         </svg>
-        Places they&apos;d like to connect with
+        {t("app.profile.destinationsTitle")}
       </h2>
-      <p className="mt-3 text-sm leading-6 text-black/50">These places are separate from their home location.</p>
+      <p className="mt-3 text-sm leading-6 text-black/50">{t("app.profile.destinationsSeparate")}</p>
       <div className="mt-4 flex flex-wrap gap-2.5">
         {visibleDestinations.map((destination, index) => {
-          const countryName = destination.country_name?.trim() || destination.country_code?.trim() || "Country";
+          const countryName = destination.country_name?.trim() || destination.country_code?.trim() || t("app.profile.country");
           const regionName = destination.region_name?.trim();
           return (
             <span key={`${destination.country_code ?? "country"}-${destination.region_code ?? "country"}-${index}`} className="inline-flex items-center gap-2 rounded-md border border-[#d8d0c2] bg-[#fbfaf6] px-3 py-2 text-sm text-primary">

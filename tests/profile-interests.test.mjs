@@ -10,7 +10,7 @@ test("public Interests module uses compact chips and hides when empty", () => {
   assert.match(interests, /flex flex-wrap gap-2/);
   assert.match(interests, /if \(interests\.length === 0\) return null/);
   assert.match(interests, /additionalInterests/);
-  assert.match(interests, /\+\{additionalInterests\.length\} more/);
+  assert.match(interests, /additionalInterests\.length[\s\S]*app\.profile\.more/);
 });
 
 test("ProfileView keeps Interests as one independent public module", () => {

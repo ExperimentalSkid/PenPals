@@ -105,7 +105,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   return <NextIntlClientProvider locale={locale} messages={messages}><PresenceProvider userId={uid}><div lang={locale} className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
     <aside className="app-sidebar">
-      <Link href="/app/discover" aria-label="pen-pals.net home" className="app-sidebar-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[9.5rem]" /></Link>
+      <Link href="/app/discover" aria-label={t("common.homeAria")} className="app-sidebar-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[9.5rem]" /></Link>
       {/* Staff routes remain deep-linkable: href="/app/admin/cases" is rendered by AppNavigation. */}
       <AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} />
       <div className="app-user-block">
@@ -124,6 +124,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
     </aside>
-    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label="pen-pals.net home" className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label={t("app.shell.openProfile")}>{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
+    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label={t("common.homeAria")} className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label={t("app.shell.openProfile")}>{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
   </div></PresenceProvider></NextIntlClientProvider>;
 }

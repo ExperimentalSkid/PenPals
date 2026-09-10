@@ -55,11 +55,11 @@ test("recipient masking and shared lost-in-transit story are wired through both 
   assert.match(actions, /export async function cancelSnailMail/);
   assert.match(panel, /window\.confirm\(/);
   assert.match(panel, /app\.snail\.cancel/);
-  assert.match(panel, /Lost in transit/);
-  assert.match(panel, /This letter was lost before it reached you/);
+  assert.match(panel, /app\.snail\.lostTransit/);
+  assert.match(panel, /app\.snail\.lostBeforeReached/);
   assert.match(inbox, /isLostInTransit/);
   assert.match(inbox, /lostInTransitCopy/);
-  assert.match(inbox, /Lost in transit/);
+  assert.match(inbox, /app\.messages\.lost/);
   assert.match(conversation, /isLostInTransit/);
   assert.match(story, /lostInTransitCopy/);
   assert.match(story, /story_variant/);

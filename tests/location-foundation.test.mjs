@@ -190,7 +190,7 @@ test("public profiles present friendship destinations separately from home locat
   assert.match(publicProfilePage, /get_public_friendship_destinations/);
   assert.match(publicProfilePage, /friendshipDestinations/);
   assert.match(profileView, /FriendshipDestinationsSection/);
-  assert.match(destinationSection, /separate from their home location/);
+  assert.match(destinationSection, /app\.profile\.destinationsSeparate/);
   assert.match(destinationSection, /CountryFlag/);
   assert.doesNotMatch(profileView, /nearest|proximity|mixing/i);
 });

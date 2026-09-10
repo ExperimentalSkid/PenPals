@@ -1,6 +1,6 @@
 "use client";
 
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import type { AppLocale } from "@/i18n/config";
 import { createClient } from "@/lib/supabase/client";
 import CountryFlag from "@/app/components/CountryFlag";
@@ -13,12 +13,11 @@ function localizedPath(pathname: string, locale: AppLocale) {
 }
 
 export default function LanguageSwitcher({ locale, label, paths }: { locale: AppLocale; label: string; paths?: Partial<Record<AppLocale, string>> }) {
-  const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
   async function selectLocale(nextLocale: AppLocale) {
-    if (nextLocale === locale) return;
+    if (nextLocale === locale) { window.location.reload(); return; }
     document.cookie = `NEXT_LOCALE=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
     try {
       const supabase = createClient();
@@ -30,8 +29,8 @@ export default function LanguageSwitcher({ locale, label, paths }: { locale: App
     const targetPath = paths?.[nextLocale] ?? localizedPath(pathname, nextLocale);
     const query = searchParams.toString();
     const target = targetPath && query && !targetPath.includes("?") ? `${targetPath}?${query}` : targetPath;
-    if (target && target !== `${pathname}${query ? `?${query}` : ""}`) router.push(target);
-    else router.refresh();
+    const current = `${pathname}${query ? `?${query}` : ""}`;
+    window.location.assign(target ?? current);
   }
 
   return (

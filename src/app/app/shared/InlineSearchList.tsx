@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 import type { KeyboardEvent, ReactNode } from "react";
 
 export type InlineSearchOption = {
@@ -42,6 +43,7 @@ export default function InlineSearchList({
   onSelect,
   onEscape,
 }: InlineSearchListProps) {
+  const t = useTranslations();
   const generatedId = useId();
   const inputId = providedInputId ?? `inline-search-${generatedId}`;
   const listId = `${inputId}-options`;
@@ -93,12 +95,12 @@ export default function InlineSearchList({
 
   return (
     <div>
-      <label htmlFor={inputId} className="sr-only">Search {label.toLocaleLowerCase()}</label>
+      <label htmlFor={inputId} className="sr-only">{t("common.searchFor", { label })}</label>
       <input
         id={inputId}
         type="text"
         role="combobox"
-        aria-label={`Search ${label.toLocaleLowerCase()}`}
+        aria-label={t("common.searchFor", { label })}
         aria-autocomplete="list"
         aria-expanded={results.length > 0}
         aria-controls={listId}
@@ -119,7 +121,7 @@ export default function InlineSearchList({
           id={listId}
           className="mt-2 divide-y divide-black/10 border-y border-black/10 bg-white/40"
           role="listbox"
-          aria-label={`${label} options`}
+          aria-label={t("common.optionsFor", { label })}
         >
           {results.map((option, index) => (
             <button

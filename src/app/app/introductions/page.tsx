@@ -177,7 +177,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
                     <form action={replyToIntroduction} className="mt-3 space-y-2">
                       <input type="hidden" name="introduction_id" value={row.id} />
                       <label htmlFor={`reply-${row.id}`} className="sr-only">{t("app.introductions.reply")}</label>
-                      <textarea id={`reply-${row.id}`} name="reply" required className="field min-h-24 w-full text-sm" placeholder="Write a reply…" />
+                      <textarea id={`reply-${row.id}`} name="reply" required className="field min-h-24 w-full text-sm" placeholder={t("app.introductions.replyPlaceholder")} />
                       <button className="btn-primary w-full px-4 py-2.5 text-sm">{t("app.introductions.reply")}</button>
                     </form>
                   </details>

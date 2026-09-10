@@ -139,7 +139,7 @@ export default async function ProfileSetup({ searchParams }: { searchParams: Pro
             <h2 id="preview-heading" className="font-serif text-lg text-primary">{t("app.profile.preview")} <span className="font-sans text-xs font-normal text-black/45">{t("app.profile.optional")}</span></h2>
             <div className="mt-4 flex justify-center">
               <div className={`relative flex items-center justify-center overflow-hidden rounded-[18px] border border-dashed border-black/20 bg-[#efeee6] ${entryComplete ? "h-[220px] w-[152px]" : "h-[176px] w-[122px]"}`}>
-                {profilePhoto ? <Image src={profilePhoto} alt="Your profile" fill unoptimized sizes="152px" className="object-cover" /> : <span className="font-serif text-5xl text-muted" aria-hidden="true">{profile?.display_name?.trim().charAt(0).toUpperCase() || "·"}</span>}
+                {profilePhoto ? <Image src={profilePhoto} alt={t("app.profile.yourProfile")} fill unoptimized sizes="152px" className="object-cover" /> : <span className="font-serif text-5xl text-muted" aria-hidden="true">{profile?.display_name?.trim().charAt(0).toUpperCase() || "·"}</span>}
               </div>
             </div>
             <form action={uploadAvatar} className="mt-4 space-y-2">

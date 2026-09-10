@@ -39,7 +39,7 @@ export default function DiscoverResults({ profiles, queryString }: { profiles: P
   };
 
   return (
-    <section className="mt-8 grid gap-4 sm:gap-5 md:grid-cols-2 md:gap-x-5 md:gap-y-5" aria-label="Member profiles">
+    <section className="mt-8 grid gap-4 sm:gap-5 md:grid-cols-2 md:gap-x-5 md:gap-y-5" aria-label={t("app.discover.memberProfiles")}>
       {profiles.map((profile) => {
         const ageLabel = typeof profile.age === "number" && Number.isFinite(profile.age)
           ? `, ${Math.floor(profile.age)}`
@@ -53,7 +53,7 @@ export default function DiscoverResults({ profiles, queryString }: { profiles: P
             </h2>
             {location && <p className="mt-2 flex items-center gap-2 text-[14px] leading-5 text-black/55"><CountryFlag code={profile.country_code} countryName={countryName} /><span>{location}</span></p>}
             <p className="mt-4 max-w-2xl font-serif text-[1.15rem] leading-7 text-brand md:text-[1.25rem]">
-              “{profile.quote || "Curious about the world and always happy to meet someone new."}”
+              “{profile.quote || t("app.discover.defaultQuote")}”
             </p>
             <div className="mt-auto flex flex-wrap gap-2 pt-6">
               {profile.interests.length ? profile.interests.map((interest) => (

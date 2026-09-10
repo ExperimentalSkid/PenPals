@@ -153,9 +153,9 @@ test("deleted senders stay anonymized in exports and conversation consumers", ()
   assert.match(exportMigration, /when m\.sender_id is null then 'Deleted user'/);
   assert.match(exportMigration, /left join public\.profiles p on p\.id = m\.sender_id/);
   assert.match(messagesList, /deletedOther/);
-  assert.match(messagesList, /Deleted user/);
+  assert.match(messagesList, /app\.messages\.deletedUser/);
   assert.match(conversationPage, /const deletedOther = !otherParticipant/);
-  assert.match(conversationPage, /const otherName = deletedOther \? "Deleted user"/);
+  assert.match(conversationPage, /const otherName = deletedOther \? t\("app\.messages\.deletedUser"\)/);
   assert.match(adminConversationPage, /message\.sender_display_name \|\| message\.sender_username \|\| "Deleted user"/);
   assert.match(notificationsPage, /person\?\.display_name \?\? person\?\.username \?\? t\("app\.notifications\.deletedUser"\)/);
   assert.match(notificationsPage, /app\.notifications\.memberUnavailable/);

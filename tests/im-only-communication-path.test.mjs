@@ -35,7 +35,7 @@ test("conversation UI keeps IM available while disabling new Snail Mail for inst
   assert.match(conversationPage, /const canComposeSnailMail = !pairBlockStateUnavailable && otherCommunicationMode !== "instant" && ownCommunicationMode !== "instant"/);
   assert.match(conversationPage, /get_public_communication_mode/);
   assert.match(snailMailPanel, /const canWriteLetter = canCompose && !outgoingLetterIsBlocking/);
-  assert.match(snailMailPanel, /New letters aren&apos;t available with the current communication preferences/);
+  assert.match(snailMailPanel, /app\.snail\.unavailablePreferences/);
   assert.match(snailMailPanel, /disabled aria-disabled="true"/);
 });
 
