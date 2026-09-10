@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import { execFileSync } from "node:child_process";
+import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 
 const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
@@ -48,8 +50,10 @@ test("public contact UI submits pre-login messages and staff can open a dedicate
   assert.match(contactPage, /submitPublicContact/);
   for (const field of ["name", "email", "topic", "subject", "message"]) assert.match(contactPage, new RegExp(`name=\\"${field}\\"`));
   assert.doesNotMatch(contactPage, /attachments/);
-  assert.match(contactAction, /submit_public_contact_ticket/);
-  assert.match(contactAction, /clientKeyFromHeaders/);
+  assert.match(contactAction, /create_public_contact_verification/);
+  assert.match(contactAction, /createContactVerificationToken/);
+  assert.match(contactAction, /sendContactVerificationEmail/);
+  assert.match(contactAction, /publicContactRequestMetadata/);
   assert.match(contactInbox, /staff_list_public_contact_tickets/);
   assert.match(contactInbox, /Contact Inbox/);
   assert.match(contactInbox, /return_to=\$\{encodeURIComponent\(`\/app\/admin\/contact/);
@@ -80,4 +84,83 @@ test("support email replies use Resend server-side without adding a browser secr
   assert.match(appConfig, /SUPPORT_EMAIL_FROM/);
   assert.match(envExample, /SUPPORT_EMAIL_FROM="Pen-Pals <no-reply@pen-pals\.net>"/);
   assert.match(envExample, /SUPPORT_EMAIL_REPLY_TO=/);
+});
+
+
+test("public contact requires email verification before entering the staff queue", async () => {
+  const migration = await read("supabase/migrations/20260910152500_public_contact_email_verification.sql");
+  const contactAction = await read("src/app/contact/actions.ts");
+  const verifyRoute = await read("src/app/contact/verify/route.ts");
+  const contactPage = await read("src/app/contact/page.tsx");
+  const supportDetail = await read("src/app/app/admin/support/[id]/page.tsx");
+
+  assert.match(migration, /public_contact_pending_verifications/);
+  assert.match(migration, /create_public_contact_verification/);
+  assert.match(migration, /verify_public_contact_submission/);
+  assert.match(migration, /insert into public\.support_tickets/);
+  assert.match(migration, /email_verified_at/);
+  assert.match(migration, /email_verified/);
+  assert.match(migration, /prior_verified_email_count/);
+  assert.match(migration, /revoke all on function public\.submit_public_contact_ticket/);
+  assert.match(migration, /grant execute on function public\.create_public_contact_verification[\s\S]*service_role/);
+  assert.doesNotMatch(migration, /grant execute on function public\.create_public_contact_verification[\s\S]*to anon/);
+  assert.match(contactAction, /redirect\("\/contact\?verify=1"\)/);
+  assert.match(verifyRoute, /verify_public_contact_submission/);
+  assert.match(verifyRoute, /\/contact\?verified=1/);
+  assert.match(contactPage, /contact\.verifyTitle/);
+  assert.match(supportDetail, /Abuse context/);
+  assert.match(supportDetail, /Submission IP/);
+  assert.match(supportDetail, /Email verified/);
+});
+
+
+test("live contact verification stays out of the inbox until verified and is idempotent", { skip: !LOCAL_DB_CONTAINER }, () => {
+  const tokenHash = "a".repeat(64);
+  const sql = String.raw`
+begin;
+do $$
+declare
+  pending_id uuid;
+  ticket_one uuid;
+  ticket_two uuid;
+  before_count bigint;
+  staged_count bigint;
+  after_count bigint;
+begin
+  select count(*) into before_count from public.support_tickets where ticket_type = 'public_contact';
+  pending_id := public.create_public_contact_verification(
+    'Verification Fixture',
+    'verification-fixture@example.test',
+    'other',
+    'Verification fixture subject',
+    'This message must not enter the staff inbox before email verification.',
+    '${tokenHash}',
+    jsonb_build_object('ip','203.0.113.10','ip_hash','fixture-ip-hash','client_key_hash','fixture-client-hash','user_agent','fixture-agent')
+  );
+  select count(*) into staged_count from public.support_tickets where ticket_type = 'public_contact';
+  if staged_count <> before_count then raise exception 'pending contact leaked into staff inbox'; end if;
+
+  ticket_one := public.verify_public_contact_submission(
+    pending_id,
+    '${tokenHash}',
+    jsonb_build_object('ip','203.0.113.10','client_key_hash','fixture-client-hash','user_agent','fixture-agent')
+  );
+  ticket_two := public.verify_public_contact_submission(
+    pending_id,
+    '${tokenHash}',
+    jsonb_build_object('ip','203.0.113.10','client_key_hash','fixture-client-hash','user_agent','fixture-agent')
+  );
+  if ticket_one is null or ticket_two <> ticket_one then raise exception 'verification is not idempotent'; end if;
+
+  select count(*) into after_count from public.support_tickets where ticket_type = 'public_contact';
+  if after_count <> before_count + 1 then raise exception 'verification did not create exactly one contact ticket'; end if;
+  if not exists (
+    select 1 from public.support_tickets
+     where id = ticket_one
+       and contact_request_metadata->>'email_verified' = 'true'
+       and contact_request_metadata->>'client_key_hash' = 'fixture-client-hash'
+  ) then raise exception 'verified ticket metadata is incomplete'; end if;
+end $$;
+rollback;`;
+  execFileSync("docker", ["exec", "-i", LOCAL_DB_CONTAINER, "psql", "-U", "postgres", "-d", "postgres", "-v", "ON_ERROR_STOP=1"], { input: sql, stdio: ["pipe", "pipe", "pipe"] });
 });

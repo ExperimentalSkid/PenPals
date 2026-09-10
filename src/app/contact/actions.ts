@@ -2,8 +2,13 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
 import { getPageI18n } from "@/i18n/server";
+import {
+  createContactVerificationServiceClient,
+  createContactVerificationToken,
+  sendContactVerificationEmail,
+} from "@/lib/contact-verification";
+import { publicContactRequestMetadata } from "./request-metadata";
 
 const TOPICS: Record<string, string> = {
   account_access: "account_access",
@@ -17,13 +22,6 @@ function contactError(message: string): never {
   redirect(`/contact?error=${encodeURIComponent(message)}`);
 }
 
-function clientKeyFromHeaders(requestHeaders: Headers) {
-  const forwardedFor = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
-  const address = forwardedFor || requestHeaders.get("x-real-ip")?.trim() || requestHeaders.get("cf-connecting-ip")?.trim();
-  const userAgent = requestHeaders.get("user-agent")?.trim();
-  return [address, userAgent].filter(Boolean).join("|").slice(0, 300);
-}
-
 export async function submitPublicContact(formData: FormData) {
   const { t } = await getPageI18n();
   const name = String(formData.get("name") ?? "").trim();
@@ -33,31 +31,41 @@ export async function submitPublicContact(formData: FormData) {
   const message = String(formData.get("message") ?? "").trim();
   const website = String(formData.get("website") ?? "").trim();
 
-  if (website) redirect("/contact?sent=1");
+  if (website) redirect("/contact?verify=1");
   if (name.length > 120) contactError(t("server.contact.nameShorter"));
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) contactError(t("server.contact.emailValid"));
   if (!topic) contactError(t("server.contact.topic"));
   if (subject.length < 3 || subject.length > 200) contactError(t("server.contact.subjectLength"));
   if (message.length < 10 || message.length > 4000) contactError(t("server.contact.messageLength"));
 
-  const db = await createClient();
-  const requestHeaders = await headers();
-  const { error } = await db.rpc("submit_public_contact_ticket", {
+  const service = createContactVerificationServiceClient();
+  const { token, tokenHash } = createContactVerificationToken();
+  const metadata = publicContactRequestMetadata(await headers());
+  const { data: pendingId, error } = await service.rpc("create_public_contact_verification", {
     p_name: name || null,
     p_email: email,
     p_category: topic,
     p_subject: subject,
     p_message: message,
-    p_client_key: clientKeyFromHeaders(requestHeaders) || null,
+    p_token_hash: tokenHash,
+    p_request_metadata: metadata,
   });
-
-  if (error) {
-    const lower = error.message?.toLowerCase() ?? "";
-    const messageText = lower.includes("wait")
-      ? t("server.contact.wait")
-      : t("server.contact.failed");
-    contactError(messageText);
+  if (error || typeof pendingId !== "string") {
+    const lower = error?.message?.toLowerCase() ?? "";
+    contactError(lower.includes("wait") ? t("server.contact.wait") : t("server.contact.failed"));
   }
 
-  redirect("/contact?sent=1");
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (!siteUrl) contactError(t("server.contact.failed"));
+  const verifyUrl = new URL("/contact/verify", siteUrl);
+  verifyUrl.searchParams.set("submission", pendingId);
+  verifyUrl.searchParams.set("token", token);
+  try {
+    await sendContactVerificationEmail({ to: email, verificationUrl: verifyUrl.toString(), submissionId: pendingId });
+  } catch {
+    await service.from("public_contact_pending_verifications").delete().eq("id", pendingId);
+    contactError(t("server.contact.failed"));
+  }
+
+  redirect("/contact?verify=1");
 }

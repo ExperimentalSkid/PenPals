@@ -16,7 +16,7 @@ export async function generateMetadata() {
 
 const topicValues = ["account_access", "privacy_safety", "bug_report", "feedback", "other"] as const;
 
-export default async function ContactPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string }> }) {
+export default async function ContactPage({ searchParams }: { searchParams: Promise<{ error?: string; sent?: string; verify?: string; verified?: string; verification?: string }> }) {
   const [query, { locale, t }] = await Promise.all([searchParams, getPageI18n()]);
   const topicLabels = {
     account_access: t("contact.topics.account"),
@@ -28,7 +28,7 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
 
   return (
     <PublicInfoPage eyebrow={t("contact.eyebrow")} title={t("contact.title")} intro={t("contact.intro")}>
-      {query.sent ? (
+      {query.verified || query.sent ? (
         <section className="rounded-2xl border border-[#D9D3C8] bg-white/55 p-6 shadow-[0_8px_24px_rgba(16,42,67,.035)]">
           <p className="eyebrow">{t("contact.sentEyebrow")}</p>
           <h2 className="section-title-large mt-2">{t("contact.sentTitle")}</h2>
@@ -38,13 +38,20 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
             <Link href={localizedPublicPath("/faq", locale)} className="btn-secondary">{t("contact.readFaq")}</Link>
           </div>
         </section>
+      ) : query.verify ? (
+        <section className="rounded-2xl border border-[#D9D3C8] bg-white/55 p-6 shadow-[0_8px_24px_rgba(16,42,67,.035)]">
+          <p className="eyebrow">{t("contact.verifyEyebrow")}</p>
+          <h2 className="section-title-large mt-2">{t("contact.verifyTitle")}</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-muted sm:text-base">{t("contact.verifyBody")}</p>
+          <div className="mt-6"><Link href={localizedPublicPath("/", locale)} className="btn-secondary">{t("contact.backHome")}</Link></div>
+        </section>
       ) : (
         <section className="rounded-2xl border border-[#D9D3C8] bg-white/55 p-5 shadow-[0_8px_24px_rgba(16,42,67,.035)] sm:p-7">
           <div className="border-b border-[#D9D3C8] pb-5">
             <h2 className="section-title-large">{t("contact.formTitle")}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{t("contact.warning")}</p>
           </div>
-          {query.error && <p className="notice notice-error mt-6" role="alert">{query.error}</p>}
+          {(query.error || query.verification) && <p className="notice notice-error mt-6" role="alert">{query.error ?? (query.verification === "expired" ? t("contact.verificationExpired") : query.verification === "failed" ? t("contact.verificationFailed") : t("contact.verificationInvalid"))}</p>}
           <form action={submitPublicContact} className="mt-6 space-y-5">
             <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
             <label className="field-label">{t("contact.name")} <span className="font-normal text-black/45">({t("common.optional")})</span><input name="name" maxLength={120} autoComplete="name" className="field mt-2 block w-full" /></label>
