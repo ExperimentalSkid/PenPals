@@ -157,14 +157,14 @@ export default async function Introductions({ searchParams }: { searchParams?: P
                 </div>
                 <details className="mt-7 text-sm">
                   <summary className="cursor-pointer list-none text-black/45 transition hover:text-black/70"><span aria-hidden="true" className="mr-2">▸</span>{t("app.introductions.report")}</summary>
-                  <form action={submitReport} className="mt-4 max-w-lg space-y-3 border-l border-black/10 pl-4">
+                  <form action={submitReport} className="user-soft-panel mt-4 max-w-lg space-y-3 p-4">
                     <input type="hidden" name="target_type" value="introduction" />
                     <input type="hidden" name="target_id" value={row.id} />
                     <input type="hidden" name="return_to" value="/app/introductions" />
                     <select name="reason" className="field w-full" aria-label={t("app.reports.reason")}><option value="spam">{t("app.reports.spam")}</option><option value="scam/fraud">{t("app.reports.scam")}</option><option value="harassment">{t("app.reports.harassment")}</option><option value="sexual/inappropriate content">{t("app.reports.sexual")}</option><option value="hate/abuse">{t("app.reports.hate")}</option><option value="fake profile/impersonation">{t("app.reports.fake")}</option><option value="underage concern">{t("app.reports.underage")}</option><option value="other">{t("app.reports.other")}</option></select>
                     <textarea name="details" aria-label={t("app.reports.details")} className="field min-h-24 w-full" placeholder={t("app.reports.details")} />
                     {pending && <label className="flex items-center gap-2 text-sm text-black/60"><input type="checkbox" name="decline_pending" /> {t("app.introductions.reportDecline")}</label>}
-                    <button className="rounded-md border border-black/15 px-3 py-2 text-sm text-black/65 hover:bg-black/[0.04]">{t("app.introductions.report")}</button>
+                    <button className="user-danger-button">{t("app.introductions.report")}</button>
                   </form>
                 </details>
               </div>
@@ -195,7 +195,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
             </article>
           );
         })}
-        {!introductionsError && !visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? t("app.introductions.emptyPending") : activeStatus === "replied" ? t("app.introductions.emptyReplied") : t("app.introductions.empty")}</p>}
+        {!introductionsError && !visibleRows.length && <p className="user-empty-state mt-4 py-14">{activeStatus === "pending" ? t("app.introductions.emptyPending") : activeStatus === "replied" ? t("app.introductions.emptyReplied") : t("app.introductions.empty")}</p>}
       </section>
 
       <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-brand"><IntroIcon name="sprout" /></span>{t("app.introductions.kindness")}</p></aside>

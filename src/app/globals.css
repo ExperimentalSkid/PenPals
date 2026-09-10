@@ -108,6 +108,11 @@ body {
   .field:focus { border-color: var(--penpals-navy); box-shadow: 0 0 0 3px var(--penpals-mist); }
   .field-label { @apply block text-sm font-semibold; color: var(--penpals-text); }
   .badge { @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold; background-color: var(--penpals-mist); color: var(--penpals-navy); }
+  .user-soft-panel { @apply rounded-xl border bg-white/55 shadow-[0_2px_12px_rgba(35,57,47,.035)]; border-color: color-mix(in srgb, var(--penpals-border) 82%, transparent); }
+  .user-empty-state { @apply rounded-xl border border-dashed px-5 py-10 text-center text-sm leading-6; border-color: color-mix(in srgb, var(--penpals-text) 14%, transparent); background-color: rgba(255,255,255,.38); color: color-mix(in srgb, var(--penpals-text) 50%, transparent); }
+  .user-action-popover { @apply rounded-lg border bg-white p-3 shadow-[0_14px_34px_rgba(35,57,47,.12)]; border-color: color-mix(in srgb, var(--penpals-text) 10%, transparent); }
+  .user-danger-button { @apply inline-flex min-h-10 items-center justify-center rounded-md border px-4 py-2 text-sm font-medium transition; border-color: rgb(252 165 165 / .7); color: rgb(185 28 28); background-color: rgb(254 242 242 / .35); }
+  .user-danger-button:hover { background-color: rgb(254 242 242 / .8); border-color: rgb(248 113 113 / .8); }
 
   .app-sidebar { @apply hidden px-7 py-8 lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col; border-right: 1px solid var(--penpals-border); background-color: var(--penpals-ivory); }
   .app-sidebar-logo { @apply font-serif text-[2.2rem] leading-none tracking-[-0.055em]; color: var(--penpals-text); }

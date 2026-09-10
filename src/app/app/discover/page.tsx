@@ -252,7 +252,7 @@ export default async function Discover({ searchParams }: { searchParams: Promise
         <span>{t("app.discover.page", { page, pages: pageCount })}</span>
       </div>
       {discoveryError ? (
-        <div role="alert" className="mt-8 border-y border-red-900/15 bg-red-50/40 px-5 py-10 text-[#6f2a22] sm:px-7">
+        <div role="alert" className="mt-8 rounded-xl border border-red-900/15 bg-red-50/40 px-5 py-8 text-[#6f2a22] shadow-[0_2px_12px_rgba(111,42,34,.04)] sm:px-7">
           <p className="font-serif text-2xl text-[#54211b]">{t("app.discover.loadError")}</p>
           <p className="section-description mt-2">{t("app.discover.filtersKept")}</p>
           <Link href={queryString ? `/app/discover?${queryString}` : "/app/discover"} className="mt-5 inline-flex min-h-10 items-center rounded-md border border-[#087456]/40 px-4 py-2 text-sm font-semibold text-brand transition hover:bg-white/70">{t("app.discover.tryAgain")}</Link>
@@ -260,7 +260,7 @@ export default async function Discover({ searchParams }: { searchParams: Promise
       ) : pageRows.length ? (
         <DiscoverResults profiles={pageRows} queryString={queryString} />
       ) : (
-        <p className="mt-8 border-y border-black/10 py-14 text-black/50">{t("app.discover.empty")}</p>
+        <p className="user-empty-state mt-8 py-14">{t("app.discover.empty")}</p>
       )}
       {pageCount > 1 && <nav aria-label={t("app.discover.pagination")} className="mt-8 flex items-center justify-between border-t border-black/10 pt-6">
           {page > 1 ? (

@@ -275,7 +275,7 @@ export default async function Messages() {
                   </Link>
                 );
               })}
-              {!instantLoadFailed && !rows.length && <p className="rounded-xl border border-dashed border-black/15 bg-white/40 px-5 py-12 text-center text-sm leading-6 text-black/50">{t("app.messages.empty")}</p>}
+              {!instantLoadFailed && !rows.length && <p className="user-empty-state py-12">{t("app.messages.empty")}</p>}
             </div>
           </section>
 
@@ -299,7 +299,7 @@ export default async function Messages() {
                     </div>
                   </Link>
                 ))}
-                {!snailMailLoadFailed && !incoming.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.noIncoming")}</p>}
+                {!snailMailLoadFailed && !incoming.length && <p className="user-empty-state py-6">{t("app.messages.noIncoming")}</p>}
               </div>
             </section>
 
@@ -308,7 +308,7 @@ export default async function Messages() {
               <p className="section-description mt-2">{t("app.messages.deliveredBody")}</p>
               <div className="mt-5 space-y-3">
                 {delivered.map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="group flex items-center gap-4 rounded-xl border border-[#dfe2da] bg-white/72 px-4 py-4 shadow-[0_2px_10px_rgba(35,57,47,.035)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:bg-white hover:shadow-[0_9px_22px_rgba(35,57,47,.065)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e8eee8] text-muted"><Icon name="mail" /></span><span className="min-w-0 flex-1"><span className="block text-xs text-black/45">{t("app.messages.from")}</span><span className="mt-0.5 block truncate font-serif text-[20px] text-primary">{letter.senderName || t("app.messages.aPenPal")}{typeof letter.senderAge === "number" ? `, ${letter.senderAge}` : ""}</span><span className="mt-1 block text-xs text-black/50">{t("app.messages.received", { time: formatConversationTime(letter.delivered_at || letter.deliver_at, t) || t("app.messages.recently") })}</span></span><Icon name="arrow" /></Link>)}
-                {!snailMailLoadFailed && !delivered.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.deliveredEmpty")}</p>}
+                {!snailMailLoadFailed && !delivered.length && <p className="user-empty-state py-6">{t("app.messages.deliveredEmpty")}</p>}
               </div>
             </section>
 

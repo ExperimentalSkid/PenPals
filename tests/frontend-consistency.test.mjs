@@ -77,3 +77,22 @@ test("public profile backend failures do not masquerade as 404s", async () => {
   assert.match(page, /if \(!profile\) notFound\(\)/);
   assert.match(page, /if \(!identity\) notFound\(\)/);
 });
+
+test("normal-user utility states and safety controls share one visual language", async () => {
+  const [globals, conversation, introductions, profilePage, blockControl] = await Promise.all([
+    read("src/app/globals.css"),
+    read("src/app/app/messages/[id]/ConversationThread.tsx"),
+    read("src/app/app/introductions/page.tsx"),
+    read("src/app/app/profile/[username]/page.tsx"),
+    read("src/app/app/profile/BlockControl.tsx"),
+  ]);
+  for (const className of ["user-empty-state", "user-soft-panel", "user-action-popover", "user-danger-button"]) {
+    assert.match(globals, new RegExp(`\\.${className}`));
+  }
+  assert.match(conversation, /user-action-popover/);
+  assert.match(conversation, /user-empty-state/);
+  assert.match(introductions, /user-soft-panel/);
+  assert.match(introductions, /user-empty-state/);
+  assert.match(profilePage, /user-danger-button/);
+  assert.match(blockControl, /user-danger-button/);
+});
