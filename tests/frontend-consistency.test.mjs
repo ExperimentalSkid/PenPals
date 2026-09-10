@@ -66,3 +66,14 @@ test("above-the-fold app wordmarks load eagerly without changing logo dimensions
   assert.match(logo, /loading=\{loading\}/);
   assert.match(logo, /width=\{asset\.width\} height=\{asset\.height\}/);
 });
+
+
+test("public profile backend failures do not masquerade as 404s", async () => {
+  const page = await readFile(new URL("../src/app/app/profile/[username]/page.tsx", import.meta.url), "utf8");
+  assert.match(page, /data: profile, error: profileError/);
+  assert.match(page, /if \(profileError\) throw profileError/);
+  assert.match(page, /data: identityData, error: identityError/);
+  assert.match(page, /if \(identityError\) throw identityError/);
+  assert.match(page, /if \(!profile\) notFound\(\)/);
+  assert.match(page, /if \(!identity\) notFound\(\)/);
+});

@@ -59,7 +59,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
   }
   const excludedCodes = new Set((excluded ?? []).map((row: { country_code: string }) => row.country_code));
   await db.rpc("maybe_notify_profile_totp_reverification");
-  const { data: totpStatusData } = await db.rpc("get_my_profile_totp_status");
+  const { data: totpStatusData, error: totpStatusError } = await db.rpc("get_my_profile_totp_status");
   const totpStatus: TotpVerificationStatus = totpStatusData && typeof totpStatusData === "object" && !Array.isArray(totpStatusData)
     ? {
         enrolled: totpStatusData.enrolled === true,
@@ -70,8 +70,9 @@ export default async function Settings({ searchParams }: { searchParams: Promise
         badge_visible: totpStatusData.badge_visible === true,
       }
     : { enrolled: false, state: "not-enrolled" };
-  const { data: verificationSupplement } = await db.rpc("get_my_data_export_supplement");
-  const verificationRecords: VerificationRecord[] = verificationSupplement && typeof verificationSupplement === "object" && !Array.isArray(verificationSupplement) && Array.isArray((verificationSupplement as { external_verification?: unknown }).external_verification)
+  const { data: verificationSupplement, error: verificationSupplementError } = await db.rpc("get_my_data_export_supplement");
+  const verificationDataAvailable = !verificationSupplementError && verificationSupplement && typeof verificationSupplement === "object" && !Array.isArray(verificationSupplement) && Array.isArray((verificationSupplement as { external_verification?: unknown }).external_verification);
+  const verificationRecords: VerificationRecord[] = verificationDataAvailable
     ? ((verificationSupplement as { external_verification: unknown[] }).external_verification.filter((record): record is VerificationRecord => Boolean(record) && typeof record === "object" && !Array.isArray(record)))
     : [];
   const activeVerification = verificationRecords.filter((record) => typeof record.provider === "string" && !record.revoked_at);
@@ -184,8 +185,9 @@ export default async function Settings({ searchParams }: { searchParams: Promise
             <section id="verification" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="verification-heading">
               <p className="eyebrow">{t("app.settings.trustPrivately")}</p><h2 id="verification-heading" className="section-title-large mt-2">{t("app.settings.verifyProfile")}</h2>
               <p className="section-description mt-3 max-w-2xl">{t("app.settings.verifyProfileBody")}</p>
-              <TotpVerificationPanel status={totpStatus} />
+              {totpStatusError ? <p role="alert" className="notice notice-error mt-5">{t("app.settings.totpStatusUnavailable")}</p> : <TotpVerificationPanel status={totpStatus} />}
               <div className="mt-6 border-y border-black/10 py-5">
+                {!verificationDataAvailable ? <p role="alert" className="notice notice-error">{t("app.settings.verificationStatusUnavailable")}</p> : <>
                 <p className="text-sm font-medium text-primary">{t("app.settings.externalAccount")}: {verificationState === "verified" ? t("app.settings.verified") : verificationState === "needs-refresh" ? t("app.settings.verificationNeedsRefresh") : verificationState === "ineligible" ? t("app.settings.verificationIneligible") : t("app.settings.notVerified")}</p>
                 <p className="section-description mt-1 max-w-2xl">{t("app.settings.externalBody")}</p>
                 {verificationState === "needs-refresh" && <p className="section-description mt-1">{t("app.settings.reconnect")}</p>}
@@ -197,6 +199,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                   {activeProvider && <form action={disconnectVerification}><input type="hidden" name="provider" value={activeProvider} /><button className="rounded-md border border-black/15 px-3 py-2 text-sm text-black/65 transition hover:border-black/30">{t("app.settings.disconnectVerification")}</button></form>}
                   {enabledProviders.length === 0 && verificationState !== "verified" && <p className="text-sm text-black/45">{t("app.settings.noServices")}</p>}
                 </div>
+                </>}
               </div>
             </section>
 

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { requireAdmin } from "../guard";
 import { AdminHeader, AdminPage, StatusChip, toneForStatus } from "../AdminChrome";
@@ -20,7 +19,7 @@ export default async function AdminInbox({ searchParams }: { searchParams: Promi
   const { db } = await requireAdmin();
   const filters = await searchParams;
   const returnTo = safeAdminReturnTo(filters.return_to);
-  const status = statuses.includes(filters.status ?? "") ? filters.status : "open";
+  const status: string = statuses.includes(filters.status ?? "") ? filters.status! : "open";
   const page = Math.max(1, Number.parseInt(filters.page ?? "1", 10) || 1);
   const { data: rows, error } = await db.rpc("admin_list_escalated_moderation_cases", {
     status_filter: status,

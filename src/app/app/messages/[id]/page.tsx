@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -42,16 +41,20 @@ export default async function Conversation({ params, searchParams }: { params: P
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
 
-  if (!(await db.from("conversation_participants").select("conversation_id").eq("conversation_id", id).eq("user_id", uid).maybeSingle()).data) notFound();
+  const membershipResult = await db.from("conversation_participants").select("conversation_id").eq("conversation_id", id).eq("user_id", uid).maybeSingle();
+  if (membershipResult.error) throw membershipResult.error;
+  if (!membershipResult.data) notFound();
   const conversationModeResult = await db.from("conversations").select("communication_mode").eq("id", id).maybeSingle();
   const conversationMode = conversationModeResult.data?.communication_mode === "snail_mail" ? "snail_mail" : "instant";
-  const otherParticipant = (await db.from("conversation_participants").select("user_id,last_read_at").eq("conversation_id", id).neq("user_id", uid).maybeSingle()).data;
+  const otherParticipantResult = await db.from("conversation_participants").select("user_id,last_read_at").eq("conversation_id", id).neq("user_id", uid).maybeSingle();
+  if (otherParticipantResult.error) throw otherParticipantResult.error;
+  const otherParticipant = otherParticipantResult.data;
   const identityResult = otherParticipant ? await db.rpc("resolve_profile_identity", { target_user: otherParticipant.user_id }) : { data: null };
   const identityRows = identityResult.data;
   const otherIdentity = Array.isArray(identityRows) ? identityRows[0] ?? null : identityRows ?? null;
   const otherProfile = otherIdentity;
   const deletedOther = !otherParticipant;
-  const publicResult = otherIdentity?.username ? await db.rpc("get_public_profile", { target_username: otherIdentity.username }) : { data: null };
+  const publicResult = otherIdentity?.username ? await db.rpc("get_public_profile", { target_username: otherIdentity.username }) : { data: null, error: null };
   const publicProfile = publicResult.data ?? {};
   const targetId = otherParticipant?.user_id ?? null;
   const otherName = deletedOther ? "Deleted user" : (publicProfile.display_name || otherIdentity?.display_name || otherIdentity?.username || "Conversation");
@@ -72,24 +75,26 @@ export default async function Conversation({ params, searchParams }: { params: P
         db.from("profile_languages").select("language_id, languages(name), proficiency, purpose").eq("profile_id", uid),
         db.from("profiles").select("avatar_path,country,country_code").eq("id", uid).maybeSingle(),
       ])
-    : [{ data: null }, { data: null }, { data: [] }, { data: [] }, { data: null }, { data: false }, { data: [] }, { data: null }];
+    : [{ data: null, error: null }, { data: null, error: null }, { data: [], error: null }, { data: [], error: null }, { data: null, error: null }, { data: false, error: null }, { data: [], error: null }, { data: null, error: null }];
   const otherCommunicationMode = otherCommunicationModeResult.data;
   const ownCommunicationMode = ownCommunicationModeResult.data;
   const blockedByMe = Boolean(blockResult.data);
   const pairBlocked = Boolean(pairBlockResult.data);
   const canComposeSnailMail = otherCommunicationMode !== "instant" && ownCommunicationMode !== "instant" && Boolean(otherCommunicationMode && ownCommunicationMode);
-  const targetLanguageEntries: LanguageCompatibilityEntry[] = (languageResult.data ?? [])
-    .map((language: any) => {
-      const name = relationName(language.languages);
-      return name ? { language_id: Number(language.language_id), name, proficiency: language.proficiency, purpose: language.purpose } : null;
-    })
-    .filter((language: LanguageCompatibilityEntry | null): language is LanguageCompatibilityEntry => Boolean(language) && Number.isSafeInteger(language.language_id));
-  const viewerLanguageEntries: LanguageCompatibilityEntry[] = (ownLanguageResult.data ?? [])
-    .map((language: any) => {
-      const name = relationName(language.languages);
-      return name ? { language_id: Number(language.language_id), name, proficiency: language.proficiency, purpose: language.purpose } : null;
-    })
-    .filter((language: LanguageCompatibilityEntry | null): language is LanguageCompatibilityEntry => Boolean(language) && Number.isSafeInteger(language.language_id));
+  const targetLanguageEntries: LanguageCompatibilityEntry[] = (languageResult.data ?? []).flatMap((language: any): LanguageCompatibilityEntry[] => {
+    const name = relationName(language.languages);
+    const languageId = Number(language.language_id);
+    return name && Number.isSafeInteger(languageId)
+      ? [{ language_id: languageId, name, proficiency: language.proficiency, purpose: language.purpose }]
+      : [];
+  });
+  const viewerLanguageEntries: LanguageCompatibilityEntry[] = (ownLanguageResult.data ?? []).flatMap((language: any): LanguageCompatibilityEntry[] => {
+    const name = relationName(language.languages);
+    const languageId = Number(language.language_id);
+    return name && Number.isSafeInteger(languageId)
+      ? [{ language_id: languageId, name, proficiency: language.proficiency, purpose: language.purpose }]
+      : [];
+  });
   const languageCompatibility = languageResult.error || ownLanguageResult.error
     ? null
     : deriveLanguageCompatibility(viewerLanguageEntries, targetLanguageEntries);
@@ -117,10 +122,14 @@ export default async function Conversation({ params, searchParams }: { params: P
     photoUrl = (await db.storage.from("avatars").createSignedUrl(path, 3600)).data?.signedUrl ?? null;
   }
 
-  const messagePage = (await db.from("messages").select("id,body,created_at,sender_id,moderation_status,reply_to_message_id").eq("conversation_id", id).order("created_at", { ascending: false }).limit(51)).data ?? [];
+  const messagePageResult = await db.from("messages").select("id,body,created_at,sender_id,moderation_status,reply_to_message_id").eq("conversation_id", id).order("created_at", { ascending: false }).limit(51);
+  const messageHistoryLoadFailed = Boolean(messagePageResult.error);
+  const messagePage = messagePageResult.data ?? [];
   const hasOlderMessages = messagePage.length > 50;
   const msgs = messagePage.slice(0, 50).reverse();
   const snailMailResult = await db.rpc("list_snail_mail", { target_conversation: id });
+  const snailMailLoadFailed = Boolean(snailMailResult.error);
+  const conversationDataLoadFailed = messageHistoryLoadFailed || snailMailLoadFailed;
   const snailMailLetters: SnailMailLetter[] = Array.isArray(snailMailResult.data) ? snailMailResult.data : [];
   const lastOtherMessageAt = [...msgs].reverse().find((currentMessage: any) => currentMessage.sender_id !== uid)?.created_at ?? null;
   const messageStreak = msgs.filter((currentMessage: any) => currentMessage.sender_id === uid && (!lastOtherMessageAt || currentMessage.created_at > lastOtherMessageAt)).length;
@@ -149,6 +158,7 @@ export default async function Conversation({ params, searchParams }: { params: P
   return <main lang={locale} className="min-h-[calc(100vh-73px)] w-full bg-[#f7f5ef] px-4 py-6 text-primary sm:px-6 lg:px-8 xl:px-4 lg:py-8"><div className="mx-auto w-full max-w-[1320px]">
     <Link href="/app/messages" className="inline-flex items-center gap-2 text-sm font-medium text-brand transition hover:text-brand hover:underline"><span aria-hidden="true">←</span> {t("app.messages.back")}</Link>
     {(error || message || readError) && <p role={error || readError ? "alert" : "status"} className={`mt-4 border-l-2 px-3 py-2 text-sm ${error || readError ? "border-red-400 text-red-700" : "border-[#087456] text-brand"}`}>{error ?? readError ?? message}</p>}
+    {conversationDataLoadFailed && <p role="alert" className="notice notice-error mt-4">{t("app.messages.conversationLoadError")}</p>}
     {reported === "1" && <p role="status" className="notice notice-success mt-4">{t("app.messages.reported")}</p>}
 
     <div className="mt-5 grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_355px] xl:items-start xl:gap-10">
@@ -173,12 +183,12 @@ export default async function Conversation({ params, searchParams }: { params: P
           </div>}
         </header>
         {hasModerationReview && <p className="mt-4 border-l-2 border-[#087456]/45 bg-[#edf0e8]/55 px-4 py-3 text-sm text-black/65" role="status">{t("app.messages.moderation")}</p>}
-        {conversationMode === "snail_mail" ? <section aria-labelledby="snail-mail-only-heading" className="rounded-xl border border-[#deded5] bg-[#fbfaf6] px-6 py-8 text-center sm:px-8"><h2 id="snail-mail-only-heading" className="section-title">{t("app.messages.snailExchange")}</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55">{t("app.messages.snailExchangeBody")}</p></section> : <ConversationThread conversationId={id} userId={uid} messages={msgs} hasOlderMessages={hasOlderMessages} introduction={openingIntroduction} pendingRequests={pairBlocked || photoStateError ? [] : pendingTheirs} otherName={otherName} otherUsername={otherIdentity?.username} otherUserId={targetId} initialOtherLastReadAt={otherParticipant?.last_read_at ?? null} messageSendBlocked={pairBlocked || messageStreak >= 3} messageSendBlockedReason={pairBlocked ? "Messaging is unavailable because one of you blocked the other." : undefined} />}
+        {conversationMode === "snail_mail" ? <section aria-labelledby="snail-mail-only-heading" className="rounded-xl border border-[#deded5] bg-[#fbfaf6] px-6 py-8 text-center sm:px-8"><h2 id="snail-mail-only-heading" className="section-title">{t("app.messages.snailExchange")}</h2><p className="mx-auto mt-2 max-w-md text-sm leading-6 text-black/55">{t("app.messages.snailExchangeBody")}</p></section> : <ConversationThread conversationId={id} userId={uid} messages={msgs} hasOlderMessages={hasOlderMessages} historyLoadFailed={messageHistoryLoadFailed} introduction={openingIntroduction} pendingRequests={pairBlocked || photoStateError ? [] : pendingTheirs} otherName={otherName} otherUsername={otherIdentity?.username} otherUserId={targetId} initialOtherLastReadAt={otherParticipant?.last_read_at ?? null} messageSendBlocked={pairBlocked || messageStreak >= 3} messageSendBlockedReason={pairBlocked ? "Messaging is unavailable because one of you blocked the other." : undefined} />}
       </div>
 
       <aside className="min-w-0 space-y-5">
         <section className="rounded-xl border border-[#deded5] bg-[#fbfaf6] p-5 sm:p-6" aria-labelledby="about-person-heading"><p className="eyebrow">{t("app.messages.context")}</p><h2 id="about-person-heading" className="section-title mt-1">About {otherName.split(" ")[0]}</h2>{publicProfile.bio && <p className="mt-4 line-clamp-5 text-sm leading-6 text-black/65">{publicProfile.bio}</p>}{location && <div className="mt-5 border-t border-black/10 pt-4"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">{t("app.messages.location")}</p><p className="mt-2 text-sm text-black/65">{location}</p></div>}<div className="mt-5 border-t border-black/10 pt-4"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">{t("app.messages.communication")}</p><div className="mt-2 space-y-1.5 text-sm text-black/70"><p className="flex items-center gap-2"><span aria-hidden="true" className={modeEnabled(otherCommunicationMode, "instant") ? "font-semibold text-brand" : "font-semibold text-[#b05b4f]"}>{modeEnabled(otherCommunicationMode, "instant") ? "✓" : "✕"}</span><span>{t("app.messages.instantMessaging")}</span><span className="sr-only">{modeEnabled(otherCommunicationMode, "instant") ? "available" : "unavailable"}</span></p><p className="flex items-center gap-2"><span aria-hidden="true" className={modeEnabled(otherCommunicationMode, "snail_mail") ? "font-semibold text-brand" : "font-semibold text-[#b05b4f]"}>{modeEnabled(otherCommunicationMode, "snail_mail") ? "✓" : "✕"}</span><span>{t("app.messages.snail")}</span><span className="sr-only">{modeEnabled(otherCommunicationMode, "snail_mail") ? "available" : "unavailable"}</span></p></div></div><div className="mt-5 border-t border-black/10 pt-4"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">{t("app.messages.languages")}</p>{contextLanguageDetails.length ? <div className="mt-2 space-y-1 text-sm text-black/70">{contextLanguageDetails.map((language: any) => <p key={`${language.languageId}-${language.purpose ?? "unknown"}`} className="leading-5"><span className="inline-flex items-center gap-1.5"><LanguageFlag name={language.name} />{language.name}</span>{language.level ? <span className="text-black/45"> · {language.level}</span> : null}</p>)}</div> : <p className="mt-2 text-sm text-black/50">{t("app.messages.notListed")}</p>}{languageCompatibility && (languageCompatibility.sharedLanguages.length > 0 || languageCompatibility.exchangeLanguages.length > 0) && <div className="mt-3 border-t border-black/[0.08] pt-3 text-xs leading-5 text-brand" aria-label="Language compatibility">{languageCompatibility.sharedLanguages.length > 0 && <p><span className="font-medium">{t("app.messages.bothSpeak")}</span> {languageCompatibility.sharedLanguages.join(", ")}</p>}{languageCompatibility.exchangeLanguages.length > 0 && <p className={languageCompatibility.sharedLanguages.length > 0 ? "mt-1 text-black/55" : "text-brand"}><span className="font-medium">{t("app.messages.languageExchange")}</span> {languageCompatibility.exchangeLanguages.join(", ")}</p>}</div>}</div>{contextInterests.length > 0 && <div className="mt-5 border-t border-black/10 pt-4"><p className="text-[10px] font-semibold uppercase tracking-[.16em] text-primary">{t("app.messages.interests")}</p><div className="mt-3 flex flex-wrap gap-2">{contextInterests.map((interest: string) => <span key={interest} className="rounded-full border border-[#d7d0c3] bg-[#fffdfa] px-3 py-1.5 text-xs text-primary">{interest}</span>)}</div></div>}<Link href={profileHref ?? "/app/messages"} className="mt-6 inline-flex w-full items-center justify-center rounded-md border border-[#d7d0c3] px-4 py-2.5 text-sm font-medium text-brand hover:bg-white/75">{t("app.messages.viewFullProfile")} <span aria-hidden="true" className="ml-2">→</span></Link></section>
-        <SnailMailPanel compact conversationId={id} userId={uid} letters={snailMailLetters} now={currentTimestamp()} canCompose={canComposeSnailMail && !snailMailBlockedReason} composeBlockedReason={snailMailBlockedReason} viewerCountry={ownProfileResult.data?.country ?? null} otherCountry={publicProfile.country ?? null} />
+        <SnailMailPanel compact conversationId={id} userId={uid} letters={snailMailLetters} now={currentTimestamp()} loadFailed={snailMailLoadFailed} canCompose={!snailMailLoadFailed && canComposeSnailMail && !snailMailBlockedReason} composeBlockedReason={snailMailLoadFailed ? t("app.messages.snailLoadError") : snailMailBlockedReason} viewerCountry={ownProfileResult.data?.country ?? null} otherCountry={publicProfile.country ?? null} />
       </aside>
     </div>
   </div></main>;

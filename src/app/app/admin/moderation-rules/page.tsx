@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { requireAdmin } from "../guard";
 import { upsertModerationDetectionRule } from "../actions";
 import { AdminHeader, AdminPage, StatusChip, toneForStatus } from "../AdminChrome";

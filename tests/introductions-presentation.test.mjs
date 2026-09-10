@@ -44,3 +44,9 @@ test("Introduction empty states and responsive card structure are present", () =
   assert.match(page, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
   assert.match(page, /sm:flex-row/);
 });
+
+test("Introductions surfaces primary inbox read failures instead of a false empty state", () => {
+  assert.match(page, /error: introductionsError/);
+  assert.match(page, /app\.introductions\.loadError/);
+  assert.match(page, /!introductionsError && !visibleRows\.length/);
+});

@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { notFound } from "next/navigation";
 import { requireStaff } from "../../guard";
 import { AdminHeader, AdminPage } from "../../AdminChrome";
@@ -40,7 +39,8 @@ export default async function AdminConversationReview({ params, searchParams }: 
     report_uuid: reportId,
     access_reason: accessReason,
   });
-  if (error || !review?.conversation) notFound();
+  if (error) throw error;
+  if (!review?.conversation) notFound();
   const participants = Array.isArray(review.participants) ? review.participants : [];
   const messages = Array.isArray(review.messages) ? review.messages : [];
 

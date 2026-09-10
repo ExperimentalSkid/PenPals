@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { requireStaff } from "../guard";
 import { updateAdminReportStatus } from "../actions";
@@ -34,7 +33,7 @@ export default async function AdminReports({ searchParams }: { searchParams: Pro
     return `/app/admin/reports?${params.toString()}`;
   };
   const { data: visibleProfiles, error: peopleError } = await db.rpc("get_discover_profiles");
-  const people = new Map((visibleProfiles ?? []).map((profile: any) => [profile.id, profile]));
+  const people = new Map<string, any>((visibleProfiles ?? []).map((profile: any) => [String(profile.id), profile]));
   let detail: any = null;
   let audit: any[] = [];
   let detailError: any = null;

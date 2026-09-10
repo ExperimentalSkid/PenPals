@@ -44,7 +44,7 @@ const highlightedText = (text: string, query: string) => {
   );
 };
 
-export default function ConversationThread({ conversationId, userId, messages, hasOlderMessages, introduction, pendingRequests, otherName, otherUsername, otherUserId, initialOtherLastReadAt, messageSendBlocked = false, messageSendBlockedReason }: { conversationId: string; userId: string; messages: Message[]; hasOlderMessages: boolean; introduction: Introduction; pendingRequests?: PendingPhotoRequest[]; otherName?: string; otherUsername?: string; otherUserId?: string | null; initialOtherLastReadAt?: string | null; messageSendBlocked?: boolean; messageSendBlockedReason?: string }) {
+export default function ConversationThread({ conversationId, userId, messages, hasOlderMessages, historyLoadFailed = false, introduction, pendingRequests, otherName, otherUsername, otherUserId, initialOtherLastReadAt, messageSendBlocked = false, messageSendBlockedReason }: { conversationId: string; userId: string; messages: Message[]; hasOlderMessages: boolean; historyLoadFailed?: boolean; introduction: Introduction; pendingRequests?: PendingPhotoRequest[]; otherName?: string; otherUsername?: string; otherUserId?: string | null; initialOtherLastReadAt?: string | null; messageSendBlocked?: boolean; messageSendBlockedReason?: string }) {
   const t = useTranslations();
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -419,7 +419,7 @@ export default function ConversationThread({ conversationId, userId, messages, h
                 </article>
               </div>;
             })}
-            {!liveMessages.length && <p className="border-y border-black/10 py-12 text-center text-sm leading-6 text-black/45">{t("app.messages.emptyThread")}</p>}
+            {!historyLoadFailed && !liveMessages.length && <p className="border-y border-black/10 py-12 text-center text-sm leading-6 text-black/45">{t("app.messages.emptyThread")}</p>}
           </div>
         </div>
         {!nearBottom && showNew && <button type="button" onClick={jumpToLatest} className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full border border-[#087456]/25 bg-[#f7f5ef] px-4 py-2 text-xs font-medium text-brand shadow-sm">{t("app.messages.newMessages")}</button>}

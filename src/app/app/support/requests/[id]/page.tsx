@@ -65,7 +65,8 @@ export default async function MySupportRequestDetail({ params, searchParams }: {
   const query = await searchParams;
   if (!UUID_PATTERN.test(id)) notFound();
   const { data: result, error } = await db.rpc("get_my_support_ticket", { ticket_uuid: id });
-  if (error || !result || typeof result !== "object") notFound();
+  if (error) throw error;
+  if (!result || typeof result !== "object") notFound();
   const ticket = result as SupportRequest;
   const status = String(ticket.status ?? "open");
   const messages = Array.isArray(ticket.messages) ? ticket.messages : [];

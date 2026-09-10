@@ -52,3 +52,13 @@ test("profile setup exposes the existing optional signals and saves them through
   assert.match(saveMigration, /create or replace function public\.save_profile\([\s\S]*p_reply_pace text/);
   assert.match(saveMigration, /grant execute on function public\.save_profile/);
 });
+
+test("profile setup fails closed when editable profile state cannot be loaded", () => {
+  assert.match(setup, /const setupLoadFailed = Boolean\(/);
+  assert.match(setup, /selectedLanguagesResult\.error/);
+  assert.match(setup, /selectedInterestsResult\.error/);
+  assert.match(setup, /regionsResult\.error/);
+  assert.match(setup, /destinationsResult\.error/);
+  assert.match(setup, /if \(setupLoadFailed\)/);
+  assert.match(setup, /app\.profile\.loadError/);
+});

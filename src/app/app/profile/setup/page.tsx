@@ -29,9 +29,9 @@ async function fetchAllLocationRegions(db: Awaited<ReturnType<typeof createClien
       .order("region_code")
       .range(offset, offset + LOCATION_REGION_PAGE_SIZE - 1);
 
-    if (error || !data) return allRegions;
+    if (error || !data) return { data: allRegions, error: error ?? new Error("Location regions could not be loaded.") };
     allRegions.push(...data);
-    if (data.length < LOCATION_REGION_PAGE_SIZE) return allRegions;
+    if (data.length < LOCATION_REGION_PAGE_SIZE) return { data: allRegions, error: null };
   }
 }
 
@@ -57,7 +57,8 @@ export default async function ProfileSetup({ searchParams }: { searchParams: Pro
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
 
-  const profile = (await db.from("profiles").select("username,display_name,birth_date,gender,country,city,country_code,region_code,locality_id,location_precision,bio,quote,avatar_path,social_style,daily_rhythm,environment_preference,travel_style,pets,connection_goals,conversation_style,reply_pace").eq("id", uid).maybeSingle()).data;
+  const profileResult = await db.from("profiles").select("username,display_name,birth_date,gender,country,city,country_code,region_code,locality_id,location_precision,bio,quote,avatar_path,social_style,daily_rhythm,environment_preference,travel_style,pets,connection_goals,conversation_style,reply_pace").eq("id", uid).maybeSingle();
+  const profile = profileResult.data;
   const cookieStore = await cookies();
   const pendingAvatarPath = cookieStore.get("penpals_pending_avatar")?.value ?? null;
   const activeAvatarPath = profile?.avatar_path && isPrivateAvatarPath(profile.avatar_path, uid)
@@ -68,18 +69,50 @@ export default async function ProfileSetup({ searchParams }: { searchParams: Pro
   let profilePhoto: string | null = null;
   if (activeAvatarPath) profilePhoto = (await db.storage.from("avatars").createSignedUrl(activeAvatarPath, 3600)).data?.signedUrl ?? null;
 
-  const languages = (await db.from("languages").select("id,name").order("name")).data ?? [];
-  const interests = (await db.from("interests").select("id,name").order("name")).data ?? [];
-  const selectedLanguages = (await db.from("profile_languages").select("language_id,proficiency,purpose").eq("profile_id", uid)).data ?? [];
-  const selectedInterests = (await db.from("profile_interests").select("interest_id").eq("profile_id", uid)).data ?? [];
-  const [regions, { data: localities }, { data: destinations }, { data: configuredDestinationLimit }] = await Promise.all([
+  const [languagesResult, interestsResult, selectedLanguagesResult, selectedInterestsResult] = await Promise.all([
+    db.from("languages").select("id,name").order("name"),
+    db.from("interests").select("id,name").order("name"),
+    db.from("profile_languages").select("language_id,proficiency,purpose").eq("profile_id", uid),
+    db.from("profile_interests").select("interest_id").eq("profile_id", uid),
+  ]);
+  const languages = languagesResult.data ?? [];
+  const interests = interestsResult.data ?? [];
+  const selectedLanguages = selectedLanguagesResult.data ?? [];
+  const selectedInterests = selectedInterestsResult.data ?? [];
+  const [regionsResult, localitiesResult, destinationsResult, destinationLimitResult] = await Promise.all([
     fetchAllLocationRegions(db),
     db.from("location_localities").select("id,country_code,region_code,name,is_major").order("name"),
     db.from("profile_friendship_destinations").select("country_code,region_code").eq("profile_id", uid),
     db.rpc("get_friendship_destination_limit"),
   ]);
+  const regions = regionsResult.data;
+  const localities = localitiesResult.data;
+  const destinations = destinationsResult.data;
+  const configuredDestinationLimit = destinationLimitResult.data;
+  const setupLoadFailed = Boolean(
+    profileResult.error
+    || languagesResult.error
+    || interestsResult.error
+    || selectedLanguagesResult.error
+    || selectedInterestsResult.error
+    || regionsResult.error
+    || localitiesResult.error
+    || destinationsResult.error
+    || destinationLimitResult.error
+  );
   const destinationLimit = typeof configuredDestinationLimit === "number" && Number.isInteger(configuredDestinationLimit) && configuredDestinationLimit > 0 ? configuredDestinationLimit : 5;
   const { error, appeal, saved } = await searchParams as { error?: string; appeal?: string; saved?: string };
+
+  if (setupLoadFailed) {
+    return (
+      <main lang={locale} className="min-h-screen w-full bg-[#f7f5ef] px-4 py-10 text-primary sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-2xl rounded-2xl border border-red-200/70 bg-[#fffdfa] p-6 sm:p-8">
+          <p role="alert" className="notice notice-error">{t("app.profile.loadError")}</p>
+          <Link href="/app/profile/setup" className="btn-secondary mt-5 inline-flex">{t("app.profile.tryAgain")}</Link>
+        </div>
+      </main>
+    );
+  }
 
   const progress = profileCompletionProgress(profile ?? {}, selectedLanguages.length, selectedInterests.length);
   const { basicsComplete, languagesComplete, interestsComplete, preferencesComplete, percent: completeness } = progress;

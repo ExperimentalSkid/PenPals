@@ -42,3 +42,11 @@ test("Discover cards render the privacy-aware location and country flag under th
   assert.match(globals, /country-flag-icons\/3x2\/flags\.css/);
   assert.match(countryFlag, /isIsoAlpha2/);
 });
+
+test("Discover preserves active catalog filters when filter catalogs fail", () => {
+  assert.match(page, /const catalogLoadFailed = Boolean\(languageCatalogError \|\| interestCatalogError \|\| regionCatalogError\)/);
+  assert.match(page, /regionCatalogError \? rawRegion\.trim\(\) : regionMatch\?\.value/);
+  assert.match(page, /languageCatalogError \? rawSpoken\.trim\(\)/);
+  assert.match(page, /interestCatalogError \? rawInterest\.trim\(\)/);
+  assert.match(page, /app\.discover\.filtersLoadError/);
+});

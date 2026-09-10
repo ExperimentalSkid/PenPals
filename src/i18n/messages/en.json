@@ -424,7 +424,8 @@
       "genderOptions": "Gender options",
       "anyGender": "Any gender",
       "minimumAge": "Minimum age",
-      "maximumAge": "Maximum age"
+      "maximumAge": "Maximum age",
+      "filtersLoadError": "Some Discover filters could not be loaded. Your current filters were preserved."
     },
     "mystery": {
       "back": "Back to Discover",
@@ -474,7 +475,8 @@
       "how": "How introductions work",
       "emptyPending": "No pending introductions right now.",
       "emptyReplied": "No replied introductions yet.",
-      "empty": "No introductions yet."
+      "empty": "No introductions yet.",
+      "loadError": "We couldn’t load your introductions right now. Please try again."
     },
     "reports": {
       "reason": "Report reason",
@@ -500,6 +502,7 @@
       "instantBody": "Your current conversations.",
       "unread": "Unread conversation",
       "empty": "No conversations yet. Your first exchange will appear here.",
+      "loadError": "We couldn’t load all of your conversations right now. Please try again.",
       "snail": "Snail Mail",
       "snailBody": "Digital letters that arrive over time.",
       "incoming": "Incoming",
@@ -549,7 +552,9 @@
       "send": "Send",
       "sendHint": "Enter to send · Shift + Enter for a new line",
       "photoGrantedTo": "Photo access granted to {name}",
-      "them": "them"
+      "them": "them",
+      "conversationLoadError": "Some conversation data could not be loaded. Refresh before relying on this view.",
+      "snailLoadError": "Snail Mail is temporarily unavailable because its current state could not be loaded."
     },
     "snail": {
       "optional": "Optional slow mail",
@@ -745,7 +750,9 @@
         "whenAvailable": "Replies when available",
         "slowRepliesFine": "Slow replies are fine",
         "noPressure": "No pressure"
-      }
+      },
+      "loadError": "We couldn’t load your full profile editing data. Nothing has been changed. Please try again.",
+      "tryAgain": "Try again"
     },
     "icebreaker": {
       "send": "Send introduction",
@@ -875,7 +882,10 @@
       "countries": "countries",
       "searchCountries": "Search countries…",
       "removeCountry": "Remove {name}",
-      "remove": "Remove"
+      "remove": "Remove",
+      "blockedLoadError": "We couldn’t load your blocked users. Please try again.",
+      "totpStatusUnavailable": "Your authenticator verification status could not be loaded. Verification controls are temporarily unavailable.",
+      "verificationStatusUnavailable": "Your external verification status could not be loaded. Verification controls are temporarily unavailable."
     },
     "totp": {
       "tooMany": "Too many attempts. Please wait a moment and try again.",

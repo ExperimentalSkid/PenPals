@@ -81,6 +81,16 @@ test("missing identities retain the existing anonymous fallback without photo or
   assert.equal(calls.length, 1);
 });
 
+test("Messages surfaces inbox query failures instead of rendering false empty states", async () => {
+  const page = await read("src/app/app/messages/page.tsx");
+  assert.match(page, /const instantLoadFailed = Boolean\(instantSummaryResult\.error\)/);
+  assert.match(page, /const snailMailLoadFailed = Boolean\(membershipsResult\.error\)/);
+  assert.match(page, /app\.messages\.loadError/);
+  assert.match(page, /!instantLoadFailed && !rows\.length/);
+  assert.match(page, /!snailMailLoadFailed && !incoming\.length/);
+  assert.match(page, /!snailMailLoadFailed && !delivered\.length/);
+});
+
 test("letter origins still use the guarded precision-aware label and country fallback", async () => {
   assert.equal(await createInboxProfileLoader(profileDb().db, "viewer").origin("sender"), "Oslo, Norway");
   assert.equal(await createInboxProfileLoader(profileDb({ location: " " }).db, "viewer").origin("sender"), "Norway");

@@ -81,7 +81,8 @@ export default async function AdminUserDetail({ params, searchParams }: { params
   const userContextHref = (anchor?: string) => `${userDetailPath}${conversationReason ? `?conversation_reason=${encodeURIComponent(conversationReason)}` : ""}${anchor ? `#${anchor}` : ""}`;
   const { data: rawDetail, error } = await db.rpc("admin_get_user_detail", { target_user: id });
   const detail = rawDetail as unknown as AdminUserDetail | null;
-  if (error || !detail?.profile) notFound();
+  if (error) throw error;
+  if (!detail?.profile) notFound();
   const { error: accessLogError } = await db.rpc("admin_log_user_detail_access", { target_user_id: id, access_reason: "admin_user_detail" });
   if (accessLogError) redirect(`/app/admin/users?error=${encodeURIComponent("User detail could not be opened because the access audit could not be recorded.")}`);
   const [{ data: securityContext, error: securityError }, { data: contentHistory, error: contentHistoryError }, { data: userCases, error: userCasesError }, { data: supportTicketRows, error: supportTicketsError }, { data: verificationContext, error: verificationError }, { data: activityRankMetrics, error: activityRankError }, { data: profileBadges }] = await Promise.all([

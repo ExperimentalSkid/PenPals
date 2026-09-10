@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { requireAdmin } from "../guard";
 import { reviewAgeAppeal } from "./actions";

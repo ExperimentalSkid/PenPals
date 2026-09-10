@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -46,14 +45,14 @@ export default async function Introductions({ searchParams }: { searchParams?: P
   const params = searchParams ? await searchParams : {};
   const errorMessage = first(params.error);
   const requestedStatus = first(params.status);
-  const activeStatus = ["pending", "replied"].includes(requestedStatus) ? requestedStatus : "all";
+  const activeStatus: "all" | "pending" | "replied" = ["pending", "replied"].includes(requestedStatus) ? requestedStatus as "pending" | "replied" : "all";
   const requestedSort = first(params.sort);
   const activeSort = requestedSort === "oldest" ? "oldest" : "newest";
-  const { data: rows } = await db.from("conversation_introductions")
+  const { data: rows, error: introductionsError } = await db.from("conversation_introductions")
     .select("id,sender_id,recipient_id,icebreaker,created_at,status,conversation_id_legacy")
     .or(`sender_id.eq.${uid},recipient_id.eq.${uid}`)
     .order("created_at", { ascending: activeSort === "oldest" });
-  const allRows = rows ?? [];
+  const allRows = introductionsError ? [] : rows ?? [];
   const visibleRows = activeStatus === "all" ? allRows : allRows.filter((row: any) => row.status === activeStatus);
   const pendingCount = allRows.filter((row: any) => row.status === "pending").length;
   const repliedCount = allRows.filter((row: any) => row.status === "replied").length;
@@ -105,6 +104,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
         <p className="mt-5 max-w-2xl text-lg leading-7 text-black/60 sm:text-xl">{t("app.introductions.intro")}</p>
       </header>
       {errorMessage && <p role="alert" className="notice notice-error mt-6">{errorMessage}</p>}
+      {introductionsError && <p role="alert" className="notice notice-error mt-6">{t("app.introductions.loadError")}</p>}
       {first(params.reported) === "1" && <p role="status" className="notice notice-success mt-4">{t("app.introductions.reported")}</p>}
 
       <section aria-label={t("app.introductions.how")} className="mt-10 grid gap-0 rounded-[22px] border border-[#eeebe3] bg-[#fbfaf7]/80 px-5 py-2 shadow-sm md:grid-cols-4 md:px-3 md:py-5">
@@ -195,7 +195,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
             </article>
           );
         })}
-        {!visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? t("app.introductions.emptyPending") : activeStatus === "replied" ? t("app.introductions.emptyReplied") : t("app.introductions.empty")}</p>}
+        {!introductionsError && !visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? t("app.introductions.emptyPending") : activeStatus === "replied" ? t("app.introductions.emptyReplied") : t("app.introductions.empty")}</p>}
       </section>
 
       <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-brand"><IntroIcon name="sprout" /></span>{t("app.introductions.kindness")}</p></aside>

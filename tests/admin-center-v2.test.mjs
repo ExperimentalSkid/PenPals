@@ -127,3 +127,17 @@ test("case and audit routes are deep-linkable and exposed to staff navigation", 
   assert.match(read("src", "app", "app", "admin", "cases", "[id]", "page.tsx"), /admin_get_moderation_case/);
   assert.match(read("src", "app", "app", "layout.tsx"), /href="\/app\/admin\/cases"/);
 });
+
+
+test("staff detail routes distinguish backend failure from a missing record", () => {
+  const files = [
+    read("src", "app", "app", "admin", "cases", "[id]", "page.tsx"),
+    read("src", "app", "app", "admin", "support", "[id]", "page.tsx"),
+    read("src", "app", "app", "admin", "users", "[id]", "page.tsx"),
+    read("src", "app", "app", "admin", "conversations", "[id]", "page.tsx"),
+  ];
+  for (const source of files) {
+    assert.match(source, /if \(error\) throw error/);
+    assert.doesNotMatch(source, /if \(error \|\|/);
+  }
+});

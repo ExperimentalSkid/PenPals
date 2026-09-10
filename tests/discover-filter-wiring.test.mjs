@@ -47,7 +47,7 @@ test("the database applies each visible filter before pagination", () => {
 
 test("country and region URL state stays hierarchical and clear-all does not restore stale filters", () => {
   assert.match(page, /const regionMatch = normalizedCountry && rawRegion/);
-  assert.match(page, /region: regionMatch\?\.value \?\? \"\"/);
+  assert.match(page, /region: regionCatalogError \? rawRegion\.trim\(\) : regionMatch\?\.value \?\? \"\"/);
   assert.match(page, /rawRegion && !filters\.region/);
   assert.match(page, /recent: rawRecent === \"1\" \|\| rawRecent\.toLowerCase\(\) === \"true\" \? \"1\" : \"\"/);
   assert.match(page, /const recentUrlNeedsNormalization = Boolean\(rawRecent && \(recentOnly \? rawRecent !== \"1\" : true\)\)/);

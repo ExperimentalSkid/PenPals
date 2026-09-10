@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
@@ -199,8 +198,10 @@ export default async function Messages() {
   if (!uid) redirect("/sign-in");
   const profiles = createInboxProfileLoader(db, uid);
 
-  const memberships = (await db.from("conversation_participants").select("conversation_id,last_read_at,conversations(communication_mode)").eq("user_id", uid)).data ?? [];
+  const membershipsResult = await db.from("conversation_participants").select("conversation_id,last_read_at,conversations(communication_mode)").eq("user_id", uid);
+  const memberships = membershipsResult.data ?? [];
   const instantSummaryResult = await db.rpc("get_instant_message_inbox");
+  const instantLoadFailed = Boolean(instantSummaryResult.error);
   const rows = await Promise.all((instantSummaryResult.data ?? []).map(async (row: any) => {
     const other = row.other_user_id ? {
       id: row.other_user_id,
@@ -225,10 +226,15 @@ export default async function Messages() {
   const letterResults = await Promise.all(memberships.map(async (membership: any) => {
     const result = await db.rpc("list_snail_mail", { target_conversation: membership.conversation_id });
     const letters = Array.isArray(result.data) ? result.data : [];
-    return Promise.all(letters.map((letter: any) => enrichLetter(profiles, letter, membership.conversation_id, uid)));
+    return {
+      error: Boolean(result.error),
+      letters: await Promise.all(letters.map((letter: any) => enrichLetter(profiles, letter, membership.conversation_id, uid))),
+    };
   }));
+  const snailMailLoadFailed = Boolean(membershipsResult.error) || letterResults.some((result) => result.error);
+  const messagesLoadFailed = instantLoadFailed || snailMailLoadFailed;
   const now = currentTimestamp();
-  const letters = letterResults.flat();
+  const letters = letterResults.flatMap((result) => result.letters);
   const incoming = letters.filter((letter) => letter.sender_id !== uid && !letter.body_available && (letter.letter_status === "incoming" || isLostInTransit(letter))).sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at));
   const delivered = letters.filter((letter) => letter.sender_id !== uid && !isLostInTransit(letter) && (letter.body_available || letter.letter_status === "delivered" || Boolean(letter.delivered_at))).sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at));
   const outgoing = letters.filter((letter) => letter.sender_id === uid).sort((a, b) => Date.parse(b.sent_at) - Date.parse(a.sent_at));
@@ -241,6 +247,8 @@ export default async function Messages() {
           <h1 className="page-title-display mt-3">{t("app.messages.title")}</h1>
           <p className="mt-4 max-w-xl text-[17px] leading-7 text-black/60">{t("app.messages.intro")}</p>
         </header>
+
+        {messagesLoadFailed && <p role="alert" className="notice notice-error mt-7">{t("app.messages.loadError")}</p>}
 
         <section className="mt-14 overflow-hidden rounded-2xl border border-[#d9d8cf] bg-[#fbfaf6] shadow-[0_18px_50px_rgba(35,57,47,0.07)] lg:grid lg:grid-cols-2">
           <section aria-labelledby="instant-heading" className="min-w-0 bg-[#fbfaf6] px-6 py-8 sm:px-8 lg:border-r lg:border-black/10 lg:px-9 lg:py-10">
@@ -267,7 +275,7 @@ export default async function Messages() {
                   </Link>
                 );
               })}
-              {!rows.length && <p className="rounded-xl border border-dashed border-black/15 bg-white/40 px-5 py-12 text-center text-sm leading-6 text-black/50">{t("app.messages.empty")}</p>}
+              {!instantLoadFailed && !rows.length && <p className="rounded-xl border border-dashed border-black/15 bg-white/40 px-5 py-12 text-center text-sm leading-6 text-black/50">{t("app.messages.empty")}</p>}
             </div>
           </section>
 
@@ -291,7 +299,7 @@ export default async function Messages() {
                     </div>
                   </Link>
                 ))}
-                {!incoming.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.noIncoming")}</p>}
+                {!snailMailLoadFailed && !incoming.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.noIncoming")}</p>}
               </div>
             </section>
 
@@ -300,7 +308,7 @@ export default async function Messages() {
               <p className="section-description mt-2">{t("app.messages.deliveredBody")}</p>
               <div className="mt-5 space-y-3">
                 {delivered.map((letter) => <Link key={letter.id} href={`/app/messages/${letter.conversationId}`} className="group flex items-center gap-4 rounded-xl border border-[#dfe2da] bg-white/72 px-4 py-4 shadow-[0_2px_10px_rgba(35,57,47,.035)] transition duration-200 hover:-translate-y-0.5 hover:border-brand/25 hover:bg-white hover:shadow-[0_9px_22px_rgba(35,57,47,.065)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/35"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-[#e8eee8] text-muted"><Icon name="mail" /></span><span className="min-w-0 flex-1"><span className="block text-xs text-black/45">{t("app.messages.from")}</span><span className="mt-0.5 block truncate font-serif text-[20px] text-primary">{letter.senderName || "A pen pal"}{typeof letter.senderAge === "number" ? `, ${letter.senderAge}` : ""}</span><span className="mt-1 block text-xs text-black/50">Received {formatConversationTime(letter.delivered_at || letter.deliver_at) || "recently"}</span></span><Icon name="arrow" /></Link>)}
-                {!delivered.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.deliveredEmpty")}</p>}
+                {!snailMailLoadFailed && !delivered.length && <p className="rounded-lg border border-dashed border-black/15 px-5 py-6 text-sm leading-6 text-black/50">{t("app.messages.deliveredEmpty")}</p>}
               </div>
             </section>
 

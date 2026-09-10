@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "../../guard";
@@ -57,7 +56,8 @@ export default async function AdminCaseDetail({ params, searchParams }: { params
     db.rpc("admin_get_moderation_case", { case_uuid: id }),
     db.rpc("admin_get_moderation_case_flags", { case_uuid: id }),
   ]);
-  if (error || !detail?.case) notFound();
+  if (error) throw error;
+  if (!detail?.case) notFound();
   const item = detail.case;
   const reports = Array.isArray(detail.reports) ? detail.reports : [];
   const notes = Array.isArray(detail.notes) ? detail.notes : [];

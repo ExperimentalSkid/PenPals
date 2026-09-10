@@ -47,3 +47,11 @@ test("administrator self-deactivation is unavailable in the UI", () => {
   assert.match(accountActions, /if \(isAdmin && !deactivated\)/);
   assert.match(accountActions, /app\.settings\.adminNoDeactivate/);
 });
+
+test("Settings does not present failed security-state reads as unverified states", () => {
+  assert.match(settings, /error: totpStatusError/);
+  assert.match(settings, /error: verificationSupplementError/);
+  assert.match(settings, /verificationDataAvailable/);
+  assert.match(settings, /app\.settings\.totpStatusUnavailable/);
+  assert.match(settings, /app\.settings\.verificationStatusUnavailable/);
+});

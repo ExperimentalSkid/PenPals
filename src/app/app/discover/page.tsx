@@ -98,11 +98,15 @@ export default async function Discover({ searchParams }: { searchParams: Promise
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
   const params = await searchParams;
-  const [{ data: languageCatalog }, { data: interestCatalog }, { data: regionCatalog }] = await Promise.all([
+  const [languageCatalogResult, interestCatalogResult, regionCatalogResult] = await Promise.all([
     db.from("languages").select("name").order("name"),
     db.from("interests").select("name").order("name"),
     db.from("location_regions").select("country_code,region_code,name,is_major").order("name"),
   ]);
+  const { data: languageCatalog, error: languageCatalogError } = languageCatalogResult;
+  const { data: interestCatalog, error: interestCatalogError } = interestCatalogResult;
+  const { data: regionCatalog, error: regionCatalogError } = regionCatalogResult;
+  const catalogLoadFailed = Boolean(languageCatalogError || interestCatalogError || regionCatalogError);
   const rawCountry = first(params.country);
   const rawRegion = first(params.region);
   const rawRecent = first(params.recent);
@@ -132,13 +136,13 @@ export default async function Discover({ searchParams }: { searchParams: Promise
     // A region is scoped to the selected country.  Discard stale or
     // cross-country URL values rather than sending an impossible pair to the
     // RPC and leaving the toolbar in an inconsistent state.
-    region: regionMatch?.value ?? "",
+    region: regionCatalogError ? rawRegion.trim() : regionMatch?.value ?? "",
     gender: first(params.gender),
     min_age: first(params.min_age),
     max_age: first(params.max_age),
-    language_spoken: canonicalCatalogValue(rawSpoken, languageNames),
-    language_learning: canonicalCatalogValue(rawLearning, languageNames),
-    interest: canonicalCatalogValue(rawInterest, interestNames),
+    language_spoken: languageCatalogError ? rawSpoken.trim() : canonicalCatalogValue(rawSpoken, languageNames),
+    language_learning: languageCatalogError ? rawLearning.trim() : canonicalCatalogValue(rawLearning, languageNames),
+    interest: interestCatalogError ? rawInterest.trim() : canonicalCatalogValue(rawInterest, interestNames),
     // The checkbox is a boolean filter.  Keep only its canonical URL value so
     // stale values such as recent=0/true-ish strings cannot appear active in
     // the toolbar or survive pagination links.
@@ -201,11 +205,11 @@ export default async function Discover({ searchParams }: { searchParams: Promise
   // model instead of silently presenting an unfiltered result under a stale
   // city query parameter.
   const countryUrlNeedsNormalization = Boolean(rawCountry && normalizedCountry && rawCountry.trim() !== normalizedCountry);
-  const regionUrlNeedsNormalization = Boolean(rawRegion && filters.region && rawRegion.trim() !== filters.region);
+  const regionUrlNeedsNormalization = !regionCatalogError && Boolean(rawRegion && filters.region && rawRegion.trim() !== filters.region);
   const recentUrlNeedsNormalization = Boolean(rawRecent && (recentOnly ? rawRecent !== "1" : true));
-  const spokenUrlNeedsNormalization = Boolean(rawSpoken && !filters.language_spoken) || Boolean(rawSpoken && filters.language_spoken && rawSpoken.trim() !== filters.language_spoken);
-  const learningUrlNeedsNormalization = Boolean(rawLearning && !filters.language_learning) || Boolean(rawLearning && filters.language_learning && rawLearning.trim() !== filters.language_learning);
-  const interestUrlNeedsNormalization = Boolean(rawInterest && !filters.interest) || Boolean(rawInterest && filters.interest && rawInterest.trim() !== filters.interest);
+  const spokenUrlNeedsNormalization = !languageCatalogError && (Boolean(rawSpoken && !filters.language_spoken) || Boolean(rawSpoken && filters.language_spoken && rawSpoken.trim() !== filters.language_spoken));
+  const learningUrlNeedsNormalization = !languageCatalogError && (Boolean(rawLearning && !filters.language_learning) || Boolean(rawLearning && filters.language_learning && rawLearning.trim() !== filters.language_learning));
+  const interestUrlNeedsNormalization = !interestCatalogError && (Boolean(rawInterest && !filters.interest) || Boolean(rawInterest && filters.interest && rawInterest.trim() !== filters.interest));
   if (first(params.city) || (rawCountry && !normalizedCountry) || (rawRegion && !filters.region) || countryUrlNeedsNormalization || regionUrlNeedsNormalization || recentUrlNeedsNormalization || spokenUrlNeedsNormalization || learningUrlNeedsNormalization || interestUrlNeedsNormalization) redirect(queryPath(filters, page));
   if (first(params.page) && String(page) !== first(params.page)) redirect(queryPath(filters, page));
   const queryParams = new URLSearchParams();
@@ -238,6 +242,8 @@ export default async function Discover({ searchParams }: { searchParams: Promise
         </Link>
       </div>
       <p className="mt-5 max-w-xl text-lg leading-7 text-black/60 sm:text-xl">{t("app.discover.intro")}</p>
+
+      {catalogLoadFailed && <p role="alert" className="notice notice-error mt-7">{t("app.discover.filtersLoadError")}</p>}
 
       <DiscoverFilters key={queryString} filters={filters} {...filterOptions} />
 

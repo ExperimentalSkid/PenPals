@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Image from "next/image";
 import Link from "next/link";
 import { revalidatePath } from "next/cache";
@@ -146,7 +145,7 @@ export default async function Notifications({ searchParams }: { searchParams?: P
   const params = searchParams ? await searchParams : {};
   const errorMessage = first(params.error);
   const requestedFilter = first(params.filter);
-  const activeFilter = ["unread", "requests", "updates"].includes(requestedFilter) ? requestedFilter : "all";
+  const activeFilter: "all" | "unread" | "requests" | "updates" = ["unread", "requests", "updates"].includes(requestedFilter) ? requestedFilter as "unread" | "requests" | "updates" : "all";
   const requestedSort = first(params.sort);
   const activeSort = requestedSort === "oldest" ? "oldest" : "newest";
 

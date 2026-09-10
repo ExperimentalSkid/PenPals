@@ -52,10 +52,12 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   const { username } = await params;
   const navigation = searchParams ? await searchParams : {};
   const adminReturnTo = safeAdminReturnTo(navigation.return_to);
-  const { data: profile } = await db.rpc("get_public_profile", { target_username: username });
+  const { data: profile, error: profileError } = await db.rpc("get_public_profile", { target_username: username });
+  if (profileError) throw profileError;
   if (!profile) notFound();
 
-  const { data: identityData } = await db.rpc("resolve_profile_identity", { target_user: profile.id });
+  const { data: identityData, error: identityError } = await db.rpc("resolve_profile_identity", { target_user: profile.id });
+  if (identityError) throw identityError;
   const identity = Array.isArray(identityData) ? identityData[0] : identityData;
   if (!identity) notFound();
   const targetId = identity.id;

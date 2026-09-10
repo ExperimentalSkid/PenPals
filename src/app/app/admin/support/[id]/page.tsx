@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireStaff } from "../../guard";
@@ -32,7 +31,8 @@ export default async function SupportTicket({ params, searchParams }: { params: 
   const { id } = await params;
   const query = await searchParams;
   const { data, error } = await db.rpc("staff_get_support_ticket", { ticket_uuid: id });
-  if (error || !data?.ticket) notFound();
+  if (error) throw error;
+  if (!data?.ticket) notFound();
 
   const ticket = data.ticket;
   const isPublicContact = ticket.ticket_type === "public_contact";

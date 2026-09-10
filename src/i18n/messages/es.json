@@ -424,7 +424,8 @@
       "genderOptions": "Opciones de género",
       "anyGender": "Cualquier género",
       "minimumAge": "Edad mínima",
-      "maximumAge": "Edad máxima"
+      "maximumAge": "Edad máxima",
+      "filtersLoadError": "No se pudieron cargar algunos filtros de Descubrir. Se conservaron tus filtros actuales."
     },
     "mystery": {
       "back": "Volver a Descubrir",
@@ -474,7 +475,8 @@
       "how": "Cómo funcionan las presentaciones",
       "emptyPending": "No hay presentaciones pendientes ahora mismo.",
       "emptyReplied": "Todavía no hay presentaciones respondidas.",
-      "empty": "Todavía no hay presentaciones."
+      "empty": "Todavía no hay presentaciones.",
+      "loadError": "No pudimos cargar tus presentaciones ahora mismo. Inténtalo de nuevo."
     },
     "reports": {
       "reason": "Motivo del reporte",
@@ -500,6 +502,7 @@
       "instantBody": "Tus conversaciones actuales.",
       "unread": "Conversación sin leer",
       "empty": "Aún no hay conversaciones. Tu primer intercambio aparecerá aquí.",
+      "loadError": "No pudimos cargar todas tus conversaciones ahora mismo. Inténtalo de nuevo.",
       "snail": "Snail Mail",
       "snailBody": "Cartas digitales que llegan con el tiempo.",
       "incoming": "Entrantes",
@@ -549,7 +552,9 @@
       "send": "Enviar",
       "sendHint": "Enter para enviar · Shift + Enter para una nueva línea",
       "photoGrantedTo": "Acceso a la foto concedido a {name}",
-      "them": "esa persona"
+      "them": "esa persona",
+      "conversationLoadError": "No se pudieron cargar algunos datos de la conversación. Actualiza antes de confiar en esta vista.",
+      "snailLoadError": "Snail Mail no está disponible temporalmente porque no se pudo cargar su estado actual."
     },
     "snail": {
       "optional": "Correo lento opcional",
@@ -745,7 +750,9 @@
         "whenAvailable": "Responde cuando puede",
         "slowRepliesFine": "No importa responder despacio",
         "noPressure": "Sin presión"
-      }
+      },
+      "loadError": "No pudimos cargar todos los datos de edición de tu perfil. No se ha cambiado nada. Inténtalo de nuevo.",
+      "tryAgain": "Intentar de nuevo"
     },
     "icebreaker": {
       "send": "Enviar presentación",
@@ -875,7 +882,10 @@
       "countries": "países",
       "searchCountries": "Buscar países…",
       "removeCountry": "Eliminar {name}",
-      "remove": "Eliminar"
+      "remove": "Eliminar",
+      "blockedLoadError": "No pudimos cargar tus usuarios bloqueados. Inténtalo de nuevo.",
+      "totpStatusUnavailable": "No se pudo cargar el estado de verificación del autenticador. Los controles de verificación no están disponibles temporalmente.",
+      "verificationStatusUnavailable": "No se pudo cargar el estado de verificación externa. Los controles de verificación no están disponibles temporalmente."
     },
     "totp": {
       "tooMany": "Demasiados intentos. Espera un momento e inténtalo de nuevo.",

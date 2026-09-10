@@ -68,3 +68,10 @@ test("notifications keep their owner-only read path and hide blocked actors thro
   assert.match(notifications, /app\.notifications\.deletedUser/);
   assert.match(notifications, /can_view_profile_photo/);
 });
+
+test("blocked-user settings surfaces read failures instead of a false empty state", async () => {
+  const blockedPage = await readFile(new URL("../src/app/app/settings/blocked/page.tsx", import.meta.url), "utf8");
+  assert.match(blockedPage, /error:\s*blockedError/);
+  assert.match(blockedPage, /app\.settings\.blockedLoadError/);
+  assert.match(blockedPage, /!blockedError && !rows\?\.length/);
+});

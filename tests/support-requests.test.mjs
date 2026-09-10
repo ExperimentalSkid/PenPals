@@ -92,3 +92,13 @@ test("staff support detail separates public replies, internal notes, assignment,
   assert.match(actions, /staff_release_support_ticket/);
   assert.match(actions, /staff_set_support_ticket_status/);
 });
+
+
+test("support request reads distinguish backend failure from empty or missing data", async () => {
+  const list = await read("src/app/app/support/requests/page.tsx");
+  const detail = await read("src/app/app/support/requests/[id]/page.tsx");
+  assert.match(list, /!error && tickets\.length/);
+  assert.match(list, /: !error \?/);
+  assert.match(detail, /if \(error\) throw error/);
+  assert.match(detail, /if \(!result \|\| typeof result !== "object"\) notFound\(\)/);
+});

@@ -73,7 +73,7 @@ export default async function MySupportRequestsPage() {
           <div className="border-b border-black/10 px-5 py-5 sm:px-8">
             <h2 id="support-requests-heading" className="section-title-large">{t("app.support.yourRequests")}</h2>
           </div>
-          {tickets.length ? (
+          {!error && tickets.length ? (
             <div className="divide-y divide-black/10">
               {tickets.map((ticket) => {
                 const status = String(ticket.status ?? "open");
@@ -101,13 +101,13 @@ export default async function MySupportRequestsPage() {
                 );
               })}
             </div>
-          ) : (
+          ) : !error ? (
             <div className="px-5 py-12 text-center sm:px-8">
               <p className="section-title">{t("app.support.none")}</p>
               <p className="mt-2 text-sm text-black/55">{t("app.support.needHelp")}</p>
               <Link href="/app/support" className="btn-primary mt-5 inline-flex px-5 py-2.5">{t("app.support.contact")}</Link>
             </div>
-          )}
+          ) : null}
         </section>
       </div>
     </main>

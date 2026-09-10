@@ -30,7 +30,7 @@ test("message send has one atomic write rather than a fallible follow-up timesta
 });
 
 test("read-state failures are returned and rendered instead of being silently ignored", () => {
-  assert.match(messagesActions, /return error \? \{ error: "We couldn't update the conversation read state\. Please refresh\." \} : \{ error: null \}/);
+  assert.match(messagesActions, /return error \? \{ error: t\("server\.messages\.readFailed"\) \} : \{ error: null \}/);
   assert.match(conversationPage, /const readResult = await markRead\(id\)/);
   assert.match(conversationPage, /const readError = readResult\?\.error \?\? null/);
   assert.match(conversationPage, /error \|\| message \|\| readError/);
@@ -73,4 +73,26 @@ test("admin audit identity lookup failures are visible to staff", () => {
   assert.match(adminAudit, /let peopleError: any = null/);
   assert.match(adminAudit, /role="alert"/);
   assert.match(adminAudit, /Actor and target context could not be loaded/);
+});
+
+test("conversation read failures do not masquerade as empty history or enable Snail Mail", () => {
+  assert.match(conversationPage, /const messageHistoryLoadFailed = Boolean\(messagePageResult\.error\)/);
+  assert.match(conversationPage, /const snailMailLoadFailed = Boolean\(snailMailResult\.error\)/);
+  assert.match(conversationPage, /historyLoadFailed=\{messageHistoryLoadFailed\}/);
+  assert.match(conversationPage, /canCompose=\{!snailMailLoadFailed && canComposeSnailMail/);
+  assert.match(conversationPage, /app\.messages\.conversationLoadError/);
+});
+
+
+test("conversation membership read failures do not masquerade as missing conversations", () => {
+  assert.match(conversationPage, /const membershipResult = await db\.from\("conversation_participants"\)/);
+  assert.match(conversationPage, /if \(membershipResult\.error\) throw membershipResult\.error/);
+  assert.match(conversationPage, /if \(!membershipResult\.data\) notFound\(\)/);
+});
+
+
+test("conversation participant read failures do not impersonate account deletion", () => {
+  assert.match(conversationPage, /const otherParticipantResult = await db\.from\("conversation_participants"\)/);
+  assert.match(conversationPage, /if \(otherParticipantResult\.error\) throw otherParticipantResult\.error/);
+  assert.match(conversationPage, /const otherParticipant = otherParticipantResult\.data/);
 });
