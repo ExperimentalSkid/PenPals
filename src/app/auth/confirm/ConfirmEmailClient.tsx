@@ -19,7 +19,8 @@ import BrandLogo from "@/app/components/BrandLogo";
  */
 export function confirmationDestination(type: string | null) {
   if (type === "recovery") return "/update-password";
-  return type === "email" || type === "email_change" || type === "invite" || type === "magiclink"
+  if (type === "email_change") return "/app/settings?email=updated#account-identity";
+  return type === "email" || type === "invite" || type === "magiclink"
     ? "/app"
     : "/app/profile/setup";
 }

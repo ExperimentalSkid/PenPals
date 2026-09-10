@@ -96,7 +96,7 @@ test("token-hash recovery and fragment confirmations retain their destinations",
   assert.deepEqual(recovery.redirects, ["/update-password"]);
   const fragment = await renderConfirmation("?type=email_change", { hash: "#access_token=test-access&refresh_token=test-refresh" });
   assert.equal(fragment.session.length, 1);
-  assert.deepEqual(fragment.redirects, ["/app"]);
+  assert.deepEqual(fragment.redirects, ["/app/settings?email=updated#account-identity"]);
 });
 test("expired confirmation displays an error without continuing", async () => {
   const result = await renderConfirmation("?code=expired-test-code", { exchangeError: { message: "expired" }, verified: false });

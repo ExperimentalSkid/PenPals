@@ -39,9 +39,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: ageRestricted, error: ageRestrictionError } = await db.rpc("is_current_user_age_restricted");
   if (ageRestrictionError) redirect("/sign-in?error=Account%20unavailable");
   if (ageRestricted) redirect("/age-appeal");
-  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,role,deactivated_at").eq("id", uid).maybeSingle();
+  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,role,deactivated_at,require_login_mfa").eq("id", uid).maybeSingle();
   if (profileError) redirect("/sign-in?error=Account%20unavailable");
   if (p?.deactivated_at) redirect("/reactivate");
+  if (p?.require_login_mfa && String(data?.claims?.aal ?? "") !== "aal2") redirect("/auth/mfa");
+  if (p?.require_login_mfa) {
+    const { data: assurance, error: assuranceError } = await db.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assuranceError || assurance.currentLevel !== "aal2") redirect("/auth/mfa");
+  }
   const [{ data: completionProfile, error: completionError }, { count: languageCount, error: languageError }, { count: interestCount, error: interestError }] = await Promise.all([
     db.from("profiles").select("username,display_name,birth_date,country").eq("id", uid).maybeSingle(),
     db.from("profile_languages").select("language_id", { count: "exact", head: true }).eq("profile_id", uid),

@@ -43,7 +43,8 @@ test("email confirmation enters the same protected setup flow as Google login", 
 test("non-signup confirmations return through the normal protected app boundary", () => {
   assert.match(confirmPage, /export function confirmationDestination/);
   assert.match(confirmPage, /if \(type === "recovery"\) return "\/update-password"/);
-  assert.match(confirmPage, /type === "email" \|\| type === "email_change" \|\| type === "invite" \|\| type === "magiclink"/);
+  assert.match(confirmPage, /type === "email_change"[^\n]*\/app\/settings\?email=updated/);
+  assert.match(confirmPage, /type === "email" \|\| type === "invite" \|\| type === "magiclink"/);
   assert.match(confirmPage, /const destination = confirmationDestination\(type\)/);
   assert.match(confirmPage, /router\.replace\(destination\)/);
   assert.match(appLayout, /if \(!userData\.user\?\.email_confirmed_at\) redirect\("\/check-email"\)/);

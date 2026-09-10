@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { savePrivacy, saveCommunicationPreferences } from "@/app/app/profile/actions";
 import AccountActions from "./AccountActions";
-import { deleteAccount, disconnectGoogleLogin, disconnectVerification } from "@/app/app/settings/data-actions";
+import { changeAccountEmail, deleteAccount, disconnectGoogleLogin, disconnectVerification, saveLoginMfaRequirement, saveNotificationPreferences } from "@/app/app/settings/data-actions";
 import { changePassword, signOutOtherSessions, startGoogleLink } from "@/app/auth/actions";
 import { COUNTRY_OPTIONS } from "@/lib/countries";
 import CountryExclusionPicker from "./CountryExclusionPicker";
@@ -11,6 +11,7 @@ import TotpVerificationPanel from "./TotpVerificationPanel";
 import { approvedExternalVerificationProviders } from "@/lib/verification/registry";
 import { isCurrentVerification, needsVerificationRefresh, verificationDisplayState } from "@/lib/verification/display";
 import { getPageI18n } from "@/i18n/server";
+import LanguageSwitcher from "@/app/components/LanguageSwitcher";
 
 type VerificationRecord = {
   provider?: string;
@@ -18,6 +19,18 @@ type VerificationRecord = {
   revoked_at?: string | null;
   reverify_after?: string | null;
 };
+
+type SecuritySettingsSummary = {
+  require_login_mfa?: boolean;
+  sessions?: Array<{ id?: string; created_at?: string | null; updated_at?: string | null; refreshed_at?: string | null; not_after?: string | null; aal?: string | null; user_agent?: string | null; ip_address?: string | null }>;
+  recent_auth_events?: Array<{ created_at?: string | null; ip_address?: string | null; action?: string | null }>;
+};
+
+function dateTimeLabel(value: string | null | undefined, locale: string) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isFinite(date.getTime()) ? new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(date) : null;
+}
 
 type TotpVerificationStatus = {
   enrolled: boolean;
@@ -32,13 +45,14 @@ function providerLabel(provider: string) {
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
-export default async function Settings({ searchParams }: { searchParams: Promise<{ error?: string; verification?: string; communication?: string; login?: string; security?: string }> }) {
+export default async function Settings({ searchParams }: { searchParams: Promise<{ error?: string; verification?: string; communication?: string; login?: string; security?: string; email?: string; notifications?: string; mfa?: string }> }) {
   const { locale, t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   const uid = data?.claims?.sub;
   if (!uid) redirect("/sign-in");
-  const { error, verification, communication, login, security } = await searchParams;
+  const { error, verification, communication, login, security, email, notifications, mfa } = await searchParams;
+  const { data: userData, error: userLoadError } = await db.auth.getUser();
   const { data: p, error: profileError } = await db.from("profiles").select("username,role,profile_visibility,show_city,show_activity_status,show_response_rate,accepting_new_conversations,introduction_scope,deactivated_at,availability,inactive_mode,allow_instant_messages,allow_snail_mail").eq("id", uid).maybeSingle();
   const { data: excluded, error: excludedError } = await db.from("profile_introduction_country_exclusions").select("country_code").eq("profile_id", uid);
   if (profileError || excludedError || !p) {
@@ -90,6 +104,18 @@ export default async function Settings({ searchParams }: { searchParams: Promise
       return null;
     }
   }))).filter((provider): provider is string => Boolean(provider));
+  const [{ data: notificationPreferenceData, error: notificationPreferenceError }, { data: securitySettingsData, error: securitySettingsError }] = await Promise.all([
+    db.rpc("get_my_notification_preferences"),
+    db.rpc("get_my_security_settings_summary"),
+  ]);
+  const notificationPreferences = !notificationPreferenceError && notificationPreferenceData && typeof notificationPreferenceData === "object" && !Array.isArray(notificationPreferenceData)
+    ? notificationPreferenceData as { introductions?: boolean; photo_access?: boolean; support_updates?: boolean; verification_reminders?: boolean }
+    : null;
+  const securitySettings: SecuritySettingsSummary | null = !securitySettingsError && securitySettingsData && typeof securitySettingsData === "object" && !Array.isArray(securitySettingsData)
+    ? securitySettingsData as SecuritySettingsSummary
+    : null;
+  const recentSessions = Array.isArray(securitySettings?.sessions) ? securitySettings.sessions.slice(0, 8) : [];
+  const recentAuthEvents = Array.isArray(securitySettings?.recent_auth_events) ? securitySettings.recent_auth_events.slice(0, 8) : [];
   const { data: identityData, error: identityError } = await db.auth.getUserIdentities();
   const googleLoginConnected = !identityError && identityData.identities.some((identity) => identity.provider === "google");
   return (
@@ -104,8 +130,11 @@ export default async function Settings({ searchParams }: { searchParams: Promise
         {error && <p className="notice notice-error mt-6" role="alert">{error}</p>}
         {verification && <p className="notice notice-success mt-6" role="status">{verification === "verified" ? t("app.settings.verified") : verification === "not-eligible" ? t("app.settings.notEligible") : verification === "disconnected" ? t("app.settings.verificationDisconnected") : t("app.settings.verificationUnavailable")}</p>}
         {communication === "saved" && <p className="notice notice-success mt-6" role="status">{t("app.settings.communicationSaved")}</p>}
-        {login && <p className="notice notice-success mt-6" role={login === "error" || login === "unavailable" ? "alert" : "status"}>{login === "connected" ? t("app.settings.googleConnected") : login === "disconnected" ? t("app.settings.googleDisconnected") : login === "cancelled" ? t("app.settings.googleCancelled") : login === "unavailable" ? t("app.settings.googleUnavailable") : t("app.settings.googleError")}</p>}
-        {security && <p className="notice notice-success mt-6" role={security.endsWith("error") || security.includes("mismatch") || security.includes("too-short") ? "alert" : "status"}>{security === "password-updated" ? t("app.settings.passwordUpdated") : security === "sessions-revoked" ? t("app.settings.sessionsRevoked") : security === "password-too-short" ? t("app.settings.passwordTooShort") : security === "password-mismatch" ? t("app.settings.passwordMismatch") : security === "password-error" ? t("app.settings.passwordError") : t("app.settings.securityUpdated")}</p>}
+        {notifications === "saved" && <p className="notice notice-success mt-6" role="status">{t("app.settings.notificationsSaved")}</p>}
+        {mfa && <p className="notice notice-success mt-6" role="status">{mfa === "enabled" ? t("app.settings.mfaEnabled") : t("app.settings.mfaDisabled")}</p>}
+        {email && <p className="notice notice-success mt-6" role="status">{email === "pending" ? t("app.settings.emailPending") : email === "updated" ? t("app.settings.emailUpdated") : t("app.settings.emailUnchanged")}</p>}
+        {login && <p className={`notice mt-6 ${login === "error" || login === "unavailable" ? "notice-error" : "notice-success"}`} role={login === "error" || login === "unavailable" ? "alert" : "status"}>{login === "connected" ? t("app.settings.googleConnected") : login === "disconnected" ? t("app.settings.googleDisconnected") : login === "cancelled" ? t("app.settings.googleCancelled") : login === "unavailable" ? t("app.settings.googleUnavailable") : t("app.settings.googleError")}</p>}
+        {security && <p className={`notice mt-6 ${security.endsWith("error") || security.includes("mismatch") || security.includes("too-short") ? "notice-error" : "notice-success"}`} role={security.endsWith("error") || security.includes("mismatch") || security.includes("too-short") ? "alert" : "status"}>{security === "password-updated" ? t("app.settings.passwordUpdated") : security === "sessions-revoked" ? t("app.settings.sessionsRevoked") : security === "password-too-short" ? t("app.settings.passwordTooShort") : security === "password-mismatch" ? t("app.settings.passwordMismatch") : security === "password-error" ? t("app.settings.passwordError") : t("app.settings.securityUpdated")}</p>}
 
         <div className="mt-10 grid gap-8 lg:grid-cols-[210px_minmax(0,1fr)] lg:items-start lg:gap-12">
           <aside className="lg:sticky lg:top-8" aria-label={t("app.settings.sections")}>
@@ -114,6 +143,8 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <a href="#privacy-availability" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.privacyAvailability")}</a>
               <a href="#profile-display" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.profileDisplay")}</a>
               <a href="#communication" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.communication")}</a>
+              <a href="#notifications" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.notifications")}</a>
+              <a href="#profile-language" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.profileLanguage")}</a>
               <a href="#login-methods" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.loginMethods")}</a>
               <a href="#security" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.security")}</a>
               <a href="#verification" className="block rounded-lg px-3 py-2.5 text-sm font-medium text-brand transition hover:bg-white/65">{t("app.settings.verification")}</a>
@@ -126,7 +157,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
           <div className="min-w-0 space-y-6">
             <form action={savePrivacy}>
               <input type="hidden" name="settings_loaded" value="1" />
-              <input type="hidden" name="profile_visibility" value={p.profile_visibility} />
+              
               <section id="privacy-availability" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="privacy-heading">
                 <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="eyebrow">{t("app.settings.privacyAvailability")}</p><h2 id="privacy-heading" className="section-title-large mt-2">{t("app.settings.controlReach")}</h2></div><span className="text-xs text-black/45">{t("app.settings.privateAccount")}</span></div>
                 <div className="mt-6 divide-y divide-black/10">
@@ -142,6 +173,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               <section id="profile-display" className="mt-6 scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="profile-display-heading">
                 <p className="eyebrow">{t("app.settings.profileDisplay")}</p><h2 id="profile-display-heading" className="section-title-large mt-2">{t("app.settings.chooseSeen")}</h2>
                 <div className="mt-6 divide-y divide-black/10">
+                  <label className="flex flex-wrap items-center justify-between gap-4 py-4 text-sm"><span>{t("app.settings.profileVisibility")}</span><select name="profile_visibility" defaultValue={p.profile_visibility} className="field w-auto"><option value="public">{t("app.settings.visibilityPublic")}</option><option value="authenticated_only">{t("app.settings.visibilityMembers")}</option></select></label>
                   <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.showCity")}</span><input type="checkbox" name="show_city" defaultChecked={p?.show_city} className="h-4 w-4 accent-[#087456]" /></label>
                   <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.showResponseRate")}</span><input type="checkbox" name="show_response_rate" defaultChecked={p?.show_response_rate} className="h-4 w-4 accent-[#087456]" /></label>
                   <label className="flex flex-wrap items-center justify-between gap-4 py-4 text-sm"><span>{t("app.settings.introScope")}</span><select name="introduction_scope" defaultValue={p?.introduction_scope} className="field w-auto"><option value="everyone">{t("app.settings.everyone")}</option><option value="matching_preferences">{t("app.settings.matchingPreferences")}</option><option value="verified_only">{t("app.settings.verifiedOnly")}</option><option value="nobody">{t("app.settings.nobody")}</option></select></label>
@@ -160,8 +192,38 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               </form>
             </section>
 
+            <section id="notifications" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="notifications-heading">
+              <p className="eyebrow">{t("app.settings.notifications")}</p><h2 id="notifications-heading" className="section-title-large mt-2">{t("app.settings.chooseNotifications")}</h2>
+              <p className="section-description mt-3 max-w-2xl">{t("app.settings.notificationsBody")}</p>
+              {notificationPreferenceError || !notificationPreferences ? <p role="alert" className="notice notice-error mt-5">{t("app.settings.notificationsUnavailable")}</p> : <form action={saveNotificationPreferences} className="mt-6 divide-y divide-black/10 border-y border-black/10">
+                <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifyIntroductions")}</span><input type="checkbox" name="notify_introductions" defaultChecked={notificationPreferences.introductions !== false} className="h-4 w-4 accent-[#087456]" /></label>
+                <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifyPhotos")}</span><input type="checkbox" name="notify_photo_access" defaultChecked={notificationPreferences.photo_access !== false} className="h-4 w-4 accent-[#087456]" /></label>
+                <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifySupport")}</span><input type="checkbox" name="notify_support" defaultChecked={notificationPreferences.support_updates !== false} className="h-4 w-4 accent-[#087456]" /></label>
+                <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifyVerification")}</span><input type="checkbox" name="notify_verification" defaultChecked={notificationPreferences.verification_reminders !== false} className="h-4 w-4 accent-[#087456]" /></label>
+                <div className="py-5"><button className="btn-primary px-4 py-2.5 text-sm">{t("app.settings.saveNotifications")}</button></div>
+              </form>}
+            </section>
+
+            <section id="profile-language" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="profile-language-heading">
+              <p className="eyebrow">{t("app.settings.profileLanguage")}</p><h2 id="profile-language-heading" className="section-title-large mt-2">{t("app.settings.profileLanguageTitle")}</h2>
+              <div className="mt-6 grid gap-5 sm:grid-cols-2">
+                <div className="rounded-xl border border-black/10 bg-white/45 p-4"><p className="text-sm font-medium text-primary">{t("app.settings.editProfile")}</p><p className="mt-1 text-sm leading-6 text-black/55">{t("app.settings.editProfileBody")}</p><Link href="/app/profile/setup" className="mt-4 inline-flex rounded-md border border-black/15 px-3 py-2 text-sm font-medium text-brand hover:border-[#075d46]">{t("app.settings.editProfile")}</Link></div>
+                <div className="rounded-xl border border-black/10 bg-white/45 p-4"><p className="text-sm font-medium text-primary">{t("app.settings.language")}</p><p className="mt-1 text-sm leading-6 text-black/55">{t("app.settings.languageBody")}</p><div className="mt-4"><LanguageSwitcher locale={locale} label={t("common.language")} /></div></div>
+              </div>
+            </section>
+
             <section id="login-methods" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="login-methods-heading">
-              <p className="eyebrow">{t("app.settings.loginMethods")}</p><h2 id="login-methods-heading" className="section-title-large mt-2">{t("app.settings.signInSecurely")}</h2>
+              <p className="eyebrow">{t("app.settings.loginMethods")}</p>
+              <div className="mt-5 rounded-xl border border-black/10 bg-white/45 p-4">
+                <p className="text-sm font-medium text-primary">{t("app.settings.accountEmail")}</p>
+                {userLoadError || !userData.user ? <p role="alert" className="notice notice-error mt-3">{t("app.settings.emailUnavailable")}</p> : <>
+                  <p className="mt-2 text-sm text-black/65">{userData.user.email ?? t("app.settings.emailUnavailable")}</p>
+                  <p className="mt-1 text-xs text-black/50">{userData.user.email_confirmed_at ? t("app.settings.emailVerified") : t("app.settings.emailNotVerified")}</p>
+                  <form action={changeAccountEmail} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end"><label className="flex-1 field-label">{t("app.settings.newEmail")}<input name="email" type="email" autoComplete="email" required className="field mt-2 block w-full" /></label><button className="btn-secondary px-4 py-2.5 text-sm">{t("app.settings.changeEmail")}</button></form>
+                  <p className="mt-2 text-xs leading-5 text-black/50">{t("app.settings.changeEmailBody")}</p>
+                </>}
+              </div>
+              <p className="eyebrow mt-7">{t("app.settings.loginMethods")}</p><h2 id="login-methods-heading" className="section-title-large mt-2">{t("app.settings.signInSecurely")}</h2>
               <p className="section-description mt-3 max-w-2xl">{t("app.settings.loginBody")}</p>
               <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-y border-black/10 py-5">
                 <div><p className="text-sm font-medium text-primary">Google</p><p className="mt-1 text-sm text-black/55">{identityError ? t("app.settings.loginUnavailable") : googleLoginConnected ? t("app.settings.connected") : t("app.settings.notConnected")}</p></div>
@@ -180,6 +242,19 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <button className="btn-secondary px-4 py-2.5 text-sm">{t("app.settings.changePassword")}</button>
               </form>
               <form action={signOutOtherSessions} className="mt-5"><button className="rounded-md border border-black/15 px-4 py-2.5 text-sm font-medium text-brand hover:border-[#075d46]">{t("app.settings.signOutOthers")}</button><p className="mt-2 text-xs leading-5 text-black/50">{t("app.settings.signOutOthersBody")}</p></form>
+              <div className="mt-7 border-t border-black/10 pt-6">
+                <p className="text-sm font-medium text-primary">{t("app.settings.loginMfa")}</p><p className="mt-1 text-sm leading-6 text-black/55">{t("app.settings.loginMfaBody")}</p>
+                {securitySettingsError || !securitySettings ? <p role="alert" className="notice notice-error mt-4">{t("app.settings.securityDetailsUnavailable")}</p> : <form action={saveLoginMfaRequirement} className="mt-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-black/10 bg-white/45 p-4"><label className="flex items-center gap-3 text-sm"><input type="checkbox" name="require_login_mfa" defaultChecked={securitySettings.require_login_mfa === true} disabled={!totpStatus.enrolled && securitySettings.require_login_mfa !== true} className="h-4 w-4 accent-[#087456]" /><span>{t("app.settings.requireMfa")}</span></label><button disabled={!totpStatus.enrolled && securitySettings.require_login_mfa !== true} className="btn-secondary px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50">{t("app.settings.saveMfa")}</button></form>}
+                {!totpStatus.enrolled && <p className="mt-2 text-xs leading-5 text-black/50">{t("app.settings.mfaNeedsAuthenticator")} <a href="#verification" className="font-medium text-brand underline">{t("app.settings.setupAuthenticator")}</a></p>}
+              </div>
+              <div className="mt-7 border-t border-black/10 pt-6">
+                <p className="text-sm font-medium text-primary">{t("app.settings.recentSessions")}</p><p className="mt-1 text-sm leading-6 text-black/55">{t("app.settings.recentSessionsBody")}</p>
+                {securitySettingsError ? <p role="alert" className="notice notice-error mt-4">{t("app.settings.securityDetailsUnavailable")}</p> : recentSessions.length ? <div className="mt-4 divide-y divide-black/10 border-y border-black/10">{recentSessions.map((session, index) => <div key={session.id ?? index} className="py-4 text-sm"><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="font-medium text-primary">{session.user_agent || t("app.settings.unknownDevice")}</p><p className="mt-1 text-xs text-black/50">{session.ip_address || t("app.settings.unknownIp")}</p></div><span className="text-xs text-black/45">{dateTimeLabel(session.refreshed_at ?? session.updated_at ?? session.created_at, locale) ?? t("app.settings.unknownTime")}</span></div></div>)}</div> : <p className="mt-3 text-sm text-black/50">{t("app.settings.noRecentSessions")}</p>}
+              </div>
+              <div className="mt-7 border-t border-black/10 pt-6">
+                <p className="text-sm font-medium text-primary">{t("app.settings.recentActivity")}</p>
+                {securitySettingsError ? null : recentAuthEvents.length ? <div className="mt-4 divide-y divide-black/10 border-y border-black/10">{recentAuthEvents.map((event, index) => <div key={`${event.created_at ?? "event"}-${index}`} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"><span>{event.action || t("app.settings.accountActivity")}</span><span className="text-xs text-black/45">{[event.ip_address, dateTimeLabel(event.created_at, locale)].filter(Boolean).join(" · ")}</span></div>)}</div> : <p className="mt-3 text-sm text-black/50">{t("app.settings.noRecentActivity")}</p>}
+              </div>
             </section>
 
             <section id="verification" className="scroll-mt-8 rounded-2xl border border-black/10 bg-white/35 p-5 shadow-[0_8px_24px_rgba(15,23,42,.03)] sm:p-7" aria-labelledby="verification-heading">

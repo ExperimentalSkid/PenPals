@@ -29,13 +29,14 @@ export async function updateSession(request: NextRequest) {
     // the normal completion boundary.
     const { data: profile, error: identityError } = await supabase
       .from("profiles")
-      .select("username,role,deactivated_at")
+      .select("username,role,deactivated_at,require_login_mfa")
       .eq("id", claims.sub)
       .maybeSingle();
     if (identityError) return withSessionCookies(NextResponse.redirect(new URL("/sign-in?error=Account%20unavailable", request.url)));
     // Re-check the lifecycle field on the combined identity projection so the
     // guard remains explicit even if the two reads observe different rows.
     if (profile?.deactivated_at) return withSessionCookies(NextResponse.redirect(new URL("/reactivate", request.url)));
+    if (profile?.require_login_mfa && String(claims?.aal ?? "") !== "aal2") return withSessionCookies(NextResponse.redirect(new URL("/auth/mfa", request.url)));
     const isBootstrapAdmin = profile?.role === "admin" && profile?.username === "admin";
     if (request.nextUrl.pathname !== "/app/profile/setup" && !isBootstrapAdmin) {
       const [{ data: completionProfile, error: completionError }, { count: languageCount, error: languageError }, { count: interestCount, error: interestError }] = await Promise.all([

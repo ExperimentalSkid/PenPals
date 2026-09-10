@@ -50,6 +50,7 @@ function settingsError(message: string): never {
   redirect(`/app/settings?error=${encodeURIComponent(message)}`);
 }
 
+
 export async function disconnectVerification(formData: FormData) {
   const { t } = await getPageI18n();
   const provider = String(formData.get("provider") ?? "").trim().toLowerCase();
@@ -106,4 +107,51 @@ export async function deleteAccount(formData: FormData) {
   await cleanupAvatarDeletionOutbox(db, avatarPaths);
   await db.auth.signOut();
   redirect("/");
+}
+
+export async function saveNotificationPreferences(formData: FormData) {
+  const { t } = await getPageI18n();
+  const db = await createClient();
+  const { data: claimsData } = await db.auth.getClaims();
+  if (!claimsData?.claims?.sub) redirect("/sign-in");
+  const { error } = await db.rpc("save_my_notification_preferences", {
+    p_introductions: formData.get("notify_introductions") === "on",
+    p_photo_access: formData.get("notify_photo_access") === "on",
+    p_support_updates: formData.get("notify_support") === "on",
+    p_verification_reminders: formData.get("notify_verification") === "on",
+  });
+  if (error) settingsError(t("server.settings.notificationSave"));
+  redirect("/app/settings?notifications=saved#notifications");
+}
+
+export async function saveLoginMfaRequirement(formData: FormData) {
+  const { t } = await getPageI18n();
+  const db = await createClient();
+  const { data: claimsData } = await db.auth.getClaims();
+  if (!claimsData?.claims?.sub) redirect("/sign-in");
+  const required = formData.get("require_login_mfa") === "on";
+  const { error } = await db.rpc("save_my_login_mfa_requirement", { p_required: required });
+  if (error) settingsError(error.message?.includes("authenticator") ? t("server.settings.mfaNeedsAuthenticator") : t("server.settings.mfaSave"));
+  redirect(`/app/settings?mfa=${required ? "enabled" : "disabled"}#security`);
+}
+
+export async function changeAccountEmail(formData: FormData) {
+  const { t } = await getPageI18n();
+  const nextEmail = String(formData.get("email") ?? "").trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail) || nextEmail.length > 254) settingsError(t("server.settings.emailValid"));
+  const db = await createClient();
+  const { data: userData, error: userError } = await db.auth.getUser();
+  if (userError || !userData.user) redirect("/sign-in");
+  if (userData.user.email?.toLowerCase() === nextEmail) redirect("/app/settings?email=same#account-identity");
+  let redirectTo: string;
+  try {
+    const { emailConfirmationOrigin } = await import("@/lib/verification/server");
+    const { headers } = await import("next/headers");
+    redirectTo = `${emailConfirmationOrigin(await headers())}/auth/confirm`;
+  } catch {
+    settingsError(t("server.settings.emailChangeFailed"));
+  }
+  const { error } = await db.auth.updateUser({ email: nextEmail }, { emailRedirectTo: redirectTo! });
+  if (error) settingsError(t("server.settings.emailChangeFailed"));
+  redirect("/app/settings?email=pending#account-identity");
 }
