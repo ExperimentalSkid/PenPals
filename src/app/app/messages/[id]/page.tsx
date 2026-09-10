@@ -129,7 +129,7 @@ export default async function Conversation({ params, searchParams }: { params: P
   const msgs = messagePage.slice(0, 50).reverse();
   const snailMailResult = await db.rpc("list_snail_mail", { target_conversation: id });
   const snailMailLoadFailed = Boolean(snailMailResult.error);
-  const conversationDataLoadFailed = messageHistoryLoadFailed || snailMailLoadFailed;
+  let conversationDataLoadFailed = messageHistoryLoadFailed || snailMailLoadFailed;
   const snailMailLetters: SnailMailLetter[] = Array.isArray(snailMailResult.data) ? snailMailResult.data : [];
   const lastOtherMessageAt = [...msgs].reverse().find((currentMessage: any) => currentMessage.sender_id !== uid)?.created_at ?? null;
   const messageStreak = msgs.filter((currentMessage: any) => currentMessage.sender_id === uid && (!lastOtherMessageAt || currentMessage.created_at > lastOtherMessageAt)).length;
@@ -143,8 +143,14 @@ export default async function Conversation({ params, searchParams }: { params: P
     : hasUnreadDeliveredLetter
       ? "Your last delivered letter is waiting to be opened."
       : null;
-  const openingIntroductionRow = (await db.from("conversation_introductions").select("id,icebreaker,created_at,sender_id").eq("conversation_id_legacy", id).eq("status", "replied").order("created_at", { ascending: true }).limit(1).maybeSingle()).data;
-  const deletedOpening = openingIntroductionRow ? null : (await db.from("messages").select("id,body,created_at,sender_id").eq("conversation_id", id).is("sender_id", null).order("created_at", { ascending: true }).limit(1).maybeSingle()).data;
+  const openingIntroductionResult = await db.from("conversation_introductions").select("id,icebreaker,created_at,sender_id").eq("conversation_id_legacy", id).eq("status", "replied").order("created_at", { ascending: true }).limit(1).maybeSingle();
+  if (openingIntroductionResult.error) conversationDataLoadFailed = true;
+  const openingIntroductionRow = openingIntroductionResult.data;
+  const deletedOpeningResult = openingIntroductionRow || openingIntroductionResult.error
+    ? { data: null, error: null }
+    : await db.from("messages").select("id,body,created_at,sender_id").eq("conversation_id", id).is("sender_id", null).order("created_at", { ascending: true }).limit(1).maybeSingle();
+  if (deletedOpeningResult.error) conversationDataLoadFailed = true;
+  const deletedOpening = deletedOpeningResult.data;
   const openingIntroduction = openingIntroductionRow ?? (deletedOpening ? { id: `deleted-opening-${deletedOpening.id}`, icebreaker: deletedOpening.body, created_at: deletedOpening.created_at, sender_id: null } : null);
   const { error, message, reported } = await searchParams;
   const readResult = await markRead(id);
@@ -152,7 +158,9 @@ export default async function Conversation({ params, searchParams }: { params: P
   const pendingMine = photoRequests.some((request: any) => request.requester_id === uid && request.status === "pending");
   const pendingTheirs = photoRequests.filter((request: any) => request.owner_id === uid && request.status === "pending");
   const photoCooldown = photoRequests.some((request: any) => request.requester_id === uid && request.owner_id === targetId && photoCooldownActive(request, now));
-  const hasModerationReview = Boolean((await db.from("messages").select("id").eq("conversation_id", id).eq("moderation_status", "flagged_for_review").limit(1).maybeSingle()).data);
+  const moderationReviewResult = await db.from("messages").select("id").eq("conversation_id", id).eq("moderation_status", "flagged_for_review").limit(1).maybeSingle();
+  if (moderationReviewResult.error) conversationDataLoadFailed = true;
+  const hasModerationReview = Boolean(moderationReviewResult.data);
   const reportControl = targetId ? <details className="mt-3"><summary className="cursor-pointer text-sm text-black/60 underline underline-offset-2">{t("app.reports.profile")}</summary><form action={submitReport} className="mt-3 space-y-2"><input type="hidden" name="target_type" value="profile" /><input type="hidden" name="target_id" value={targetId} /><input type="hidden" name="return_to" value={`/app/messages/${encodeURIComponent(id)}`} /><label htmlFor="conversation-report-reason" className="sr-only">{t("app.reports.reason")}</label><select id="conversation-report-reason" name="reason" className="field w-full text-xs"><option value="spam">{t("app.reports.spam")}</option><option value="scam/fraud">{t("app.reports.scam")}</option><option value="harassment">{t("app.reports.harassment")}</option><option value="sexual/inappropriate content">{t("app.reports.sexual")}</option><option value="hate/abuse">{t("app.reports.hate")}</option><option value="fake profile/impersonation">{t("app.reports.fake")}</option><option value="underage concern">{t("app.reports.underage")}</option><option value="other">{t("app.reports.other")}</option></select><label htmlFor="conversation-report-details" className="sr-only">{t("app.reports.details")}</label><textarea id="conversation-report-details" name="details" className="field w-full text-xs" placeholder="Tell us what happened (optional)" /><button className="w-full rounded-md border border-black/15 px-3 py-2 text-xs text-black/65 hover:bg-black/[0.04]">{t("app.reports.profile")}</button></form></details> : null;
 
   return <main lang={locale} className="min-h-[calc(100vh-73px)] w-full bg-[#f7f5ef] px-4 py-6 text-primary sm:px-6 lg:px-8 xl:px-4 lg:py-8"><div className="mx-auto w-full max-w-[1320px]">

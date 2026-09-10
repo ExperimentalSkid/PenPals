@@ -81,6 +81,8 @@ test("conversation read failures do not masquerade as empty history or enable Sn
   assert.match(conversationPage, /historyLoadFailed=\{messageHistoryLoadFailed\}/);
   assert.match(conversationPage, /canCompose=\{!snailMailLoadFailed && canComposeSnailMail/);
   assert.match(conversationPage, /app\.messages\.conversationLoadError/);
+  assert.match(conversationPage, /if \(openingIntroductionResult\.error\) conversationDataLoadFailed = true/);
+  assert.match(conversationPage, /if \(moderationReviewResult\.error\) conversationDataLoadFailed = true/);
 });
 
 

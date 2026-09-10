@@ -29,7 +29,9 @@ function events() {
 
 function harness(options = {}) {
   const session = { data: { session: { access_token: "mock-session" } } };
-  const profile = { data: { availability: "available", show_activity_status: true, inactive_mode: false, ...options.profile } };
+  const profile = options.profileError
+    ? { data: null, error: new Error("profile read failed") }
+    : { data: { availability: "available", show_activity_status: true, inactive_mode: false, ...options.profile }, error: null };
   const sessions = [];
   const profiles = [];
   const authorizations = [];
@@ -237,6 +239,17 @@ test("provider remount waits before recreating its own same-topic channel", asyn
   assert.equal(h.created.length, 2);
   await h.created[1].onSubscribe("SUBSCRIBED");
   assert.equal(h.created[1].tracks.length, 1);
+});
+
+
+
+test("own presence fails closed when privacy settings cannot be loaded", async () => {
+  const h = harness({ profileError: true });
+  const p = h.provider(); p.mount();
+  await settle();
+  assert.equal(h.created.length, 0, "presence channel must not start from permissive defaults after a failed settings read");
+  assert.deepEqual(h.warnings, ["Could not start an activity status connection."]);
+  p.unmount();
 });
 
 test("existing paused and hidden presence settings still prevent tracking", async () => {

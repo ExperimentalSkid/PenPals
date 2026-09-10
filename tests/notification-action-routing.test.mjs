@@ -46,6 +46,7 @@ test("notification action routing surfaces authorization and destination lookup 
   assert.match(page, /if \(requestError\) throw requestError/);
   assert.match(page, /error: introductionLookupError/);
   assert.match(page, /if \(introductionLookupError\) throw introductionLookupError/);
+  assert.match(page, /if \(notificationError\) throw notificationError/);
 });
 
 

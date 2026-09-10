@@ -36,7 +36,8 @@ async function openNotification(notificationId: string) {
     .eq("id", notificationId)
     .eq("user_id", uid)
     .maybeSingle();
-  if (notificationError || !notification) redirect("/app/notifications?error=Notification%20is%20no%20longer%20available");
+  if (notificationError) throw notificationError;
+  if (!notification) redirect("/app/notifications?error=Notification%20is%20no%20longer%20available");
   if (!ACTIVE_TYPES.includes(notification.type)) redirect("/app/notifications?error=That%20notification%20is%20no%20longer%20available");
 
   let destination = "/app/notifications";

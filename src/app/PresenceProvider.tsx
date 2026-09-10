@@ -59,7 +59,7 @@ export default function PresenceProvider({ userId, children }: { userId: string;
   }, [supabase]);
   const channels = useRef(new Map<string, { channel: PresenceChannel | null; refs: number }>());
   const [presence, setPresence] = useState<Map<string, PresenceInfo>>(new Map());
-  const ownSettingsRef = useRef({ availability: "available", show_activity_status: true, inactive_mode: false });
+  const ownSettingsRef = useRef({ availability: "available", show_activity_status: false, inactive_mode: true });
   useEffect(() => {
     let ownChannel: PresenceChannel | null = null;
     let active = true;
@@ -72,9 +72,11 @@ export default function PresenceProvider({ userId, children }: { userId: string;
       if (!active) return;
       if (sessionData.session?.access_token) await supabase.realtime.setAuth(sessionData.session.access_token);
       if (!active) return;
-      const { data: profile } = await supabase.from("profiles").select("availability,show_activity_status,inactive_mode").eq("id", userId).maybeSingle();
+      const { data: profile, error: profileError } = await supabase.from("profiles").select("availability,show_activity_status,inactive_mode").eq("id", userId).maybeSingle();
       if (!active) return;
-      if (profile) ownSettingsRef.current = { availability: profile.availability ?? "available", show_activity_status: profile.show_activity_status !== false, inactive_mode: profile.inactive_mode === true };
+      if (profileError) throw profileError;
+      if (!profile) throw new Error("Presence settings unavailable");
+      ownSettingsRef.current = { availability: profile.availability ?? "available", show_activity_status: profile.show_activity_status !== false, inactive_mode: profile.inactive_mode === true };
       // Supabase reuses channels by topic until asynchronous removal finishes.
       await pendingRemovals.get(supabase)?.get(userId);
       if (!active) return;
