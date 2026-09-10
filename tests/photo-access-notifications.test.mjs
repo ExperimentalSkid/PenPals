@@ -28,6 +28,6 @@ test("notification tray resolves photo requests to their conversation", () => {
 
 test("notification query failures are surfaced instead of looking empty", () => {
   assert.match(page, /notificationsError/);
-  assert.match(page, /We couldn&apos;t load your notifications/);
+  assert.match(page, /app\.notifications\.loadError/);
   assert.match(page, /!notificationsError && !notifications\.length/);
 });

@@ -71,9 +71,9 @@ test("claim-bound case status changes retain prior status in audit history", () 
 
 test("case controls explain the claim requirement before showing moderator actions", () => {
   assert.match(caseDetail, /const canMutateCase = role === "admin" \|\| activeClaim/);
-  assert.match(caseDetail, /Claim this case before changing its status/);
-  assert.match(caseDetail, /Claim this case before adding a note/);
-  assert.match(caseDetail, /Claim this case before resolving the flag/);
+  assert.match(caseDetail, /Claim this case before updating its status/);
+  assert.match(caseDetail, /Claim this case before recording a note/);
+  assert.match(caseDetail, /Claim this case before resolving this flag/);
 });
 
 const hasLocalDatabase = (() => {

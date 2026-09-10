@@ -35,15 +35,15 @@ test("the introduction dialog keeps focus contained and labels its message field
 
 test("profile selectors expose unique controls and context-specific labels", () => {
   assert.match(choices, /aria-expanded=\{visible\.length > 0\}/);
-  assert.match(choices, /aria-label=\{`Proficiency for \$\{languageName\}`\}/);
-  assert.match(choices, /role="list" aria-label="Selected languages"/);
-  assert.match(choices, /role="list" aria-label="Selected interests"/);
+  assert.match(choices, /app\.profile\.proficiencyFor/);
+  assert.match(choices, /role="list" aria-label=\{t\("app\.profile\.selectedLanguages"\)\}/);
+  assert.match(choices, /role="list" aria-label=\{t\("app\.profile\.selectedInterests"\)\}/);
 });
 
 test("message history and unread state have non-colour semantics", () => {
   assert.match(conversation, /role="log" aria-live="polite" aria-relevant="additions"/);
   assert.match(conversation, /className="sr-only">\{mine \? "You"/);
   assert.match(conversation, /aria-describedby=\{messageSendBlocked \? "message-composer-status"/);
-  assert.match(messages, /className="sr-only">Unread conversation<\/span>/);
-  assert.match(notifications, /className="sr-only">Unread notification<\/span>/);
+  assert.match(messages, /className="sr-only">\{t\("app\.messages\.unread"\)\}<\/span>/);
+  assert.match(notifications, /className="sr-only">\{t\("app\.notifications\.unreadNotification"\)\}<\/span>/);
 });

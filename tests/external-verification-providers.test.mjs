@@ -82,9 +82,9 @@ test("unlinking immediately revokes only the current user's provider record", ()
 });
 
 test("verification settings expose only owner actions and callback results return there", () => {
-  assert.match(files.settings, /Verify your profile/);
-  assert.match(files.settings, /Verify control of an established external account/);
-  assert.match(files.settings, /Verification needs refresh/);
+  assert.match(files.settings, /app\.settings\.verifyProfile/);
+  assert.match(files.settings, /app\.settings\.externalAccount/);
+  assert.match(files.settings, /app\.settings\.verificationNeedsRefresh/);
   assert.match(files.settings, /disconnectVerification/);
   assert.match(files.settingsActions, /revoke_my_external_verification/);
   assert.match(files.server, /\/app\/settings\?verification=/);
@@ -92,6 +92,6 @@ test("verification settings expose only owner actions and callback results retur
 
 test("public profile exposes a boolean-only verified badge", () => {
   assert.match(files.profileView, /profile\.is_verified/);
-  assert.match(files.profileView, /Verified within the last 30 days using an authenticator app or another approved method/);
+  assert.match(files.profileView, /app\.profile\.verifiedTooltip/);
   assert.doesNotMatch(files.profileView, /provider\s*[:=]|external account age|followers|social URL/i);
 });

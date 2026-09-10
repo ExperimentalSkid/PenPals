@@ -14,7 +14,7 @@ test("quality rejection clears the composer and returns focus to the empty texta
 
 test("quality guidance is separate UI text and never textarea content", () => {
   assert.match(modal, /id="icebreaker-quality-guidance"/);
-  assert.match(modal, /Write a genuine introduction/);
+  assert.match(modal, /app\.icebreaker\.guidance/);
   assert.match(modal, /value=\{text\}/);
   assert.doesNotMatch(modal, /value=\{qualityGuidance/);
 });

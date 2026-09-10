@@ -22,8 +22,10 @@ const { default: Panel } = await load("src/app/app/messages/[id]/SnailMailPanel.
   react: { useEffect() {}, useState: (initial) => [initial, () => {}] },
   "react-dom": { useFormStatus: () => ({ pending: false }) },
   "react/jsx-runtime": { jsx: element, jsxs: element },
+  "next-intl": { useTranslations: () => (key) => ({ "app.snail.open": "Open letter", "app.snail.cancel": "Cancel letter" }[key] ?? key) },
   "@/app/app/messages/actions": {},
   "@/app/app/messages/snailMailStory": story,
+  "@/app/app/messages/SnailMailJourneyMap": { default: () => null },
 });
 const now = Date.parse("2026-09-08T12:00:00Z");
 const letter = {

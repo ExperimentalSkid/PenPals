@@ -16,14 +16,14 @@ test("private-photo conversation wiring covers request, cooldown, proactive shar
   assert.match(page, /select\("id,requester_id,owner_id,status,created_at,updated_at"\)/);
   assert.match(page, /PHOTO_REQUEST_COOLDOWN_MS = 72 \* 60 \* 60 \* 1000/);
   assert.match(page, /photoCooldownActive/);
-  assert.match(page, /Your photo request was declined\. Please wait before requesting again\./);
+  assert.match(page, /app\.messages\.photoDeclined/);
   assert.match(page, /!photoCooldown && <form action=\{requestPhotoAccess\}/);
   assert.match(page, /pairBlockResult\.error/);
   assert.match(page, /ownPhotoAvailable/);
-  assert.match(page, /Add a photo to share yours/);
+  assert.match(page, /app\.messages\.addPhoto/);
   assert.match(page, /grantPhotoAccess/);
   assert.match(page, /revokePhotoAccess/);
-  assert.match(page, /Photo access granted to/);
+  assert.match(page, /app\.messages\.photoGrantedTo/);
   assert.match(page, /pendingRequests=\{pairBlocked \|\| photoStateError \? \[\] : pendingTheirs\}/);
 });
 
@@ -32,7 +32,7 @@ test("private-photo request responses remain owner-controlled and block-aware", 
   assert.match(thread, /decision.*allowed/);
   assert.match(thread, /decision.*declined/);
   assert.match(page, /users_are_blocked/);
-  assert.match(page, /Photo access is unavailable while this block is active/);
+  assert.match(page, /app\.messages\.photoUnavailable/);
   assert.match(latestPhotoRules, /request_photo_access[\s\S]*updated_at > now\(\) - interval '72 hours'/);
   assert.match(latestPhotoRules, /respond_photo_access[\s\S]*r\.owner_id <> auth\.uid\(\)/);
   assert.match(latestPhotoRules, /revoke_photo_access[\s\S]*owner_id = auth\.uid\(\)/);
@@ -40,12 +40,12 @@ test("private-photo request responses remain owner-controlled and block-aware", 
 
 test("photo server actions preserve error feedback instead of treating failures as grants", () => {
   assert.match(actions, /request_photo_access/);
-  assert.match(actions, /Photo access isn't available right now\. Please try again\./);
+  assert.match(actions, /server\.messages\.photoUnavailable/);
   assert.match(actions, /grant_photo_access/);
   assert.match(actions, /if \(error\) redirect\(`\/app\/messages\/\$\{conversationId\}\?error=/);
   assert.match(actions, /respond_photo_access/);
   assert.match(actions, /revoke_photo_access/);
-  assert.match(actions, /We couldn't revoke photo access\. Please try again\./);
+  assert.match(actions, /server\.messages\.photoRevokeFailed/);
 });
 
 test("signed avatar rendering remains private-path and short-lived", () => {

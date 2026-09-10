@@ -6,8 +6,8 @@ const settings = await readFile(new URL("../src/app/app/settings/page.tsx", impo
 const accountActions = await readFile(new URL("../src/app/app/settings/AccountActions.tsx", import.meta.url), "utf8");
 
 test("Settings exposes the complete workspace navigation without duplicating controls", () => {
-  for (const label of ["Privacy &amp; availability", "Profile display", "Communication", "Verification", "Blocked users", "Your data", "Account"]) {
-    assert.match(settings, new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  for (const key of ["privacyAvailability", "profileDisplay", "communication", "verification", "blockedUsers", "yourData", "account"]) {
+    assert.match(settings, new RegExp(`app\\.settings\\.${key}`));
   }
   for (const id of ["privacy-availability", "profile-display", "communication", "verification", "your-data", "account"]) {
     assert.match(settings, new RegExp(`id=\"${id}\"`));
@@ -26,10 +26,10 @@ test("Settings workspace uses responsive navigation and a wider desktop content 
 });
 
 test("account and data actions remain visibly separated from ordinary preferences", () => {
-  assert.match(settings, /id="your-data"[\s\S]*Permanently delete account/);
+  assert.match(settings, /id="your-data"[\s\S]*app\.settings\.deleteAccount/);
   assert.match(settings, /id="account"[\s\S]*AccountActions/);
-  assert.match(accountActions, /Deactivate account/);
-  assert.match(settings, /separate from Pause participation/);
+  assert.match(accountActions, /app\.settings\.deactivate/);
+  assert.match(settings, /id="your-data"[\s\S]*id="account"/);
 });
 
 test("staff account status changes require an explicit confirmation checkbox", async () => {

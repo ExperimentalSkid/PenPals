@@ -58,7 +58,7 @@ export const metadata: Metadata = {
 };
 
 export default async function RootLayout({ children }: { children: ReactNode }) {
-  const { locale, messages } = await getPageI18n();
+  const { locale, messages, t } = await getPageI18n();
   return (
     <html
       lang={locale}
@@ -66,6 +66,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
     >
       <body className="min-h-full flex flex-col">
         <NextIntlClientProvider locale={locale} messages={messages}>
+          <a href="#main-content" className="fixed left-3 top-3 z-[100] -translate-y-24 rounded-md bg-white px-4 py-2 font-semibold text-primary shadow-lg transition-transform focus:translate-y-0">{t("common.skipToContent")}</a>
           <AuthSession />
           <div id="main-content" className="min-h-0 flex-1">{children}</div>
         </NextIntlClientProvider>

@@ -23,6 +23,8 @@ test("the obsolete moderation action module is removed while its route compatibi
   );
 
   const route = await readFile(new URL("src/app/app/moderation/page.tsx", root), "utf8");
-  assert.match(route, /redirect\("\/app\/admin\/reports"\)/);
+  assert.match(route, /requireStaff/);
+  assert.match(route, /if \(role === "admin"\) redirect\("\/app\/admin"\)/);
+  assert.match(route, /Moderator Panel/);
   assert.doesNotMatch(route, /from ["']\.\/actions/);
 });

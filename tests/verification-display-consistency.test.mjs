@@ -21,14 +21,14 @@ test("Settings uses the shared current verification state", async () => {
   assert.match(settings, /isCurrentVerification/);
   assert.match(settings, /needsVerificationRefresh/);
   assert.match(settings, /const verificationState = verificationDisplayState\(activeVerification, now\)/);
-  assert.match(settings, /verificationState === "verified" \? "Verified"/);
+  assert.match(settings, /verificationState === "verified" \? t\("app\.settings\.verified"\)/);
 });
 
 test("public profiles expose only the provider-neutral boolean", async () => {
   const profileView = await read("src/app/app/profile/[username]/ProfileView.tsx");
   const profilePage = await read("src/app/app/profile/[username]/page.tsx");
   assert.match(profileView, /profile\.is_verified/);
-  assert.match(profileView, /Verified/);
+  assert.match(profileView, /<ProfileBadge[\s\S]*badge="verified"/);
   assert.doesNotMatch(profileView, /provider_subject|verified_at|reverify_after|external_account_verifications/i);
   assert.doesNotMatch(profilePage, /external_account_verifications|provider_subject|verified_at/);
 });

@@ -33,14 +33,14 @@ test("acceptance respects new-contact communication mode and preserves existing 
 
 test("reply action navigates to the created conversation and keeps failures in introductions", () => {
   assert.match(actions, /rpc\("reply_to_introduction"/);
-  assert.match(actions, /if \(error \|\| !conversationId\) redirect\(`\/app\/introductions\?error=\$\{encodeURIComponent\("We couldn't open that introduction\. Please refresh and try again\."\)\}`\)/);
+  assert.match(actions, /server\.messages\.introOpenFailed/);
   assert.match(actions, /redirect\(`\/app\/messages\/\$\{conversationId\}`\)/);
   assert.match(introductions, /errorMessage = first\(params\.error\)/);
   assert.match(introductions, /role="alert"/);
 });
 
 test("a sent introduction returns to the canonical profile with success feedback intact", () => {
-  assert.match(actions, /redirect\(`\/app\/profile\/\$\{encodeURIComponent\(username\)\}\?message=\$\{encodeURIComponent\("Introduction sent"\)\}`\)/);
+  assert.match(actions, /server\.messages\.introSent/);
   assert.doesNotMatch(actions, /redirect\(`\/profile\/\$\{username\}\?message=Introduction sent`\)/);
 });
 

@@ -36,11 +36,15 @@ function harness(options = {}) {
   const removals = [];
   const created = [];
   const activeChannels = new Map();
-  const document = events();
-  const window = events();
+  const document = Object.assign(events(), { visibilityState: "visible" });
+  const window = Object.assign(events(), {
+    setInterval: () => 1,
+    clearInterval: () => {},
+  });
   const warnings = [];
   let rendering;
   const client = {
+    rpc: async (name) => name === "touch_activity" ? { data: null, error: null } : { data: null, error: null },
     auth: { getSession() {
       const request = deferred();
       sessions.push(request);

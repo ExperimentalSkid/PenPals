@@ -19,7 +19,8 @@
     "backToSignIn": "Back to sign in",
     "continue": "Continue",
     "cancel": "Cancel",
-    "publicLinks": "Public site links"
+    "publicLinks": "Public site links",
+    "skipToContent": "Skip to main content"
   },
   "home": {
     "eyebrow": "A thoughtful way to meet the world",
@@ -464,7 +465,16 @@
       "startedBody": "You replied. Continue the conversation.",
       "openConversation": "Open conversation",
       "inactive": "This first note is no longer active.",
-      "kindness": "Kindness goes a long way. A thoughtful reply can be someone’s favorite part of their day."
+      "kindness": "Kindness goes a long way. A thoughtful reply can be someone’s favorite part of their day.",
+      "all": "All",
+      "pending": "Pending",
+      "replied": "Replied",
+      "filters": "Introduction filters",
+      "list": "Introduction list",
+      "how": "How introductions work",
+      "emptyPending": "No pending introductions right now.",
+      "emptyReplied": "No replied introductions yet.",
+      "empty": "No introductions yet."
     },
     "reports": {
       "reason": "Report reason",
@@ -475,6 +485,8 @@
       "hate": "Hate or abuse",
       "fake": "Fake profile or impersonation",
       "underage": "Underage concern",
+      "restricted": "This signup is temporarily restricted. If you believe this is incorrect, use the age correction process.",
+      "cooldown": "Too many age-check attempts. Please wait before trying to sign up again.",
       "other": "Other",
       "details": "Report details",
       "profile": "Report profile",
@@ -535,7 +547,9 @@
       "emptyThread": "No messages yet. Start the conversation below.",
       "newMessages": "New messages ↓",
       "send": "Send",
-      "sendHint": "Enter to send · Shift + Enter for a new line"
+      "sendHint": "Enter to send · Shift + Enter for a new line",
+      "photoGrantedTo": "Photo access granted to {name}",
+      "them": "them"
     },
     "snail": {
       "optional": "Optional slow mail",

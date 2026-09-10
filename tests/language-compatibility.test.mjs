@@ -30,9 +30,9 @@ test("public profile compares the target to the current viewer and keeps Discove
   assert.match(profilePage, /deriveLanguageCompatibility/);
   assert.match(profilePage, /const languageCompatibility = isOwn\s*\n\s*\? null/);
   assert.match(profileView, /languageCompatibility\?: LanguageCompatibility/);
-  assert.match(profileView, /You both speak/);
-  assert.match(profileView, /Language exchange/);
-  assert.doesNotMatch(discover, /deriveLanguageCompatibility|You both speak|Language exchange/);
+  assert.match(profileView, /app\.profile\.bothSpeak/);
+  assert.match(profileView, /app\.profile\.languageExchange/);
+  assert.doesNotMatch(discover, /deriveLanguageCompatibility|app\.profile\.bothSpeak|app\.profile\.languageExchange/);
 });
 
 test("conversation helper context uses both participants and preserves target proficiency labels", () => {
@@ -40,8 +40,8 @@ test("conversation helper context uses both participants and preserves target pr
   assert.match(conversation, /profile_languages.*eq\("profile_id", uid\)/s);
   assert.match(conversation, /formatLanguageProficiency/);
   assert.match(conversation, /deriveLanguageCompatibility/);
-  assert.match(conversation, /You both speak/);
-  assert.match(conversation, /Language exchange/);
+  assert.match(conversation, /app\.messages\.bothSpeak/);
+  assert.match(conversation, /app\.messages\.languageExchange/);
   assert.match(conversation, /key=\{`\$\{language\.languageId\}-\$\{language\.purpose/);
 });
 

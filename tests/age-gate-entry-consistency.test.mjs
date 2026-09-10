@@ -7,7 +7,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 const [authActions, googleCallback, emailConfirm, appLayout, sessionProxy, appealPage, appealActions, profileActions, ageAppealMigration] = await Promise.all([
   read("src/app/auth/actions.ts"),
   read("src/app/auth/callback/route.ts"),
-  read("src/app/auth/confirm/page.tsx"),
+  read("src/app/auth/confirm/ConfirmEmailClient.tsx"),
   read("src/app/app/layout.tsx"),
   read("src/lib/supabase/proxy.ts"),
   read("src/app/age-appeal/page.tsx"),
@@ -30,7 +30,8 @@ test("email confirmation cannot enter the app before confirmation and protected 
   assert.match(emailConfirm, /auth\.verifyOtp/);
   assert.match(emailConfirm, /exchangeCodeForSession/);
   assert.match(emailConfirm, /userData\.user\?\.email_confirmed_at/);
-  assert.match(emailConfirm, /router\.replace\("\/app\/profile\/setup"\)/);
+  assert.match(emailConfirm, /confirmationDestination/);
+  assert.match(emailConfirm, /\/app\/profile\/setup/);
   assert.match(appLayout, /if \(!userData\.user\?\.email_confirmed_at\) redirect\("\/check-email"\)/);
   assert.match(appLayout, /db\.rpc\("is_current_user_age_restricted"\)/);
   assert.match(appLayout, /if \(ageRestricted\) redirect\("\/age-appeal"\)/);
@@ -46,7 +47,7 @@ test("returning sessions and direct URLs cannot bypass profile completion", () =
 });
 
 test("restricted users have a separate, self-authenticated appeal state without an app redirect loop", () => {
-  assert.match(appealPage, /Age correction/);
+  assert.match(appealPage, /auth\.age\.title/);
   assert.match(appealPage, /href="\/sign-in"/);
   assert.match(appealPage, /submitAgeAppeal/);
   assert.match(appealActions, /submit_age_appeal/);

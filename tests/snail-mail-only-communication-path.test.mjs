@@ -30,11 +30,10 @@ test("new accepted relationships select Snail Mail without creating an IM pair",
 test("Snail Mail-only conversations hide the IM composer and stay out of the IM inbox", () => {
   assert.match(conversationPage, /const conversationModeResult = await db\.from\("conversations"\)\.select\("communication_mode"\)/);
   assert.match(conversationPage, /conversationMode === "snail_mail"/);
-  assert.match(conversationPage, /Snail Mail exchange/);
-  assert.match(conversationPage, /This exchange uses letters rather than instant messages/);
-  assert.match(messagesPage, /const instantMemberships = memberships\.filter/);
-  assert.match(messagesPage, /conversation\?\.communication_mode !== "snail_mail"/);
-  assert.match(messagesPage, /Promise\.all\(instantMemberships\.map/);
+  assert.match(conversationPage, /app\.messages\.snailExchange/);
+  assert.match(conversationPage, /app\.messages\.snailExchangeBody/);
+  assert.match(messagesPage, /rpc\("get_instant_message_inbox"\)/);
+  assert.match(messagesPage, /Promise\.all\(memberships\.map/);
 });
 
 test("live Snail Mail-only relationships send a delayed first letter and reject IM", { skip: !hasLocalDatabase }, () => {

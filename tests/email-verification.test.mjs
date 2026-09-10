@@ -6,7 +6,7 @@ const migration = await readFile(new URL("../supabase/migrations/20260902220000_
 const readBoundary = await readFile(new URL("../supabase/migrations/20260902220100_require_verified_email_reads.sql", import.meta.url), "utf8");
 const config = await readFile(new URL("../supabase/config.toml", import.meta.url), "utf8");
 const actions = await readFile(new URL("../src/app/auth/actions.ts", import.meta.url), "utf8");
-const confirmRoute = await readFile(new URL("../src/app/auth/confirm/page.tsx", import.meta.url), "utf8");
+const confirmRoute = await readFile(new URL("../src/app/auth/confirm/ConfirmEmailClient.tsx", import.meta.url), "utf8");
 const appLayout = await readFile(new URL("../src/app/app/layout.tsx", import.meta.url), "utf8");
 const checkEmail = await readFile(new URL("../src/app/check-email/page.tsx", import.meta.url), "utf8");
 const readme = await readFile(new URL("../README.md", import.meta.url), "utf8");
@@ -31,16 +31,16 @@ test("confirmation callback only continues after Supabase confirms the user", ()
   assert.match(confirmRoute, /auth\.getUser\(\)/);
   assert.match(confirmRoute, /user\?\.email_confirmed_at/);
   assert.match(confirmRoute, /\/app\/profile\/setup/);
-  assert.match(confirmRoute, /Confirmation link is invalid or expired/);
+  assert.match(confirmRoute, /labels\.invalid/);
 });
 
 test("verification screen can resend without exposing account existence", () => {
   assert.match(actions, /auth\.resend/);
   assert.match(actions, /response generic|Keep the response generic/i);
-  assert.match(actions, /We couldn't resend that email yet/);
-  assert.match(checkEmail, /Check your email/);
+  assert.match(actions, /server\.auth\.resendFailed/);
+  assert.match(checkEmail, /auth\.checkEmail\.title/);
   assert.match(checkEmail, /resendVerificationEmail/);
-  assert.match(checkEmail, /Send again/);
+  assert.match(checkEmail, /auth\.checkEmail\.again/);
 });
 
 test("database blocks unverified profile writes and direct normal feature bypasses", () => {

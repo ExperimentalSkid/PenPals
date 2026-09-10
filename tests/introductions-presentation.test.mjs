@@ -6,17 +6,15 @@ const page = await readFile(new URL("../src/app/app/introductions/page.tsx", imp
 const sort = await readFile(new URL("../src/app/app/introductions/IntroductionSort.tsx", import.meta.url), "utf8");
 
 test("Introductions presents the editorial inbox hierarchy and explanation strip", () => {
-  assert.match(page, /Your inbox/);
-  assert.match(page, /Thoughtful first notes, kept separate from your conversations/);
-  for (const label of ["They wrote first", "Read at your pace", "Start a conversation", "You're in control"]) {
-    assert.match(page, new RegExp(label.replace("'", "&apos;")));
-  }
+  assert.match(page, /app\.introductions\.eyebrow/);
+  assert.match(page, /app\.introductions\.intro/);
+  for (const key of ["wroteFirst", "pace", "start", "control"]) assert.match(page, new RegExp(`app\\.introductions\\.${key}`));
 });
 
 test("Introduction filters and sorting use real rows and preserve query state", () => {
-  assert.match(page, /All \(\{allRows\.length\}\)/);
-  assert.match(page, /Pending \(\{pendingCount\}\)/);
-  assert.match(page, /Replied \(\{repliedCount\}\)/);
+  assert.match(page, /app\.introductions\.all[\s\S]*allRows\.length/);
+  assert.match(page, /app\.introductions\.pending[\s\S]*pendingCount/);
+  assert.match(page, /app\.introductions\.replied[\s\S]*repliedCount/);
   assert.match(sort, /Newest first/);
   assert.match(sort, /Oldest first/);
   assert.match(sort, /requestSubmit/);
@@ -30,19 +28,19 @@ test("Introduction cards retain authorized identity, location, photo and lifecyc
   assert.match(page, /isPrivateAvatarPath/);
   assert.match(page, /createSignedUrl/);
   assert.match(page, /<CountryFlag code=\{person\.country_code\}/);
-  assert.match(page, /Open introduction/);
-  assert.match(page, /Open conversation/);
-  assert.match(page, /Not interested/);
-  assert.match(page, /Report introduction/);
+  assert.match(page, /app\.introductions\.open/);
+  assert.match(page, /app\.introductions\.openConversation/);
+  assert.match(page, /app\.introductions\.notInterested/);
+  assert.match(page, /app\.introductions\.report/);
   assert.match(page, /replyToIntroduction/);
   assert.match(page, /declineIntroduction/);
   assert.match(page, /submitReport/);
 });
 
 test("Introduction empty states and responsive card structure are present", () => {
-  assert.match(page, /No pending introductions right now/);
-  assert.match(page, /No replied introductions yet/);
-  assert.match(page, /No introductions yet/);
+  assert.match(page, /app\.introductions\.emptyPending/);
+  assert.match(page, /app\.introductions\.emptyReplied/);
+  assert.match(page, /app\.introductions\.empty/);
   assert.match(page, /lg:grid-cols-\[minmax\(0,1fr\)_300px\]/);
   assert.match(page, /sm:flex-row/);
 });

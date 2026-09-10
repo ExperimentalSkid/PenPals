@@ -21,9 +21,9 @@ const [actions, button, callback, settings, settingsActions, verificationCallbac
 
 test("signed-out front page exposes direct sign-in and account-creation actions", () => {
   assert.match(home, /href="\/sign-in"/);
-  assert.match(home, /Sign in/);
+  assert.match(home, /t\("common\.signIn"\)/);
   assert.match(home, /href="\/sign-up"/);
-  assert.match(home, /Join (?:Penpal|pen-pals\.net|free)/);
+  assert.match(home, /t\("common\.joinFull"\)/);
   assert.match(home, /flex-wrap/);
   assert.match(home, /sm:px-10/);
 });
@@ -102,11 +102,11 @@ test("authenticated Google linking is identity-bound and cannot be an email merg
 
 test("login methods and profile verification remain separate Settings surfaces", () => {
   assert.match(settings, /id="login-methods"/);
-  assert.match(settings, /Connect Google/);
-  assert.match(settings, /Disconnect Google/);
+  assert.match(settings, /app\.settings\.connectGoogle/);
+  assert.match(settings, /app\.settings\.disconnectGoogle/);
   assert.match(settings, /id="verification"/);
-  assert.match(settings, /Verify your profile/);
-  assert.match(settings, /Disconnect verification/);
+  assert.match(settings, /app\.settings\.verifyProfile/);
+  assert.match(settings, /app\.settings\.disconnectVerification/);
   assert.match(settings, /startGoogleLink/);
   assert.match(settings, /disconnectVerification/);
   assert.doesNotMatch(callback, /is_verified|record_external_verification|revoke_my_external_verification/);

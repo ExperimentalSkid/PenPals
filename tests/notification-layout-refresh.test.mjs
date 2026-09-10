@@ -27,6 +27,7 @@ async function actionHarness(path, result = {}, signedIn = true) {
     "../investigation-context": { safeAdminReturnTo: () => "/app/admin/support" },
     "next/navigation": { redirect: (path) => { events.push(["redirect", path]); throw Object.assign(new Error("redirect"), { path }); } },
     "next/cache": { revalidatePath: (...args) => events.push(["revalidate", ...args]) },
+    "@/i18n/server": { getPageI18n: async () => ({ t: (key) => key }) },
   };
   const source = await readFile(new URL(path, root), "utf8");
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;

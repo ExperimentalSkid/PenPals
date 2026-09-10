@@ -107,7 +107,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
       {errorMessage && <p role="alert" className="notice notice-error mt-6">{errorMessage}</p>}
       {first(params.reported) === "1" && <p role="status" className="notice notice-success mt-4">{t("app.introductions.reported")}</p>}
 
-      <section aria-label="How introductions work" className="mt-10 grid gap-0 rounded-[22px] border border-[#eeebe3] bg-[#fbfaf7]/80 px-5 py-2 shadow-sm md:grid-cols-4 md:px-3 md:py-5">
+      <section aria-label={t("app.introductions.how")} className="mt-10 grid gap-0 rounded-[22px] border border-[#eeebe3] bg-[#fbfaf7]/80 px-5 py-2 shadow-sm md:grid-cols-4 md:px-3 md:py-5">
         <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-brand"><IntroIcon name="sprout" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.wroteFirst")}</p><p className="section-description mt-1">{t("app.introductions.wroteFirstBody")}</p></div></div>
         <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e8e2d6] bg-[#fffdfa] text-brand"><IntroIcon name="book" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.pace")}</p><p className="section-description mt-1">{t("app.introductions.paceBody")}</p></div></div>
         <div className="flex items-start gap-4 border-b border-black/[0.08] px-2 py-4 md:border-b-0 md:border-r md:px-5 md:py-1"><span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e0e6dd] bg-[#fffdfa] text-brand"><IntroIcon name="send" /></span><div><p className="text-sm font-semibold text-primary">{t("app.introductions.start")}</p><p className="section-description mt-1">{t("app.introductions.startBody")}</p></div></div>
@@ -115,15 +115,15 @@ export default async function Introductions({ searchParams }: { searchParams?: P
       </section>
 
       <div className="mt-8 flex flex-col gap-4 border-y border-black/10 py-4 sm:flex-row sm:items-center sm:justify-between">
-        <nav aria-label="Introduction filters" className="flex flex-wrap items-center gap-2 sm:gap-5">
-          <Link href={filterHref("all")} aria-current={activeStatus === "all" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeStatus === "all" ? "bg-[#fffdfa] text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>All ({allRows.length})</Link>
-          <Link href={filterHref("pending")} aria-current={activeStatus === "pending" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "pending" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>Pending ({pendingCount})</Link>
-          <Link href={filterHref("replied")} aria-current={activeStatus === "replied" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "replied" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>Replied ({repliedCount})</Link>
+        <nav aria-label={t("app.introductions.filters")} className="flex flex-wrap items-center gap-2 sm:gap-5">
+          <Link href={filterHref("all")} aria-current={activeStatus === "all" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm font-semibold transition ${activeStatus === "all" ? "bg-[#fffdfa] text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>{t("app.introductions.all")} ({allRows.length})</Link>
+          <Link href={filterHref("pending")} aria-current={activeStatus === "pending" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "pending" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>{t("app.introductions.pending")} ({pendingCount})</Link>
+          <Link href={filterHref("replied")} aria-current={activeStatus === "replied" ? "page" : undefined} className={`rounded-full px-4 py-2 text-sm transition ${activeStatus === "replied" ? "bg-[#fffdfa] font-semibold text-brand shadow-sm ring-1 ring-black/[0.06]" : "text-black/55 hover:text-brand"}`}>{t("app.introductions.replied")} ({repliedCount})</Link>
         </nav>
         <IntroductionSort activeSort={activeSort} activeStatus={activeStatus} />
       </div>
 
-      <section aria-label="Introduction list" className="mt-6 space-y-5">
+      <section aria-label={t("app.introductions.list")} className="mt-6 space-y-5">
         {visibleRows.map((row: any) => {
           const pendingIntro = row.status === "pending";
           const pending = row.recipient_id === uid && pendingIntro;
@@ -195,7 +195,7 @@ export default async function Introductions({ searchParams }: { searchParams?: P
             </article>
           );
         })}
-        {!visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? "No pending introductions right now." : activeStatus === "replied" ? "No replied introductions yet." : "No introductions yet."}</p>}
+        {!visibleRows.length && <p className="border-y border-black/10 py-14 text-center text-sm text-black/50">{activeStatus === "pending" ? t("app.introductions.emptyPending") : activeStatus === "replied" ? t("app.introductions.emptyReplied") : t("app.introductions.empty")}</p>}
       </section>
 
       <aside className="mt-7 flex flex-col gap-3 rounded-xl border border-[#e5e0d6] bg-[#fbfaf7] px-5 py-4 text-sm text-black/60 sm:flex-row sm:items-center sm:justify-between sm:px-6"><p className="flex items-center gap-3"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-[#d9e5d9] text-brand"><IntroIcon name="sprout" /></span>{t("app.introductions.kindness")}</p></aside>

@@ -53,7 +53,7 @@ test("recipient masking and shared lost-in-transit story are wired through both 
   assert.match(panel, /cancelSnailMail/);
   assert.match(actions, /export async function cancelSnailMail/);
   assert.match(panel, /window\.confirm\(/);
-  assert.match(panel, /Cancel letter/);
+  assert.match(panel, /app\.snail\.cancel/);
   assert.match(panel, /Lost in transit/);
   assert.match(panel, /This letter was lost before it reached you/);
   assert.match(inbox, /isLostInTransit/);

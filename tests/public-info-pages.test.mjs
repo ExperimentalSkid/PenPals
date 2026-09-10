@@ -11,17 +11,17 @@ test("public FAQ, privacy, and contact pages exist with canonical metadata", asy
   const contact = await read("src/app/contact/page.tsx");
   const gdpr = await read("src/app/gdpr/page.tsx");
 
-  assert.match(faq, /Frequently asked questions/);
-  assert.match(faq, /Privacy &amp; data rights/);
-  assert.match(privacy, /Privacy & data rights/);
-  assert.match(privacy, /Download, correct, or delete data/);
-  assert.match(contact, /Contact pen-pals\.net/);
+  assert.match(faq, /t\("faq\.title"\)/);
+  assert.match(faq, /t\("faq\.privacy"\)/);
+  assert.match(privacy, /t\("privacy\.title"\)/);
+  assert.match(privacy, /t\("privacy\.manageTitle"\)/);
+  assert.match(contact, /t\("contact\.title"\)/);
   assert.match(contact, /submitPublicContact/);
   assert.match(gdpr, /permanentRedirect\("\/privacy"\)/);
-  for (const source of [faq, privacy, contact]) {
-    assert.match(source, /alternates: \{ canonical:/);
-    assert.match(source, /PublicInfoPage/);
-  }
+  assert.match(faq, /localizedPublicMetadata\(locale, "\/faq"/);
+  assert.match(privacy, /localizedPublicMetadata\(locale, "\/privacy"/);
+  assert.match(contact, /localizedPublicMetadata\(locale, "\/contact"/);
+  for (const source of [faq, privacy, contact]) assert.match(source, /PublicInfoPage/);
 });
 
 test("public pages are linked from the front page and generated sitemap", async () => {
@@ -31,7 +31,8 @@ test("public pages are linked from the front page and generated sitemap", async 
 
   assert.match(home, /PublicFooter/);
   for (const href of ["/faq", "/privacy", "/contact"]) {
-    assert.match(footer, new RegExp(`href="${href}"`));
-    assert.match(sitemap, new RegExp(`"${href}"`));
+    const escaped = href.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    assert.match(footer, new RegExp(`localizedPublicPath\\(\"${escaped}\", locale\\)`));
+    assert.match(sitemap, new RegExp(`\"${escaped}\"`));
   }
 });

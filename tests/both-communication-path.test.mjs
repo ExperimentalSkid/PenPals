@@ -25,8 +25,9 @@ test("Both profiles expose both communication modes without duplicate actions", 
   assert.match(conversationPage, /const canComposeSnailMail = otherCommunicationMode !== "instant" && ownCommunicationMode !== "instant"/);
   assert.match(conversationPage, /<ConversationThread conversationId=/);
   assert.equal((conversationPage.match(/<SnailMailPanel /g) ?? []).length, 1);
-  assert.match(messagesPage, /const instantMemberships = memberships\.filter/);
-  assert.match(messagesPage, /Promise\.all\(instantMemberships\.map/);
+  assert.match(messagesPage, /rpc\("get_instant_message_inbox"\)/);
+  assert.match(messagesPage, /Promise\.all\(memberships\.map/);
+  assert.match(messagesPage, /rpc\("list_snail_mail"/);
 });
 
 test("live Both relationship establishes IM and can also send Snail Mail", { skip: !hasLocalDatabase }, () => {

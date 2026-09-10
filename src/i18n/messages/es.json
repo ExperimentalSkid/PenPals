@@ -19,7 +19,8 @@
     "backToSignIn": "Volver a iniciar sesión",
     "continue": "Continuar",
     "cancel": "Cancelar",
-    "publicLinks": "Enlaces del sitio público"
+    "publicLinks": "Enlaces del sitio público",
+    "skipToContent": "Saltar al contenido principal"
   },
   "home": {
     "eyebrow": "Una forma más consciente de conocer el mundo",
@@ -464,7 +465,16 @@
       "startedBody": "Has respondido. Continúa la conversación.",
       "openConversation": "Abrir conversación",
       "inactive": "Este primer mensaje ya no está activo.",
-      "kindness": "La amabilidad cuenta mucho. Una respuesta atenta puede alegrarle el día a alguien."
+      "kindness": "La amabilidad cuenta mucho. Una respuesta atenta puede alegrarle el día a alguien.",
+      "all": "Todas",
+      "pending": "Pendientes",
+      "replied": "Respondidas",
+      "filters": "Filtros de presentaciones",
+      "list": "Lista de presentaciones",
+      "how": "Cómo funcionan las presentaciones",
+      "emptyPending": "No hay presentaciones pendientes ahora mismo.",
+      "emptyReplied": "Todavía no hay presentaciones respondidas.",
+      "empty": "Todavía no hay presentaciones."
     },
     "reports": {
       "reason": "Motivo del reporte",
@@ -475,6 +485,8 @@
       "hate": "Odio o abuso",
       "fake": "Perfil falso o suplantación",
       "underage": "Posible menor de edad",
+      "restricted": "Este registro está restringido temporalmente. Si crees que es un error, utiliza el proceso de corrección de edad.",
+      "cooldown": "Demasiados intentos de verificación de edad. Espera antes de volver a registrarte.",
       "other": "Otro",
       "details": "Detalles del reporte",
       "profile": "Reportar perfil",
@@ -535,7 +547,9 @@
       "emptyThread": "Aún no hay mensajes. Empieza la conversación abajo.",
       "newMessages": "Mensajes nuevos ↓",
       "send": "Enviar",
-      "sendHint": "Enter para enviar · Shift + Enter para una nueva línea"
+      "sendHint": "Enter para enviar · Shift + Enter para una nueva línea",
+      "photoGrantedTo": "Acceso a la foto concedido a {name}",
+      "them": "esa persona"
     },
     "snail": {
       "optional": "Correo lento opcional",

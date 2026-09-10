@@ -49,6 +49,6 @@ test("Support notifications are actionable for users and staff", async () => {
   assert.match(page, /is_moderator/);
   assert.match(page, /\/app\/admin\/support\/\$\{notification\.related_id\}/);
   assert.match(page, /\/app\/support\/requests\/\$\{notification\.related_id\}/);
-  assert.match(page, /Open support ticket/);
-  assert.match(page, /Open support request/);
+  assert.match(page, /app\.notifications\.openSupportTicket/);
+  assert.match(page, /app\.notifications\.openSupportRequest/);
 });

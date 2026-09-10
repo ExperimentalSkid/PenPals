@@ -68,8 +68,8 @@ test("location selectors clear incompatible precision fields", () => {
 test("locality input follows the normalized country → region hierarchy", () => {
   assert.match(locationEditor, /required=\{Boolean\(countryCode && regionCode\)\}/);
   assert.match(locationEditor, /disabled=\{!countryCode \|\| !regionCode\}/);
-  assert.match(locationEditor, /Choose a country and region before searching for a city \/ town/);
-  assert.match(locationEditor, /Suggestions are scoped to your country and region/);
+  assert.match(locationEditor, /app\.profile\.chooseRegionBeforeCity/);
+  assert.match(locationEditor, /app\.profile\.localityHint/);
 });
 
 test("region and locality suggestions are scoped and major entries sort first", () => {
@@ -90,14 +90,14 @@ test("friendship destinations are separate, normalized, capped, and removable", 
   assert.match(destinations, /DEFAULT_MAX_DESTINATIONS = 5/);
   assert.match(destinations, /destinations\.length >= destinationLimit/);
   assert.match(destinations, /friendship_destinations/);
-  assert.match(destinations, /Remove/);
+  assert.match(destinations, /app\.profile\.removeDestination/);
   assert.doesNotMatch(destinations, /locality|city/i);
 });
 
 test("friendship destination max and duplicate feedback stay coherent with server validation", () => {
   assert.match(destinations, /maxDestinations\?/);
-  assert.match(destinations, /That destination is already selected/);
-  assert.match(destinations, /You can choose up to/);
+  assert.match(destinations, /app\.profile\.destinationDuplicate/);
+  assert.match(destinations, /app\.profile\.destinationLimit/);
   assert.match(setup, /get_friendship_destination_limit/);
   assert.match(setup, /maxDestinations=\{destinationLimit\}/);
   assert.match(destinationFlow, /revoke insert, update, delete on table public\.profile_friendship_destinations from authenticated/i);
@@ -119,7 +119,7 @@ test("Discover uses country and optional region filters, with no city filter or 
   assert.match(discover, /location_regions/);
   assert.match(discover, /normalizedCountry[\s\S]*region\.country_code/);
   assert.match(discover, /region:/);
-  assert.match(discoverFilters, /label="Region"/);
+  assert.match(discoverFilters, /label=\{t\("app\.discover\.region"\)\}/);
   assert.match(discoverFilters, /name="region"/);
   assert.doesNotMatch(discoverFilters, /label="City"|name="city"/);
   assert.match(discover, /first\(params\.city\)[\s\S]*redirect\(queryPath\(filters, page\)\)/);
@@ -131,7 +131,7 @@ test("Discover retains existing filter URL and pagination semantics", () => {
   assert.match(discover, /queryPath\(filters, page\)/);
   assert.match(discoverFilters, /method="get" action="\/app\/discover"/);
   assert.match(discoverFilters, /name="page" value="1"/);
-  assert.match(discoverFilters, /Clear all/);
+  assert.match(discoverFilters, /app\.discover\.clearAll/);
 });
 
 test("selected precision controls public location disclosure", () => {

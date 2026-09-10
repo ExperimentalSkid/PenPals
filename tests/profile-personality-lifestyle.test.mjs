@@ -22,7 +22,7 @@ test("personality and lifestyle data is optional and constrained to non-sensitiv
 test("public personality module hides empty fields and stays independent", () => {
   assert.match(personalityModule, /if \(rows\.length === 0\) return null/);
   assert.match(personalityModule, /<dl/);
-  assert.match(personalityModule, /Personality &amp; lifestyle/);
+  assert.match(personalityModule, /heading/);
   assert.match(page, /get_public_personality_lifestyle/);
-  assert.match(profileView, /<PersonalityLifestyleSection personality=\{personality\} \/>/);
+  assert.match(profileView, /<PersonalityLifestyleSection personality=\{personality\} heading=\{t\("app\.profile\.personality"\)\} \/>/);
 });

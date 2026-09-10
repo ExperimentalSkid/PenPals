@@ -30,6 +30,7 @@ function pickerHarness(catalogue, initialSelected) {
         return [selected, (update) => { selected = update(selected); }];
       } };
       if (name === "react/jsx-runtime") return { jsx, jsxs: jsx };
+      if (name === "next-intl") return { useTranslations: () => (key, values = {}) => key === "app.settings.removeCountry" ? `Remove ${values.name}` : key === "app.settings.remove" ? "Remove" : key };
       if (name === "../shared/InlineSearchList") return { default: inlineSearch };
       if (name === "@/app/components/CountryFlag") return { default: () => null };
       throw new Error(`Unexpected import: ${name}`);

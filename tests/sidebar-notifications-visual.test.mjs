@@ -7,10 +7,11 @@ const layout = await readFile(new URL("../src/app/app/layout.tsx", import.meta.u
 const notifications = await readFile(new URL("../src/app/app/notifications/page.tsx", import.meta.url), "utf8");
 
 test("app navigation has accessible grouped links and role-gated real count badges", () => {
-  for (const label of ["Discover", "Introductions", "Messages", "Notifications", "Settings", "Admin", "Mod Inbox", "Profile"]) assert.match(navigation, new RegExp(label));
+  for (const label of ["Discover", "Introductions", "Messages", "Notifications", "Settings", "Admin", "Mod Inbox"]) assert.match(navigation, new RegExp(label));
+  assert.match(navigation, /app\.nav\.profile/);
   assert.match(navigation, /usePathname/);
   assert.match(navigation, /aria-current=\{active \? "page"/);
-  assert.match(navigation, /unread notifications/);
+  assert.match(navigation, /app\.nav\.unreadNotifications/);
   assert.match(navigation, /open moderation cases/);
   assert.match(navigation, /role === "admin" \|\| role === "moderator"/);
 });

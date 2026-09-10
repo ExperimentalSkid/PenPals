@@ -12,14 +12,14 @@ const adminAudit = await readFile(new URL("../src/app/app/admin/audit/page.tsx",
 
 test("declining an introduction does not report success after an RPC error", () => {
   assert.match(messagesActions, /const \{ error \} = await db\.rpc\("decline_introduction"/);
-  assert.match(messagesActions, /if \(error\) redirect\(`\/app\/introductions\?error=\$\{encodeURIComponent\("We couldn't decline that introduction\. Please try again\."\)\}`\)/);
-  assert.match(messagesActions, /if \(error\)[\s\S]*?We couldn't decline that introduction[\s\S]*?redirect\("\/app\/messages"\)/);
+  assert.match(messagesActions, /if \(error\) redirect\(`\/app\/introductions\?error=\$\{encodeURIComponent\(t\("server\.messages\.introDeclineFailed"\)\)\}`\)/);
+  assert.match(messagesActions, /if \(error\)[\s\S]*?server\.messages\.introDeclineFailed[\s\S]*?redirect\("\/app\/messages"\)/);
 });
 
 test("revoking photo access surfaces RPC failures instead of redirecting as success", () => {
   assert.match(messagesActions, /const \{ error \} = await db\.rpc\("revoke_photo_access"/);
-  assert.match(messagesActions, /if \(error\) redirect\(`\/app\/messages\/\$\{conversationId\}\?error=\$\{encodeURIComponent\("We couldn't revoke photo access\. Please try again\."\)\}`\)/);
-  assert.match(messagesActions, /if \(error\)[\s\S]*?We couldn't revoke photo access[\s\S]*?redirect\(`\/app\/messages\/\$\{conversationId\}`\)/);
+  assert.match(messagesActions, /if \(error\) redirect\(`\/app\/messages\/\$\{conversationId\}\?error=\$\{encodeURIComponent\(t\("server\.messages\.photoRevokeFailed"\)\)\}`\)/);
+  assert.match(messagesActions, /if \(error\)[\s\S]*?server\.messages\.photoRevokeFailed[\s\S]*?redirect\(`\/app\/messages\/\$\{conversationId\}`\)/);
 });
 
 test("message send has one atomic write rather than a fallible follow-up timestamp write", async () => {

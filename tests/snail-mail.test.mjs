@@ -54,10 +54,10 @@ test("server action and conversation UI expose Snail Mail without changing insta
   assert.match(actions, /idempotency_key/);
   assert.match(conversationPage, /db\.rpc\("list_snail_mail"/);
   assert.match(conversationPage, /<SnailMailPanel/);
-  assert.match(panel, /Write a letter/);
+  assert.match(panel, /app\.snail\.write/);
   assert.match(panel, /The letter is sealed until delivery/);
   assert.match(panel, /role="progressbar"/);
-  assert.match(panel, /Open letter/);
+  assert.match(panel, /app\.snail\.open/);
 });
 
 test("coarse delivery bands use country, region, locality, and protected macro-region configuration", () => {

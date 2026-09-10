@@ -10,7 +10,7 @@ test("every active notification type has an actionable destination", () => {
   assert.match(page, /introduction_declined/);
   assert.match(page, /photo_access_request/);
   assert.match(page, /photo_access_granted/);
-  assert.match(page, /title: `\$\{personName\} declined your introduction`[\s\S]*action: "Open introductions"/);
+  assert.match(page, /introduction_declined[\s\S]*app\.notifications\.introDeclined[\s\S]*app\.notifications\.openIntroductions/);
   assert.doesNotMatch(page, /ACTIVE_TYPES = \[[^\]]*new_message/);
 });
 

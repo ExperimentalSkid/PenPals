@@ -94,6 +94,8 @@ export async function signUp(formData: FormData) {
   const { data: ageResult, error: ageError } = await supabase.rpc("age_gate_signup", { p_email: email, p_birth_date: birthDate || null });
   if (ageError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.ageUnavailable"))}`);
   if (ageResult === "underage") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.underage"))}`);
+  if (ageResult === "restricted") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.restricted"))}`);
+  if (ageResult === "cooldown") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.cooldown"))}`);
   if (password.length < 8) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.passwordLength"))}`);
   try {
     const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale } } });

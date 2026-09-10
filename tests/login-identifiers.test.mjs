@@ -14,7 +14,7 @@ test("sign-in accepts username and keeps legacy email form submissions compatibl
   assert.match(actions, /formData\.get\("identifier"\) \?\? formData\.get\("email"\)/);
   assert.match(actions, /resolve_login_identifier/);
   assert.match(actions, /auth\.signInWithPassword\(\{ email: canonicalEmail, password \}\)/);
-  assert.match(page, /Email or username/);
+  assert.match(page, /auth\.signIn\.identifier/);
   assert.match(page, /name="identifier"/);
   assert.match(page, /autoComplete="username"/);
 });

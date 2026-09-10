@@ -57,21 +57,21 @@ test("my support requests pages use owner-scoped data and expose required fields
   assert.match(listPage, /status/);
   assert.match(listPage, /updated_at/);
   assert.match(listPage, /\/app\/support\/requests\/\$\{ticket\.id\}/);
-  assert.match(listPage, /You haven&apos;t submitted any support requests yet/);
+  assert.match(listPage, /app\.support\.none/);
   assert.match(detailPage, /get_my_support_ticket/);
   assert.match(detailPage, /SupportAttachmentViewer/);
-  assert.match(detailPage, /Support updates/);
+  assert.match(detailPage, /app\.support\.updates/);
   assert.match(detailPage, /whitespace-pre-wrap/);
   assert.match(detailPage, /replyToSupportTicket/);
   assert.match(detailPage, /SubmitSupportReplyButton/);
   assert.match(detailPage, /status !== "resolved"/);
-  assert.match(detailPage, /This request is resolved and can no longer receive replies/);
+  assert.match(detailPage, /app\.support\.resolvedNoReply/);
   const replyButton = await read("src/app/app/support/SubmitSupportReplyButton.tsx");
   assert.match(replyButton, /useFormStatus/);
   const action = await read("src/app/app/support/actions.ts");
   assert.match(action, /reply_to_support_ticket/);
   assert.match(detailPage, /notFound\(\)/);
-  assert.match(detailPage, /Back to my support requests/);
+  assert.match(detailPage, /app\.support\.backMine/);
   assert.match(supportPage, /\/app\/support\/requests/);
 });
 

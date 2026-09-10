@@ -13,12 +13,12 @@ const catalogueMigration = await read("supabase/migrations/20260904180000_expand
 
 test("profile setup searches the shared interest catalogue instead of rendering a fixed option wall", () => {
   assert.match(choices, /InlineSearchList/);
-  assert.match(choices, /label="interests"/);
+  assert.match(choices, /label=\{t\("app\.profile\.interests"\)\}/);
   assert.match(choices, /options=\{interests\.map\(\(interest\) => \(\{ value: String\(interest\.id\), label: interest\.name \}\)\)\}/);
-  assert.match(choices, /placeholder="Search interests…"/);
+  assert.match(choices, /placeholder=\{t\("app\.profile\.searchInterests"\)\}/);
   assert.match(choices, /selectedValues=\{chosen\.map\(String\)\}/);
   assert.match(choices, /name="interests" value=\{chosen\.join\(","\)\}/);
-  assert.match(choices, /Remove \$\{interest\.name\}/);
+  assert.match(choices, /aria-label=\{t\("app\.profile\.remove", \{ name: interest\.name \}\)\}/);
   assert.doesNotMatch(choices, /interests\.map\(\(interest\) => \{ const selected = chosen\.includes/);
   assert.match(setup, /section="interests"/);
   assert.match(setup, /section="languages"/);
@@ -27,8 +27,8 @@ test("profile setup searches the shared interest catalogue instead of rendering 
 test("profile setup and Discover both source interests from the database catalogue", () => {
   assert.match(setup, /db\.from\("interests"\)\.select\("id,name"\)\.order\("name"\)/);
   assert.match(discoverFilters, /InlineSearchList/);
-  assert.match(discoverFilters, /label="interests"/);
-  assert.match(discoverFilters, /placeholder="Search interests…"/);
+  assert.match(discoverFilters, /label=\{t\("app\.discover\.interest"\)\}/);
+  assert.match(discoverFilters, /placeholder=\{t\("app\.discover\.searchInterests"\)\}/);
 });
 
 test("the shared interest catalogue covers ordinary hobbies without changing existing entries", () => {

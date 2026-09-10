@@ -27,7 +27,8 @@ test("Admin Inbox reuses the moderation case workstation and is admin-only in na
   assert.match(route, /escalated_by_name/);
   assert.match(route, /\/app\/admin\/cases\/\$\{item\.id\}/);
   assert.match(chrome, /Admin Inbox/);
-  assert.match(chrome, /isAdmin \|\| item\.id !== "admin-inbox"/);
+  assert.match(chrome, /showNav = isAdmin/);
+  assert.match(chrome, /showRules=\{isAdmin\}/);
   assert.match(navigation, /role === "admin".*\/app\/admin\/inbox/s);
 });
 

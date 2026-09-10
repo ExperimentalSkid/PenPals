@@ -20,7 +20,7 @@ test("message notifications are removed from the active notification stream", ()
 test("notification tray only queries unread useful events", () => {
   assert.match(page, /\.is\("read_at", null\)/);
   assert.match(page, /\.in\("type", ACTIVE_TYPES\)/);
-  assert.match(page, /You&apos;re all caught up\./);
+  assert.match(page, /app\.notifications\.caughtUp/);
   assert.doesNotMatch(page, /Mark as read/);
 });
 

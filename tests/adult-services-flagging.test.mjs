@@ -77,8 +77,8 @@ test("staff context is bounded and resolutions are audited", () => {
 
 test("normal users see only generic review indicators", () => {
   assert.match(conversation, /moderation_status/);
-  assert.match(conversation, /This conversation has content under moderation review/);
-  assert.match(thread, /Flagged for review/);
+  assert.match(conversation, /app\.messages\.moderation/);
+  assert.match(thread, /app\.messages\.flagged/);
   assert.doesNotMatch(conversation, /rule_identifier|content_snapshot/);
   assert.doesNotMatch(thread, /rule_identifier|content_snapshot/);
 });

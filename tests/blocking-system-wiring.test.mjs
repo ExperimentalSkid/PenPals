@@ -55,7 +55,7 @@ test("conversation UI detects a block created by either participant and fails cl
   assert.match(page, /messageSendBlocked=\{pairBlocked \|\| messageStreak >= 3\}/);
   assert.match(page, /pendingRequests=\{pairBlocked \|\| photoStateError \? \[\] : pendingTheirs\}/);
   assert.match(page, /Snail Mail is unavailable because one of you blocked the other\./);
-  assert.match(page, /Photo access is unavailable while this block is active\./);
+  assert.match(page, /app\.messages\.photoUnavailable/);
   assert.match(thread, /messageSendBlockedReason\?/);
   assert.match(thread, /disabled=\{messageSendBlocked\}/);
   assert.match(thread, /blockedReason/);
@@ -65,6 +65,6 @@ test("conversation UI detects a block created by either participant and fails cl
 test("notifications keep their owner-only read path and hide blocked actors through identity resolution", () => {
   assert.match(notifications, /\.eq\("user_id", uid\)/);
   assert.match(notifications, /resolve_profile_identity/);
-  assert.match(notifications, /Deleted user/);
+  assert.match(notifications, /app\.notifications\.deletedUser/);
   assert.match(notifications, /can_view_profile_photo/);
 });

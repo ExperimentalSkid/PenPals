@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
   // upload validation in the support action/database boundary.
   experimental: {
     serverActions: {
-      bodySizeLimit: "20mb",
+      bodySizeLimit: "35mb",
     },
   },
   async headers() {

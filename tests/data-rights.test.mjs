@@ -114,10 +114,10 @@ test("moderator account erasure does not fail on immutable audit evidence", () =
 });
 
 test("settings distinguish reversible deactivation from permanent deletion", () => {
-  assert.match(accountActions, /Deactivate account/);
-  assert.match(settings, /Permanently delete account/);
-  assert.match(settings, /deletion is permanent/i);
-  assert.match(settings, /Download my data/);
+  assert.match(accountActions, /app\.settings\.deactivate/);
+  assert.match(settings, /app\.settings\.deleteAccount/);
+  assert.match(settings, /app\.settings\.deleteBody/);
+  assert.match(settings, /app\.settings\.downloadData/);
 });
 
 test("data inventory documents access, retention, export, and open decisions", () => {

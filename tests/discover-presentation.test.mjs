@@ -9,8 +9,8 @@ const countryFlag = await readFile(new URL("../src/app/components/CountryFlag.ts
 const globals = await readFile(new URL("../src/app/globals.css", import.meta.url), "utf8");
 
 test("Discover uses the target editorial hierarchy and card grid", () => {
-  assert.match(page, /Discover new pen pals\./);
-  assert.match(page, /people[\s\S]*found/);
+  assert.match(page, /app\.discover\.title/);
+  assert.match(page, /app\.discover\.found/);
   assert.match(page, /max-w-\[1580px\]/);
   assert.match(results, /md:grid-cols-2/);
   assert.match(results, /border-\[#deded5\]/);

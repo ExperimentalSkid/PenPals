@@ -26,7 +26,7 @@ test("the Settings verification section owns the authenticator badge flow", () =
   assert.match(settings, /TotpVerificationPanel status=\{totpStatus\}/);
   assert.match(settings, /maybe_notify_profile_totp_reverification/);
   assert.match(settings, /get_my_profile_totp_status/);
-  assert.match(settings, /External account:/);
+  assert.match(settings, /app\.settings\.externalAccount/);
 });
 
 test("the browser completes Supabase TOTP enrollment/challenge/verification before the badge RPC", () => {

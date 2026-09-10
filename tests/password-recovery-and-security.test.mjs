@@ -8,7 +8,7 @@ const [actions, signIn, signUp, confirm, recovery, update, updateForm, settings,
   read("src/app/auth/actions.ts"),
   read("src/app/sign-in/page.tsx"),
   read("src/app/sign-up/page.tsx"),
-  read("src/app/auth/confirm/page.tsx"),
+  read("src/app/auth/confirm/ConfirmEmailClient.tsx"),
   read("src/app/forgot-password/page.tsx"),
   read("src/app/update-password/page.tsx"),
   read("src/app/update-password/UpdatePasswordForm.tsx"),
@@ -55,5 +55,5 @@ test("production responses include baseline security headers", () => {
 
 test("existing local auth fixtures remain compatible while policy is tightened at app entry", () => {
   assert.match(config, /minimum_password_length = 6/);
-  assert.match(signUp, /Use at least 8 characters/);
+  assert.match(signUp, /auth\.signUp\.passwordHint/);
 });

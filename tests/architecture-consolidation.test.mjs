@@ -107,6 +107,7 @@ test("successful profile saves refresh the shared app layout before redirecting"
     "next/headers": { cookies: async () => ({ get: () => undefined }) },
     "@/lib/avatar": { isPrivateAvatarPath: () => false },
     "@/lib/profile-completeness": { hasCompletedProfile: () => true, onboardingNextStep: () => null },
+    "@/i18n/server": { getPageI18n: async () => ({ t: (key) => key }) },
   });
   const form = new FormData();
   form.set("display_name", "Test Member");

@@ -43,7 +43,7 @@ test("Support Inbox has filters, pagination, and a dedicated ticket route", asyn
   assert.match(viewer, /aria-modal="true"/);
   assert.match(viewer, /Escape/);
   assert.match(viewer, /ArrowRight/);
-  assert.match(viewer, /Preview inline/);
+  assert.match(viewer, /app\.attachments\.previewInline/);
   assert.match(chrome, /Support Inbox/);
   assert.match(navigation, /app\/admin\/support/);
   assert.match(navigation, /role === "admin" \|\| role === "moderator"/);

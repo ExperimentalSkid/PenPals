@@ -20,7 +20,7 @@ async function loadPage(path) {
     from(table) {
       let otherParticipant = false;
       return {
-        select() { return this; }, eq() { return this; }, order() { return this; },
+        select() { return this; }, eq() { return this; }, is() { return this; }, order() { return this; },
         limit() { return this; }, or() { return this; },
         neq() { otherParticipant = true; return this; },
         maybeSingle: async () => ({ data: table === "conversation_participants" && !otherParticipant ? { conversation_id: "test-conversation" } : null }),
@@ -46,6 +46,7 @@ async function loadPage(path) {
     "@/app/components/CountryFlag": { default: component },
     "@/lib/countries": {}, "@/lib/avatar": {},
     "@/lib/language-compatibility": { deriveLanguageCompatibility: () => null },
+    "@/i18n/server": { getPageI18n: async () => ({ locale: "en", t: (key) => ["app.messages.reported", "app.introductions.reported"].includes(key) ? confirmation : key }) },
   };
   const testModule = { exports: {} };
   vm.runInNewContext(code, { module: testModule, exports: testModule.exports, URLSearchParams,
@@ -74,7 +75,7 @@ for (const path of ["src/app/app/messages/[id]/page.tsx", "src/app/app/introduct
     const feedback = nodes(await render({ reported: "1" })).filter((node) => text(node) === confirmation && node.type === "p");
     assert.equal(feedback.length, 1);
     assert.equal(feedback[0].props.role, "status");
-    assert.match(feedback[0].props.className, /border-l-2/);
+    assert.match(feedback[0].props.className, /notice-success/);
   });
 
   test(`${path}: no confirmation without a successful-report marker`, async () => {

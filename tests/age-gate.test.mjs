@@ -14,6 +14,7 @@ const profileSetup = await readFile(new URL("../src/app/app/profile/setup/page.t
 const appealPage = await readFile(new URL("../src/app/age-appeal/page.tsx", import.meta.url), "utf8");
 const appealAction = await readFile(new URL("../src/app/age-appeal/actions.ts", import.meta.url), "utf8");
 const adminPage = await readFile(new URL("../src/app/app/admin/age-appeals/page.tsx", import.meta.url), "utf8");
+const adminDecision = await readFile(new URL("../src/app/app/admin/age-appeals/AgeAppealDecision.tsx", import.meta.url), "utf8");
 const adminAction = await readFile(new URL("../src/app/app/admin/age-appeals/actions.ts", import.meta.url), "utf8");
 const contactHardening = await readFile(new URL("../supabase/migrations/20260902182000_block_underage_contact_paths.sql", import.meta.url), "utf8");
 
@@ -61,7 +62,8 @@ test("signup retries use a separate 48-hour cooldown", () => {
   assert.match(migration, /interval '48 hours'/);
   assert.match(migration, /next_attempts >= 3/);
   assert.match(signupAction, /age_gate_signup/);
-  assert.match(signupAction, /This email cannot currently be used to create an account/);
+  assert.match(signupAction, /server\.auth\.restricted/);
+  assert.match(signupAction, /server\.auth\.cooldown/);
   assert.match(signupPage, /name="birth_date" type="date"/);
   assert.match(cooldownFix, /Profile edits are not signup attempts/);
 });
@@ -86,10 +88,10 @@ test("correction appeal is authenticated, validated, rate-limited, and audited",
   assert.match(migration, /age_appeal_approved/);
   assert.match(migration, /age_appeal_rejected/);
   assert.match(migration, /moderation_audit_log/);
-  assert.match(adminPage, /Approve correction/);
-  assert.match(adminPage, /Reject/);
+  assert.match(adminDecision, /Approve correction/);
+  assert.match(adminDecision, /Reject correction/);
   assert.match(adminAction, /requireAdmin/);
-  assert.match(appealPage, /Request a correction/);
+  assert.match(appealPage, /auth\.age\.submit/);
 });
 
 test("approved appeal clears restriction/cooldown without creating an account", () => {
@@ -114,8 +116,8 @@ test("profile setup surfaces age-gate results instead of reporting a false save"
   assert.match(profileActions, /saveResult/);
   assert.match(profileActions, /saveResult === "underage"/);
   assert.match(profileActions, /saveResult === "restricted" \|\| saveResult === "cooldown"/);
-  assert.match(profileActions, /You must be at least 18 years old to use (?:Penpal|pen-pals\.net)/);
-  assert.match(profileSetup, /Request a correction/);
+  assert.match(profileActions, /server\.profile\.underage/);
+  assert.match(profileSetup, /app\.profile\.requestCorrection/);
 });
 
 test("active verified age restrictions cannot be bypassed with an adult profile save", () => {

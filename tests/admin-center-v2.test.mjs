@@ -1,13 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("..", import.meta.url).pathname.replace(/^\//, "").replaceAll("/", "\\");
-const migration = fs.readFileSync(`${root}supabase\\migrations\\20260902200000_admin_center_v2.sql`, "utf8");
-const dashboardMigration = fs.readFileSync(`${root}supabase\\migrations\\20260902200100_admin_dashboard_counts.sql`, "utf8");
-const guard = fs.readFileSync(`${root}src\\app\\app\\admin\\guard.ts`, "utf8");
-const conversationPage = fs.readFileSync(`${root}src\\app\\app\\admin\\conversations\\[id]\\page.tsx`, "utf8");
-const conversationReasonMigration = fs.readFileSync(`${root}supabase\\migrations\\20260902200400_conversation_review_reason_floor.sql`, "utf8");
+const root = fileURLToPath(new URL("..", import.meta.url));
+const read = (...parts) => fs.readFileSync(path.join(root, ...parts), "utf8");
+const migration = read("supabase", "migrations", "20260902200000_admin_center_v2.sql");
+const dashboardMigration = read("supabase", "migrations", "20260902200100_admin_dashboard_counts.sql");
+const guard = read("src", "app", "app", "admin", "guard.ts");
+const conversationPage = read("src", "app", "app", "admin", "conversations", "[id]", "page.tsx");
+const conversationReasonMigration = read("supabase", "migrations", "20260902200400_conversation_review_reason_floor.sql");
 
 test("report details use an explicit moderation-safe projection", () => {
   const fn = migration.slice(migration.indexOf("create or replace function public.get_report_details"), migration.indexOf("-- Staff routes"));
@@ -39,7 +42,7 @@ test("case creation groups only exact message or introduction targets", () => {
 });
 
 test("case linking serializes concurrent reports for the same target", () => {
-  const concurrencyMigration = fs.readFileSync(`${root}supabase\\migrations\\20260902201100_case_link_concurrency.sql`, "utf8");
+  const concurrencyMigration = read("supabase", "migrations", "20260902201100_case_link_concurrency.sql");
   assert.match(concurrencyMigration, /pg_advisory_xact_lock/);
   assert.match(concurrencyMigration, /penpal-report-case/);
 });
@@ -62,7 +65,7 @@ test("case mutations are staff-only and audited", () => {
 });
 
 test("case status audit preserves the previous status", () => {
-  const statusAuditMigration = fs.readFileSync(`${root}supabase\\migrations\\20260902201400_case_status_audit_old_status.sql`, "utf8");
+  const statusAuditMigration = read("supabase", "migrations", "20260902201400_case_status_audit_old_status.sql");
   assert.match(statusAuditMigration, /select status into previous_status/);
   assert.match(statusAuditMigration, /previous_status, new_status/);
 });
@@ -88,8 +91,8 @@ test("admin datasets use server-side pagination", () => {
 });
 
 test("age appeal queue is bounded server-side", () => {
-  const ageAppealMigration = fs.readFileSync(`${root}supabase\\migrations\\20260902201000_age_appeals_pagination.sql`, "utf8");
-  const ageAppealPage = fs.readFileSync(`${root}src\\app\\app\\admin\\age-appeals\\page.tsx`, "utf8");
+  const ageAppealMigration = read("supabase", "migrations", "20260902201000_age_appeals_pagination.sql");
+  const ageAppealPage = read("src", "app", "app", "admin", "age-appeals", "page.tsx");
   assert.match(ageAppealMigration, /admin_list_age_appeals_page/);
   assert.match(ageAppealMigration, /limit page_size offset page_offset/);
   assert.match(ageAppealPage, /admin_list_age_appeals_page/);
@@ -120,7 +123,7 @@ test("profile restoration requires exact retained evidence and reason", () => {
 });
 
 test("case and audit routes are deep-linkable and exposed to staff navigation", () => {
-  assert.match(fs.readFileSync(`${root}src\\app\\app\\admin\\cases\\page.tsx`, "utf8"), /\/app\/admin\/cases\/\$\{item\.id\}/);
-  assert.match(fs.readFileSync(`${root}src\\app\\app\\admin\\cases\\[id]\\page.tsx`, "utf8"), /admin_get_moderation_case/);
-  assert.match(fs.readFileSync(`${root}src\\app\\app\\layout.tsx`, "utf8"), /href="\/app\/admin\/cases"/);
+  assert.match(read("src", "app", "app", "admin", "cases", "page.tsx"), /\/app\/admin\/cases\/\$\{item\.id\}/);
+  assert.match(read("src", "app", "app", "admin", "cases", "[id]", "page.tsx"), /admin_get_moderation_case/);
+  assert.match(read("src", "app", "app", "layout.tsx"), /href="\/app\/admin\/cases"/);
 });

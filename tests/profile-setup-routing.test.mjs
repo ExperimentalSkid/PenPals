@@ -18,7 +18,7 @@ const [setupPage, profileActions, profilePage, appPage, appNavigation, proxy, go
 
 test("incomplete authenticated profiles enter setup while completed saves exit to the app", () => {
   assert.match(proxyEntrypoint, /export function proxy/);
-  assert.match(proxyEntrypoint, /matcher: \["\/app\/:path\*", "\/auth\/:path\*"\]/);
+  assert.match(proxyEntrypoint, /"\/app\/:path\*"[\s\S]*"\/auth\/:path\*"/);
   assert.match(proxy, /if \(request\.nextUrl\.pathname !== "\/app\/profile\/setup" && !isBootstrapAdmin\)/);
   assert.match(proxy, /!completionProfile \|\| !hasCompletedProfile/);
   assert.match(proxy, /new URL\("\/app\/profile\/setup", request\.url\)/);
@@ -34,10 +34,10 @@ test("incomplete authenticated profiles enter setup while completed saves exit t
 });
 
 test("setup remains a valid edit destination for completed profiles without trapping them", () => {
-  assert.match(setupPage, /entryComplete \? "Edit your profile" : "Set up your profile"/);
-  assert.match(appNavigation, /href: "\/app\/profile\/setup", label: "Profile"/);
+  assert.match(setupPage, /entryComplete \? t\("app\.profile\.editProfile"\) : t\("app\.profile\.setUpProfile"\)/);
+  assert.match(appNavigation, /href: "\/app\/profile\/setup", label: t\("app\.nav\.profile"\)/);
   assert.match(appPage, /redirect\('\/app\/discover'\)/);
-  assert.match(setupPage, /View public profile/);
+  assert.match(setupPage, /app\.profile\.viewPublic/);
   assert.match(setupPage, /\?from=setup/);
 });
 

@@ -211,7 +211,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
               </details>
             </section>
 
-            <section id="account" className="scroll-mt-8 rounded-2xl border border-red-200/70 bg-red-50/20 p-5 sm:p-7" aria-labelledby="account-heading"><p className="text-xs font-bold uppercase tracking-[.16em] text-red-700/75">{t("app.settings.account")}</p><h2 id="account-heading" className="section-title-large mt-2">{t("app.settings.accountAccess")}</h2><p className="mt-3 text-sm leading-6 text-black/60">Deactivation pauses account access and keeps your data. An administrator can reactivate the account. This is separate from {t("app.settings.pauseParticipation")}.</p><div className="mt-5"><AccountActions deactivated={Boolean(p?.deactivated_at)} isAdmin={p.role === "admin"} /></div></section>
+            <section id="account" className="scroll-mt-8 rounded-2xl border border-red-200/70 bg-red-50/20 p-5 sm:p-7" aria-labelledby="account-heading"><p className="text-xs font-bold uppercase tracking-[.16em] text-red-700/75">{t("app.settings.account")}</p><h2 id="account-heading" className="section-title-large mt-2">{t("app.settings.accountAccess")}</h2><p className="mt-3 text-sm leading-6 text-black/60">{t("app.settings.deactivateBody")}</p><div className="mt-5"><AccountActions deactivated={Boolean(p?.deactivated_at)} isAdmin={p.role === "admin"} /></div></section>
           </div>
         </div>
       </div>

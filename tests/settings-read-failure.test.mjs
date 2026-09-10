@@ -11,7 +11,7 @@ test("Settings fails closed when profile or privacy reads fail", () => {
   assert.match(settings, /error: profileError/);
   assert.match(settings, /error: excludedError/);
   assert.match(settings, /if \(profileError \|\| excludedError \|\| !p\)/);
-  assert.match(settings, /We couldn&apos;t load your privacy settings/);
+  assert.match(settings, /app\.settings\.loadError/);
   assert.match(settings, /role="alert"/);
   assert.match(settings, /name="settings_loaded" value="1"/);
   assert.doesNotMatch(settings, /profile_visibility\?\.\?\s*["']public/);
@@ -32,7 +32,7 @@ test("a save attempt after a failed or stale Settings read is rejected before th
   assert.ok(rpc > exclusionsRead, "save RPC must run only after both preflight reads");
   assert.match(block, /privacyReadError \|\| !currentPrivacy/);
   assert.match(block, /exclusionsReadError/);
-  assert.match(block, /We couldn&apos;t load your privacy settings|We couldn't load your privacy settings/);
+  assert.match(block, /server\.profile\.privacyLoad/);
 });
 
 test("self-deactivation requires explicit confirmation", () => {
@@ -45,5 +45,5 @@ test("administrator self-deactivation is unavailable in the UI", () => {
   assert.match(settings, /select\("username,role,/);
   assert.match(settings, /isAdmin=\{p\.role === "admin"\}/);
   assert.match(accountActions, /if \(isAdmin && !deactivated\)/);
-  assert.match(accountActions, /Administrator accounts can&apos;t be deactivated/);
+  assert.match(accountActions, /app\.settings\.adminNoDeactivate/);
 });

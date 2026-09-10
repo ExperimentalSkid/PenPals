@@ -21,7 +21,7 @@ test("desktop and mobile navigation receive the same server-authoritative count"
   assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} contactInboxCount=\{Number\(contactInboxCount \?\? 0\)\} role=\{role\} \/>/);
   assert.match(layout, /<AppNavigation unreadCount=\{Number\(unreadCount \?\? 0\)\} modInboxCount=\{modInboxCount\} supportInboxCount=\{Number\(supportInboxCount \?\? 0\)\} contactInboxCount=\{Number\(contactInboxCount \?\? 0\)\} role=\{role\} mobile \/>/);
   assert.match(navigation, /badge: unreadCount/);
-  assert.match(navigation, /badgeLabel: "unread notifications"/);
+  assert.match(navigation, /badgeLabel: t\("app\.nav\.unreadNotifications"\)/);
 });
 
 test("the database count and Notifications page use the same unread actionable set", () => {

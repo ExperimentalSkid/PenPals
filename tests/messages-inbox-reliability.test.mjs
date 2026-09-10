@@ -104,6 +104,7 @@ async function messageActions(error = null) {
     }) },
     "next/navigation": { redirect: (url) => { throw new Error(url); } },
     "next/cache": { revalidatePath: (...args) => invalidations.push(args) },
+    "@/i18n/server": { getPageI18n: async () => ({ t: (key) => key === "server.messages.messageFailed" ? "We couldn\'t send that message. Please try again." : key }) },
   });
   return { actions, inserts, invalidations };
 }
@@ -112,7 +113,7 @@ test("successful message send has one insert and one success redirect", async ()
   const { actions, inserts, invalidations } = await messageActions();
   const form = new FormData();
   form.set("conversation_id", "conversation"); form.set("body", " Hello pen pal! ");
-  await assert.rejects(actions.sendMessage(form), { message: "/app/messages/conversation" });
+  await assert.rejects(actions.sendMessage(form), { message: "/app/messages/conversation?sent=1" });
   assert.equal(inserts.length, 1);
   assert.equal(inserts[0].body, "Hello pen pal!");
   assert.equal(inserts[0].sender_id, "sender");
