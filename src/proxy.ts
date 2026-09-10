@@ -23,6 +23,10 @@ export function proxy(request: NextRequest) {
     return NextResponse.rewrite(url, { request: { headers: requestHeaders } });
   }
   if (isLocalizedPublicPath(pathname)) {
+    // Requests internally rewritten from /es/* already carry the Spanish
+    // locale marker. Do not redirect those back to /es/* again or the
+    // rewrite re-enters this branch and creates a redirect loop.
+    if (request.headers.get("x-penpals-locale") === "es") return NextResponse.next();
     if (request.cookies.get("NEXT_LOCALE")?.value === "es") {
       const url = request.nextUrl.clone();
       url.pathname = pathname === "/" ? "/es" : `/es${pathname}`;
