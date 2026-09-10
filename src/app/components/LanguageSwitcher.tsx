@@ -2,7 +2,6 @@
 
 import { usePathname, useSearchParams } from "next/navigation";
 import type { AppLocale } from "@/i18n/config";
-import { createClient } from "@/lib/supabase/client";
 import CountryFlag from "@/app/components/CountryFlag";
 
 function localizedPath(pathname: string, locale: AppLocale) {
@@ -16,16 +15,9 @@ export default function LanguageSwitcher({ locale, label, paths }: { locale: App
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  async function selectLocale(nextLocale: AppLocale) {
+  function selectLocale(nextLocale: AppLocale) {
     if (nextLocale === locale) { window.location.reload(); return; }
     document.cookie = `NEXT_LOCALE=${nextLocale}; Path=/; Max-Age=31536000; SameSite=Lax`;
-    try {
-      const supabase = createClient();
-      const { data } = await supabase.auth.getUser();
-      if (data.user) await supabase.auth.updateUser({ data: { locale: nextLocale } });
-    } catch {
-      // Cookie preference remains authoritative for the UI if metadata persistence is unavailable.
-    }
     const targetPath = paths?.[nextLocale] ?? localizedPath(pathname, nextLocale);
     const query = searchParams.toString();
     if (!targetPath) {
@@ -40,7 +32,7 @@ export default function LanguageSwitcher({ locale, label, paths }: { locale: App
     <div role="group" aria-label={label} className="inline-flex items-center gap-1.5">
       <button
         type="button"
-        onClick={() => void selectLocale("en")}
+        onClick={() => selectLocale("en")}
         aria-label="English"
         aria-pressed={locale === "en"}
         title="English"
@@ -50,7 +42,7 @@ export default function LanguageSwitcher({ locale, label, paths }: { locale: App
       </button>
       <button
         type="button"
-        onClick={() => void selectLocale("es")}
+        onClick={() => selectLocale("es")}
         aria-label="Español"
         aria-pressed={locale === "es"}
         title="Español"

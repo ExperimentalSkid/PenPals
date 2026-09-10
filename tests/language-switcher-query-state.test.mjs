@@ -14,4 +14,6 @@ test("language switching preserves query state and performs a full reload", () =
   assert.match(source, /"\/terms"/);
   assert.match(source, /"\/guidelines"/);
   assert.doesNotMatch(source, /router\.(?:push|refresh)\(/);
+  assert.doesNotMatch(source, /supabase\.auth\.(?:getUser|updateUser)/);
+  assert.doesNotMatch(source, /async function selectLocale/);
 });
