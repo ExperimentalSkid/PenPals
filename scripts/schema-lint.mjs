@@ -1,9 +1,12 @@
 import { runSupabase, REPOSITORY_ROOT, SUPABASE_CLI_VERSION } from "./supabase-cli.mjs";
+import { resolveSchemaDatabaseUrl } from "./schema-database.mjs";
 
+const databaseUrl = resolveSchemaDatabaseUrl();
+const targetArgs = databaseUrl ? ["--db-url", databaseUrl] : ["--local"];
 const result = runSupabase([
   "db",
   "lint",
-  "--local",
+  ...targetArgs,
   // Intentional INFO/warning findings remain visible without blocking a release.
   "--fail-on",
   "error",

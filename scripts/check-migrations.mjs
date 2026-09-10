@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
 import { REPOSITORY_ROOT, runSupabase, SUPABASE_CLI_VERSION } from "./supabase-cli.mjs";
+import { resolveSchemaDatabaseUrl } from "./schema-database.mjs";
 
 const migrationsDirectory = path.join(REPOSITORY_ROOT, "supabase", "migrations");
 const migrationFilename = /^(\d{14})_([a-z0-9][a-z0-9_-]*)\.sql$/;
@@ -68,10 +69,12 @@ if (!checkLocalDatabase) {
   process.exit(0);
 }
 
+const databaseUrl = resolveSchemaDatabaseUrl();
+const targetArgs = databaseUrl ? ["--db-url", databaseUrl] : ["--local"];
 const result = runSupabase([
   "migration",
   "list",
-  "--local",
+  ...targetArgs,
   "--output-format",
   "json",
   "--workdir",
