@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { markRead, requestPhotoAccess, revokePhotoAccess, grantPhotoAccess, respondPhotoAccess } from "@/app/app/messages/actions";
@@ -11,7 +10,7 @@ import { submitReport } from "@/app/app/reports/actions";
 import LanguageFlag from "@/app/components/LanguageFlag";
 import ConversationThread from "./ConversationThread";
 import SnailMailPanel, { type SnailMailLetter } from "./SnailMailPanel";
-import { isPrivateAvatarPath, isSignedAvatarUrl } from "@/lib/avatar";
+import { isPrivateAvatarPath } from "@/lib/avatar";
 import { getAuthorizedProfilePhoto } from "@/lib/private-avatar-server";
 import { deriveLanguageCompatibility, formatLanguageProficiency, type LanguageCompatibilityEntry } from "@/lib/language-compatibility";
 import { getPageI18n } from "@/i18n/server";
@@ -181,7 +180,7 @@ export default async function Conversation({ params, searchParams }: { params: P
         <header className="rounded-xl border border-[#deded5] bg-[#fbfaf6] px-5 py-5 sm:px-7 sm:py-6">
           <div className="flex flex-wrap items-start justify-between gap-6">
             <div className="flex min-w-0 items-start gap-4 sm:gap-5">
-              {profileHref ? <Link href={profileHref} className="relative block h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[#d8d3c7] bg-[#e5e9df] sm:h-[92px] sm:w-[92px]" aria-label={t("app.messages.viewPersonProfile", { name: otherName })}>{photoUrl ? <Image src={photoUrl} alt={t("app.messages.personProfilePhoto", { name: otherName })} fill sizes="92px" unoptimized={isSignedAvatarUrl(photoUrl)} className="object-cover" /> : <span className="flex h-full w-full items-center justify-center font-serif text-3xl text-muted">◦</span>}</Link> : <div className="relative block h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[#d8d3c7] bg-[#e5e9df] sm:h-[92px] sm:w-[92px]" aria-hidden="true"><span className="flex h-full w-full items-center justify-center font-serif text-3xl text-muted">◦</span></div>}
+              {profileHref ? <Link href={profileHref} className="relative block h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[#d8d3c7] bg-[#e5e9df] sm:h-[92px] sm:w-[92px]" aria-label={t("app.messages.viewPersonProfile", { name: otherName })}>{photoUrl ? <img src={photoUrl} alt={t("app.messages.personProfilePhoto", { name: otherName })} className="h-full w-full object-cover" /> : <span className="flex h-full w-full items-center justify-center font-serif text-3xl text-muted">◦</span>}</Link> : <div className="relative block h-20 w-20 shrink-0 overflow-hidden rounded-full border border-[#d8d3c7] bg-[#e5e9df] sm:h-[92px] sm:w-[92px]" aria-hidden="true"><span className="flex h-full w-full items-center justify-center font-serif text-3xl text-muted">◦</span></div>}
               <div className="min-w-0 pt-1"><h1 className="font-serif text-[clamp(2rem,2.8vw,2.65rem)] leading-[1.02] tracking-[-0.04em] text-primary">{profileHref ? <Link href={profileHref} className="break-words hover:text-brand hover:underline">{otherName}{typeof (publicProfile.age ?? otherProfile?.age) === "number" ? `, ${publicProfile.age ?? otherProfile.age}` : ""}</Link> : otherName}</h1><div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-sm text-black/60">{location && <span>{location}</span>}{targetId && location && <span aria-hidden="true" className="text-black/25">•</span>}{targetId && <PresenceStatus userId={targetId} fallback={otherIdentity?.activity_status} visible={otherIdentity?.activity_status !== null} availability={otherIdentity?.availability} awayLabel={t("app.presence.away")} onlineLabel={t("app.presence.onlineNow")} />}</div></div>
             </div>
             {targetId && <div className="flex shrink-0 items-start gap-2"><Link href={profileHref ?? "/app/messages"} className="rounded-md border border-[#d7d0c3] px-3 py-2 text-xs font-medium text-primary hover:bg-white/75">{t("app.messages.viewProfile")}</Link><details className="relative"><summary className="flex min-h-9 cursor-pointer list-none items-center rounded-md border border-[#d7d0c3] px-3 py-2 text-xs font-medium text-primary hover:bg-white/75">{t("app.messages.more")} <span className="ml-2 text-black/40" aria-hidden="true">⌄</span></summary><div className="absolute right-0 top-[calc(100%+6px)] z-20 w-56 rounded-md border border-black/10 bg-[#fffdfa] p-3 shadow-lg"><div><BlockControl blocked={blockedByMe} id={targetId} username={otherIdentity?.username ?? ""} /></div>{reportControl}</div></details></div>}

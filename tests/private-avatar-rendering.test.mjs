@@ -12,8 +12,8 @@ const privateAvatarServer = await readFile(new URL("src/lib/private-avatar-serve
 test("signed Supabase avatars bypass Next optimization and legacy external URLs are rejected", () => {
   assert.match(avatarHelper, /\/storage\/v1\/object\/sign\/avatars\//);
   assert.match(avatarHelper, /isPrivateAvatarPath/);
-  assert.match(profileView, /unoptimized=\{isSignedAvatarUrl\(photo\)\}/);
-  assert.match(conversation, /unoptimized=\{isSignedAvatarUrl\(photoUrl\)\}/);
+  assert.match(profileView, /<img src=\{photo\}/);
+  assert.match(conversation, /<img src=\{photoUrl\}/);
   assert.match(avatarHelper, /Legacy external URLs intentionally return false/);
   assert.doesNotMatch(avatarHelper, /return path;/);
 });

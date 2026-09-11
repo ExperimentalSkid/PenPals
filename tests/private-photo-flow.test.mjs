@@ -55,6 +55,6 @@ test("signed avatar rendering remains private-path and short-lived", () => {
   assert.match(privateAvatarServer, /can_view_profile_photo/);
   assert.match(privateAvatarServer, /isPrivateAvatarPath\(avatarPath, ownerUser\)/);
   assert.match(privateAvatarServer, /createSignedUrl\(avatarPath, 3600\)/);
-  assert.match(page, /unoptimized=\{isSignedAvatarUrl\(photoUrl\)\}/);
+  assert.match(page, /<img src=\{photoUrl\}/);
   assert.match(avatar, /Legacy external URLs intentionally return false/);
 });

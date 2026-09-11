@@ -1,10 +1,8 @@
-import Image from "next/image";
 import Link from "next/link";
 import { startConversation } from "@/app/app/messages/actions";
 import BlockControl from "@/app/app/profile/BlockControl";
 import IcebreakerModal from "@/app/profile/IcebreakerModal";
 import { PresenceStatus } from "@/app/PresenceProvider";
-import { isSignedAvatarUrl } from "@/lib/avatar";
 import AboutSection from "./AboutSection";
 import LanguagesSection, { type ProfileLanguage } from "./LanguagesSection";
 import InterestsSection, { type ProfileInterest } from "./InterestsSection";
@@ -108,7 +106,7 @@ export default async function ProfileView({ profile, displayName, age, location,
           <aside className="w-full max-w-[300px] justify-self-center lg:max-w-[280px] lg:justify-self-start xl:max-w-[260px] 2xl:max-w-[300px]">
             <div className="relative aspect-[0.68] w-full overflow-hidden rounded-[20px] border border-[#d9cdb9] bg-[#f1e8d9] p-2 shadow-[0_3px_0_#e4d8c6]">
               <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-[#e9e8df]">
-                {photo ? <Image src={photo} alt={displayName} fill priority sizes="(min-width: 1280px) 300px, 240px" unoptimized={isSignedAvatarUrl(photo)} className="object-cover" /> : <div role="img" aria-label={t("app.profile.photoUnavailableFor", { name: displayName })} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
+                {photo ? <img src={photo} alt={displayName} className="h-full w-full object-cover" /> : <div role="img" aria-label={t("app.profile.photoUnavailableFor", { name: displayName })} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
               </div>
               {photo && <div className="absolute bottom-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-[#fbfaf7]/95 px-3 py-1.5 text-xs font-medium text-brand shadow-sm"><DetailIcon name="eye" />{t("app.profile.photoVisible")}</div>}
             </div>
