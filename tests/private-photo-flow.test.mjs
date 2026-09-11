@@ -6,7 +6,6 @@ const root = new URL("../", import.meta.url);
 const read = (path) => readFile(new URL(path, root), "utf8");
 
 const page = await read("src/app/app/messages/[id]/page.tsx");
-const thread = await read("src/app/app/messages/[id]/ConversationThread.tsx");
 const actions = await read("src/app/app/messages/actions.ts");
 const avatar = await read("src/lib/avatar.ts");
 const latestPhotoRules = await read("supabase/migrations/20260902220000_require_verified_email.sql");
@@ -24,13 +23,15 @@ test("private-photo conversation wiring covers request, cooldown, proactive shar
   assert.match(page, /grantPhotoAccess/);
   assert.match(page, /revokePhotoAccess/);
   assert.match(page, /app\.messages\.photoGrantedTo/);
-  assert.match(page, /pendingRequests=\{pairBlocked \|\| photoStateError \? \[\] : pendingTheirs\}/);
+  assert.match(page, /pendingTheirs\.length > 0/);
+  assert.match(page, /form action=\{respondPhotoAccess\}/);
+  assert.doesNotMatch(page, /pendingRequests=/);
 });
 
 test("private-photo request responses remain owner-controlled and block-aware", () => {
-  assert.match(thread, /respondPhotoAccess/);
-  assert.match(thread, /decision.*allowed/);
-  assert.match(thread, /decision.*declined/);
+  assert.match(page, /respondPhotoAccess/);
+  assert.match(page, /decision.*allowed/);
+  assert.match(page, /decision.*declined/);
   assert.match(page, /users_are_blocked/);
   assert.match(page, /app\.messages\.photoUnavailable/);
   assert.match(latestPhotoRules, /request_photo_access[\s\S]*updated_at > now\(\) - interval '72 hours'/);

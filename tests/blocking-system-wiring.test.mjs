@@ -54,7 +54,7 @@ test("conversation UI detects a block created by either participant and fails cl
   assert.match(page, /const pairBlockStateUnavailable = Boolean\(pairBlockResult\.error\)/);
   assert.match(page, /BlockControl blocked=\{blockedByMe\}/);
   assert.match(page, /messageSendBlocked=\{pairBlocked \|\| pairBlockStateUnavailable \|\| messageStreak >= 3\}/);
-  assert.match(page, /pendingRequests=\{pairBlocked \|\| photoStateError \? \[\] : pendingTheirs\}/);
+  assert.match(page, /!pairBlocked && !photoStateError && pendingTheirs\.length > 0/);
   assert.match(page, /Snail Mail is unavailable because one of you blocked the other\./);
   assert.match(page, /app\.messages\.photoUnavailable/);
   assert.match(thread, /messageSendBlockedReason\?/);

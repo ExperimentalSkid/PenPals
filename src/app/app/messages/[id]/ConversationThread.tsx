@@ -4,14 +4,12 @@ import { useTranslations } from "next-intl";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
-import Link from "next/link";
-import { sendMessage, respondPhotoAccess } from "@/app/app/messages/actions";
+import { sendMessage } from "@/app/app/messages/actions";
 import { submitReport } from "@/app/app/reports/actions";
 import { createClient } from "@/lib/supabase/client";
 
 type Message = { id: string; body: string; created_at: string; sender_id: string | null; moderation_status?: "clear" | "flagged_for_review" | null; reply_to_message_id?: string | null };
 type Introduction = { id: string; icebreaker: string; created_at: string; sender_id: string | null } | null;
-type PendingPhotoRequest = { id: string };
 
 function FormSubmitButton({ children, pendingLabel = "Saving…", className, disabled = false }: { children: React.ReactNode; pendingLabel?: string; className: string; disabled?: boolean }) {
   const { pending } = useFormStatus();
@@ -44,7 +42,7 @@ const highlightedText = (text: string, query: string) => {
   );
 };
 
-export default function ConversationThread({ conversationId, userId, messages, hasOlderMessages, historyLoadFailed = false, introduction, pendingRequests, otherName, otherUsername, otherUserId, initialOtherLastReadAt, messageSendBlocked = false, messageSendBlockedReason }: { conversationId: string; userId: string; messages: Message[]; hasOlderMessages: boolean; historyLoadFailed?: boolean; introduction: Introduction; pendingRequests?: PendingPhotoRequest[]; otherName?: string; otherUsername?: string; otherUserId?: string | null; initialOtherLastReadAt?: string | null; messageSendBlocked?: boolean; messageSendBlockedReason?: string }) {
+export default function ConversationThread({ conversationId, userId, messages, hasOlderMessages, historyLoadFailed = false, introduction, otherName, otherUserId, initialOtherLastReadAt, messageSendBlocked = false, messageSendBlockedReason }: { conversationId: string; userId: string; messages: Message[]; hasOlderMessages: boolean; historyLoadFailed?: boolean; introduction: Introduction; otherName?: string; otherUserId?: string | null; initialOtherLastReadAt?: string | null; messageSendBlocked?: boolean; messageSendBlockedReason?: string }) {
   const t = useTranslations();
   const scrollRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -393,7 +391,6 @@ export default function ConversationThread({ conversationId, userId, messages, h
       <div className="relative">
         <div ref={scrollRef} className="max-h-[min(64vh,720px)] overflow-y-auto px-5 py-5 sm:px-7 sm:py-7 lg:px-8" role="log" aria-live="polite" aria-relevant="additions" aria-label={t("app.messages.messageHistory")}>
           <div className="space-y-1 pb-2">
-            {!!pendingRequests?.length && <div className="mb-7 border border-[#d7dcca] bg-[#f0f3eb] px-5 py-4" aria-live="polite"><p className="text-sm text-primary">{t("app.messages.photoRequest", { name: otherName ?? t("app.messages.they") })}</p><div className="mt-3 flex flex-wrap items-center gap-3"><Link href={otherUsername ? `/app/profile/${encodeURIComponent(otherUsername)}` : "/app/messages"} className="text-xs font-medium text-brand underline underline-offset-2">{t("app.messages.viewProfile")}</Link>{pendingRequests.map((request) => <div key={request.id} className="flex items-center gap-2"><form action={respondPhotoAccess}><input type="hidden" name="request_id" value={request.id} /><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="decision" value="allowed" /><FormSubmitButton className="rounded-md bg-[#087456] px-3 py-2 text-xs font-medium text-white">{t("app.messages.allow")}</FormSubmitButton></form><form action={respondPhotoAccess}><input type="hidden" name="request_id" value={request.id} /><input type="hidden" name="conversation_id" value={conversationId} /><input type="hidden" name="decision" value="declined" /><FormSubmitButton className="rounded-md border border-black/10 px-3 py-2 text-xs font-medium text-black/60 hover:bg-black/[0.04]">{t("app.messages.decline")}</FormSubmitButton></form></div>)}</div></div>}
             {grouped.map(({ message, previous, day, previousDay }) => {
               const mine = message.sender_id === userId;
               const groupedWithPrevious = previous?.sender_id === message.sender_id && previousDay === day;
