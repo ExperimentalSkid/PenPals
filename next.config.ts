@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
       "form-action 'self'",
       "script-src 'self' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob: https://*.tile.openstreetmap.org",
+      "img-src 'self' data: blob: https://supabase.pen-pals.net https://*.tile.openstreetmap.org",
       "font-src 'self' data:",
       "connect-src 'self' https://supabase.pen-pals.net wss://supabase.pen-pals.net",
       "worker-src 'self' blob:",
