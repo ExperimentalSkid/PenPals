@@ -22,6 +22,7 @@ const { default: Panel } = await load("src/app/app/messages/[id]/SnailMailPanel.
   react: { useEffect() {}, useState: (initial) => [initial, () => {}] },
   "react-dom": { useFormStatus: () => ({ pending: false }) },
   "react/jsx-runtime": { jsx: element, jsxs: element },
+  "next/image": { default: () => null },
   "next-intl": { useTranslations: () => (key) => ({
     "app.snail.open": "Open letter",
     "app.snail.cancel": "Cancel letter",

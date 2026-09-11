@@ -1,3 +1,5 @@
+import { brandedEmailHtml, emailParagraphs, escapeEmailHtml } from "@/lib/email/brand-template";
+
 export class SupportEmailConfigurationError extends Error {}
 export class SupportEmailDeliveryError extends Error {}
 
@@ -31,24 +33,6 @@ function supportReplyTo() {
   return clean;
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
-}
-
-function paragraphsFromPlainText(value: string) {
-  return value
-    .split(/\n{2,}/)
-    .map((paragraph) => paragraph.trim())
-    .filter(Boolean)
-    .map((paragraph) => `<p>${escapeHtml(paragraph).replace(/\n/g, "<br />")}</p>`)
-    .join("\n");
-}
-
 export function buildPublicContactReplyEmail({
   body,
   ticketCode,
@@ -58,10 +42,11 @@ export function buildPublicContactReplyEmail({
 }) {
   const footer = `\n\n—\nPen-Pals support\nReference: ${ticketCode}`;
   const text = `${body}${footer}`;
-  const html = [
-    paragraphsFromPlainText(body),
-    `<p style="margin-top:24px;color:#66717C;">—<br />Pen-Pals support<br />Reference: ${escapeHtml(ticketCode)}</p>`,
-  ].filter(Boolean).join("\n");
+  const html = brandedEmailHtml({
+    heading: "Pen-Pals support",
+    bodyHtml: emailParagraphs(body),
+    footerHtml: `<p style="margin:0;">Reference: ${escapeEmailHtml(ticketCode)}</p>`,
+  });
   return { text, html };
 }
 

@@ -28,6 +28,9 @@ export default async function PrivacyPage() {
             {cards.map((key) => <article key={key} className="rounded-2xl border border-[#D9D3C8] bg-white/45 p-5"><h3 className="text-sm font-semibold text-[#102A43]">{t(`privacy.cards.${key}Title`)}</h3><p className="mt-2 text-sm leading-6">{t(`privacy.cards.${key}Body`)}</p></article>)}
           </div>
         </section>
+        <section><h2 className="section-title-large">{t("privacy.contactDataTitle")}</h2><p className="section-description mt-4 max-w-3xl sm:text-base">{t("privacy.contactDataBody")}</p></section>
+        <section><h2 className="section-title-large">{t("privacy.contactPurposeTitle")}</h2><p className="section-description mt-4 max-w-3xl sm:text-base">{t("privacy.contactPurposeBody")}</p></section>
+        <section><h2 className="section-title-large">{t("privacy.contactRetentionTitle")}</h2><p className="section-description mt-4 max-w-3xl sm:text-base">{t("privacy.contactRetentionBody")}</p></section>
         <section><h2 className="section-title-large">{t("privacy.visibilityTitle")}</h2><p className="section-description mt-4 max-w-3xl sm:text-base">{t("privacy.visibilityBody")}</p></section>
         <section><h2 className="section-title-large">{t("privacy.statsTitle")}</h2><p className="section-description mt-4 max-w-3xl sm:text-base">{t("privacy.statsBody")}</p></section>
         <section>

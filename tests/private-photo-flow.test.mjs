@@ -9,6 +9,7 @@ const page = await read("src/app/app/messages/[id]/page.tsx");
 const actions = await read("src/app/app/messages/actions.ts");
 const avatar = await read("src/lib/avatar.ts");
 const privateAvatarServer = await read("src/lib/private-avatar-server.ts");
+const privateAvatarRoute = await read("src/app/api/profile-photo/[id]/route.ts");
 const latestPhotoRules = await read("supabase/migrations/20260902220000_require_verified_email.sql");
 
 test("private-photo conversation wiring covers request, cooldown, proactive share, and revoke", () => {
@@ -50,11 +51,15 @@ test("photo server actions preserve error feedback instead of treating failures 
   assert.match(actions, /server\.messages\.photoRevokeFailed/);
 });
 
-test("signed avatar rendering remains private-path and short-lived", () => {
+test("avatar rendering remains private-path and permission-gated through the same-origin route", () => {
   assert.match(page, /getAuthorizedProfilePhoto\(db, targetId, uid\)/);
   assert.match(privateAvatarServer, /can_view_profile_photo/);
   assert.match(privateAvatarServer, /isPrivateAvatarPath\(avatarPath, ownerUser\)/);
-  assert.match(privateAvatarServer, /createSignedUrl\(avatarPath, 3600\)/);
-  assert.match(page, /<img src=\{photoUrl\}/);
+  assert.match(privateAvatarServer, /\/api\/profile-photo\/\$\{encodeURIComponent\(ownerUser\)\}/);
+  assert.match(privateAvatarRoute, /can_view_profile_photo/);
+  assert.match(privateAvatarRoute, /isPrivateAvatarPath\(avatarPath, ownerUser\)/);
+  assert.match(privateAvatarRoute, /storage\.from\("avatars"\)\.download\(avatarPath\)/);
+  assert.match(privateAvatarRoute, /Cache-Control.*private, no-store, max-age=0/);
+  assert.match(page, /<Image src=\{photoUrl\}[^>]*unoptimized/);
   assert.match(avatar, /Legacy external URLs intentionally return false/);
 });

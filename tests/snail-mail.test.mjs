@@ -5,10 +5,13 @@ import { readFile } from "node:fs/promises";
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903020000_snail_mail.sql", root), "utf8");
 const transportMigration = await readFile(new URL("supabase/migrations/20260903030000_snail_mail_transport_modes.sql", root), "utf8");
+const photoMigration = await readFile(new URL("supabase/migrations/20260911152000_snail_mail_photo_attachments.sql", root), "utf8");
+const photoLifecycleMigration = await readFile(new URL("supabase/migrations/20260911160000_snail_mail_attachment_retention_and_consent.sql", root), "utf8");
 const actions = await readFile(new URL("src/app/app/messages/actions.ts", root), "utf8");
 const conversationPage = await readFile(new URL("src/app/app/messages/[id]/page.tsx", root), "utf8");
 const panel = await readFile(new URL("src/app/app/messages/[id]/SnailMailPanel.tsx", root), "utf8");
 const worker = await readFile(new URL("scripts/run-background-jobs.mjs", root), "utf8");
+const attachmentRoute = await readFile(new URL("src/app/api/snail-mail-attachment/[id]/route.ts", root), "utf8");
 
 test("Snail Mail stores an immutable letter with a server-side ETA snapshot", () => {
   assert.match(migration, /create table if not exists public\.snail_mail_letters/i);
@@ -50,7 +53,7 @@ test("delivery processing is durable, idempotent, and service-role-only", () => 
 
 test("server action and conversation UI expose Snail Mail without changing instant messaging", () => {
   assert.match(actions, /export async function sendSnailMail/);
-  assert.match(actions, /db\.rpc\("send_snail_mail"/);
+  assert.match(actions, /db\.rpc\("send_snail_mail_with_attachments"/);
   assert.match(actions, /idempotency_key/);
   assert.match(conversationPage, /db\.rpc\("list_snail_mail"/);
   assert.match(conversationPage, /<SnailMailPanel/);
@@ -58,6 +61,55 @@ test("server action and conversation UI expose Snail Mail without changing insta
   assert.match(panel, /app\.snail\.sealedUntilDelivery/);
   assert.match(panel, /role="progressbar"/);
   assert.match(panel, /app\.snail\.open/);
+});
+
+
+test("Snail Mail photo attachments are capped, private, and delivery-gated", () => {
+  assert.match(photoMigration, /create table if not exists public\.snail_mail_attachments/i);
+  assert.match(photoMigration, /jsonb_array_length\(coalesce\(p_attachments, '\[\]'::jsonb\)\) > 3/i);
+  assert.match(photoMigration, /size_bytes <= 5242880/i);
+  assert.match(photoMigration, /'image\/jpeg', 'image\/png', 'image\/webp'/i);
+  assert.match(photoMigration, /'snail-mail-attachments',\s*'snail-mail-attachments',\s*false/is);
+  assert.match(photoMigration, /l\.recipient_id = me and l\.cancelled_at is null and l\.deliver_at <= now\(\)/i);
+  assert.match(photoMigration, /get_snail_mail_attachment_path/i);
+  assert.doesNotMatch(photoMigration, /for select to authenticated[\s\S]{0,200}bucket_id = 'snail-mail-attachments'/i);
+});
+
+test("Snail Mail composer uploads only supported photos and renders delivered attachments", () => {
+  assert.match(actions, /MAX_SNAIL_MAIL_PHOTOS = 3/);
+  assert.match(actions, /MAX_SNAIL_MAIL_PHOTO_BYTES = 5 \* 1024 \* 1024/);
+  assert.match(actions, /formData\.getAll\("photos"\)/);
+  assert.match(actions, /storage\.from\("snail-mail-attachments"\)\.upload/);
+  assert.match(panel, /name="photos"/);
+  assert.match(panel, /accept="image\/jpeg,image\/png,image\/webp"/);
+  assert.match(panel, /api\/snail-mail-attachment/);
+  assert.match(conversationPage, /list_snail_mail_attachments/);
+  assert.match(attachmentRoute, /get_snail_mail_attachment_path/);
+  assert.match(attachmentRoute, /Cache-Control.*private, no-store/s);
+});
+
+test("Snail Mail photos expire on active-time clocks and pause with voluntary inactivity", () => {
+  assert.match(photoLifecycleMigration, /recipient_read_at \+ interval '14 days'/i);
+  assert.match(photoLifecycleMigration, /delivered_at \+ interval '30 days'/i);
+  assert.match(photoLifecycleMigration, /after update of inactive_mode on public\.profiles/i);
+  assert.match(photoLifecycleMigration, /expires_at = a\.expires_at \+ \(now\(\) - a\.retention_paused_at\)/i);
+  assert.match(photoLifecycleMigration, /and not p\.inactive_mode/i);
+  assert.match(photoLifecycleMigration, /snail_mail_attachment_deletion_outbox/i);
+  assert.match(worker, /snail_mail_photo_cleanup/);
+  assert.match(worker, /storage\.from\("snail-mail-attachments"\)\.remove/);
+});
+
+test("sensitive Snail Mail photos require sender attestation and recipient reveal", () => {
+  assert.match(actions, /photo_safety_confirmed/);
+  assert.match(actions, /sensitive_content/);
+  assert.match(actions, /letterPhotoSafetyRequired/);
+  assert.match(panel, /name="sensitive_content"/);
+  assert.match(panel, /name="photo_safety_confirmed"/);
+  assert.match(panel, /sensitivePhotosWarning/);
+  assert.match(panel, /revealSnailMailPhotos/);
+  assert.match(photoLifecycleMigration, /create table if not exists public\.snail_mail_attachment_reveals/i);
+  assert.match(photoLifecycleMigration, /not a\.sensitive_content or l\.sender_id=me or exists/i);
+  assert.match(photoLifecycleMigration, /reveal_snail_mail_attachments/i);
 });
 
 test("coarse delivery bands use country, region, locality, and protected macro-region configuration", () => {

@@ -6,10 +6,10 @@ const templateRoot = new URL("../supabase/templates/production/", import.meta.ur
 const contracts = [
   { name: "confirmation", variables: ["SiteURL", "TokenHash"], type: "signup", heading: "Confirm your email" },
   { name: "recovery", variables: ["SiteURL", "TokenHash"], type: "recovery", heading: "Reset your password" },
-  { name: "invite", variables: ["ConfirmationURL"], providerType: "invite", heading: "You're invited" },
-  { name: "magic-link", variables: ["ConfirmationURL"], providerType: "magiclink", heading: "Sign in to Pen-Pals" },
-  { name: "email-change", variables: ["ConfirmationURL", "NewEmail"], providerType: "email_change", heading: "Confirm your email change" },
-  { name: "reauthentication", variables: ["Token"], heading: "Your verification code" },
+  { name: "invite", variables: ["ConfirmationURL", "SiteURL"], providerType: "invite", heading: "You're invited" },
+  { name: "magic-link", variables: ["ConfirmationURL", "SiteURL"], providerType: "magiclink", heading: "Sign in to Pen-Pals" },
+  { name: "email-change", variables: ["ConfirmationURL", "NewEmail", "SiteURL"], providerType: "email_change", heading: "Confirm your email change" },
+  { name: "reauthentication", variables: ["Token", "SiteURL"], heading: "Your verification code" },
 ];
 const templates = new Map(await Promise.all(contracts.map(async ({ name }) => [
   name, await readFile(new URL(`${name}.html`, templateRoot), "utf8"),
@@ -17,6 +17,10 @@ const templates = new Map(await Promise.all(contracts.map(async ({ name }) => [
 
 function links(html) {
   return Array.from(html.matchAll(/<a\b[^>]*\bhref="([^"]*)"[^>]*>/gi), ([, href]) => href);
+}
+
+function images(html) {
+  return Array.from(html.matchAll(/<img\b[^>]*\bsrc="([^"]*)"[^>]*>/gi), ([, src]) => src);
 }
 
 function renderLink(href, values) {
@@ -37,7 +41,10 @@ for (const { name, variables, type, providerType, heading } of contracts) {
     assert.ok(html.includes(`>${heading}</h1>`), "The email must clearly name its action");
     assert.match(html, /If you (?:didn't|weren't)/);
     assert.doesNotMatch(html, /localhost|127\.0\.0\.1|https?:\/\//i);
-    assert.doesNotMatch(html, /<(?:img|script|iframe|form|link)\b|\b(?:src|srcset)=|@import|url\(/i);
+    assert.doesNotMatch(html, /<(?:script|iframe|form|link)\b|\bsrcset=|@import|url\(/i);
+    assert.deepEqual(images(html), ["{{ .SiteURL }}/assets/brand/logo/logo-primary.png"]);
+    assert.match(html, /#073A73/);
+    assert.match(html, /#60A4E1/);
     assert.equal(links(html).length, name === "reauthentication" ? 0 : 1);
   });
 

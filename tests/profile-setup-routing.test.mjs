@@ -37,7 +37,7 @@ test("incomplete authenticated profiles enter setup while completed saves exit t
 test("setup remains a valid edit destination for completed profiles without trapping them", () => {
   assert.match(setupPage, /entryComplete \? t\("app\.profile\.editProfile"\) : t\("app\.profile\.setUpProfile"\)/);
   assert.match(appNavigation, /href: "\/app\/profile\/setup", label: t\("app\.nav\.profile"\)/);
-  assert.match(appPage, /redirect\('\/app\/discover'\)/);
+  assert.match(appPage, /redirect\('\/app\/pen-pals'\)/);
   assert.match(setupPage, /app\.profile\.viewPublic/);
   assert.match(setupPage, /\?from=setup/);
 });

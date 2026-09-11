@@ -132,7 +132,7 @@ export default async function Home() {
         </section>
       )}
 
-      <PublicFooter />
+      <PublicFooter showLanguageSwitcher={false} />
     </main>
   );
 }

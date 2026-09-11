@@ -75,6 +75,11 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
     targetId ? db.rpc("get_profile_badges", { target_user: targetId }) : Promise.resolve({ data: [] }),
   ]);
   const isOwn = auth.claims.sub === targetId;
+  const memberInviteResult = isOwn ? await db.rpc("get_my_member_invites") : { data: null, error: null };
+  const memberInviteData = memberInviteResult.data && typeof memberInviteResult.data === "object" && !Array.isArray(memberInviteResult.data)
+    ? memberInviteResult.data as { sent?: unknown[] }
+    : null;
+  const memberInvites = Array.isArray(memberInviteData?.sent) ? memberInviteData.sent : [];
   const languageCompatibility = isOwn
     ? null
     : deriveLanguageCompatibility(compatibilityEntries(viewerLanguageResult.data), compatibilityEntries(languageResult.data));
@@ -124,5 +129,5 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
       ? profile.country.trim()
       : null;
   const friendshipDestinations = Array.isArray(friendshipDestinationResult.data) ? friendshipDestinationResult.data : [];
-  return <ProfileView profile={viewProfile} displayName={displayName} age={age} location={location ?? ""} activity={activity} responseRate={profile.response_rate_label ?? null} photo={photo} languages={languageResult.data ?? []} interests={interestResult.data ?? []} friendshipDestinations={friendshipDestinations} personality={personalityResult.data ?? null} communicationPreference={communicationModeResult.data ?? null} languageCompatibility={languageCompatibility} badges={badgeKeys(badgeResult.data)} blocked={Boolean(blockResult.data)} targetId={targetId} username={profile.username} reportControl={reportControl} isOwn={isOwn} backHref={backHref} backLabel={backLabel} reportError={navigation.error ?? null} reportSubmitted={navigation.reported === "1"} existingConversationId={existingConversationId} />;
+  return <ProfileView profile={viewProfile} displayName={displayName} age={age} location={location ?? ""} activity={activity} responseRate={profile.response_rate_label ?? null} photo={photo} languages={languageResult.data ?? []} interests={interestResult.data ?? []} friendshipDestinations={friendshipDestinations} personality={personalityResult.data ?? null} communicationPreference={communicationModeResult.data ?? null} languageCompatibility={languageCompatibility} badges={badgeKeys(badgeResult.data)} blocked={Boolean(blockResult.data)} targetId={targetId} username={profile.username} reportControl={reportControl} isOwn={isOwn} backHref={backHref} backLabel={backLabel} reportError={navigation.error ?? null} reportSubmitted={navigation.reported === "1"} existingConversationId={existingConversationId} memberInvites={memberInvites} />;
 }

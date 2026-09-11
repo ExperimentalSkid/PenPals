@@ -4,6 +4,7 @@ import { googleLoginIntentCookie, verifyGoogleLoginIntent } from "@/lib/auth/goo
 import { hasCompletedProfile } from "@/lib/profile-completeness";
 import { verificationSiteUrl } from "@/lib/verification/server";
 import { legalAcceptanceCookie, verifyLegalAcceptanceIntent } from "@/lib/auth/legal-acceptance";
+import { MEMBER_INVITE_COOKIE, validMemberInviteToken } from "@/lib/auth/member-invite";
 
 export const runtime = "nodejs";
 
@@ -96,6 +97,7 @@ export async function GET(request: NextRequest) {
     }
 
     if (signupEntry) {
+      const inviteToken = request.cookies.get(MEMBER_INVITE_COOKIE)?.value;
       const legalIntent = verifyLegalAcceptanceIntent(request.cookies.get(legalAcceptanceCookie)?.value);
       if (!legalIntent) {
         await db.auth.signOut();
@@ -109,6 +111,9 @@ export async function GET(request: NextRequest) {
       if (legalError) {
         await db.auth.signOut();
         return destination(request, "/sign-up?legal=required");
+      }
+      if (validMemberInviteToken(inviteToken)) {
+        await db.rpc("claim_member_invite", { p_token: inviteToken });
       }
     }
 

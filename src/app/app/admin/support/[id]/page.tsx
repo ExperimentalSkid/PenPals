@@ -5,8 +5,9 @@ import { requireStaff } from "../../guard";
 import { AdminHeader, AdminPage, StatusChip, toneForStatus } from "../../AdminChrome";
 import { safeAdminReturnTo } from "../../investigation-context";
 import SupportAttachmentViewer, { type SupportAttachment } from "@/app/app/support/SupportAttachmentViewer";
-import { addSupportInternalNote, claimSupportTicket, releaseSupportTicket, setSupportTicketStatus, staffReplyToSupportTicket } from "../actions";
+import { addSupportInternalNote, claimSupportTicket, createContactRetentionHold, escalateContactInvestigation, releaseContactRetentionHold, releaseSupportTicket, setSupportTicketStatus, staffReplyToSupportTicket } from "../actions";
 import StaffSupportSubmitButton from "../StaffSupportSubmitButton";
+import ContactAbuseContext from "../ContactAbuseContext";
 
 function labelFor(value: unknown) {
   return String(value ?? "").replaceAll("_", " ");
@@ -36,6 +37,10 @@ export default async function SupportTicket({ params, searchParams }: { params: 
 
   const ticket = data.ticket;
   const isPublicContact = ticket.ticket_type === "public_contact";
+  const { data: contactIntegrity, error: contactIntegrityError } = isPublicContact
+    ? await db.rpc("staff_get_contact_submission_integrity", { ticket_uuid: id })
+    : { data: null, error: null };
+  if (contactIntegrityError) throw contactIntegrityError;
   const returnTo = safeAdminReturnTo(query.return_to) ?? (isPublicContact ? "/app/admin/contact" : "/app/admin/support");
   const messages = Array.isArray(data.messages) ? data.messages : [];
   const rawAttachments = Array.isArray(data.attachments) ? data.attachments : [];
@@ -56,8 +61,30 @@ export default async function SupportTicket({ params, searchParams }: { params: 
   const assignedStaffId = ticket.assigned_staff?.id ?? null;
   const canAct = role === "admin" || assignedStaffId === uid;
   const contactMetadata = isPublicContact && ticket.contact?.metadata && typeof ticket.contact.metadata === "object" ? ticket.contact.metadata as Record<string, unknown> : {};
-  const metadataText = (key: string) => { const value = contactMetadata[key]; return typeof value === "string" && value.trim() ? value : null; };
-  const metadataCount = (key: string) => Number.isFinite(Number(contactMetadata[key])) ? Number(contactMetadata[key]) : 0;
+  let contactRecordHold: { id: string; reason: string; started_at: string } | null = null;
+  let contactCategoryHold: { id: string; reason: string; started_at: string } | null = null;
+  let contactInvestigation: { id: string; status: string; reason: string; created_at: string } | null = null;
+  if (isPublicContact && role === "admin") {
+    const [{ data: retentionConfig, error: retentionError }, { data: investigationData, error: investigationError }] = await Promise.all([
+      db.rpc("admin_get_retention_config"),
+      db.rpc("admin_get_contact_investigation", { ticket_uuid: id }),
+    ]);
+    if (investigationError) throw investigationError;
+    if (investigationData && typeof investigationData === "object") {
+      const investigation = investigationData as Record<string, unknown>;
+      contactInvestigation = { id: String(investigation.id ?? ""), status: String(investigation.status ?? "open"), reason: String(investigation.reason ?? ""), created_at: String(investigation.created_at ?? "") };
+    }
+    if (retentionError) throw retentionError;
+    const holds = Array.isArray((retentionConfig as { holds?: unknown[] } | null)?.holds) ? (retentionConfig as { holds: unknown[] }).holds : [];
+    for (const row of holds) {
+      if (!row || typeof row !== "object") continue;
+      const hold = row as Record<string, unknown>;
+      if (hold.category !== "contact_evidence") continue;
+      const parsed = { id: String(hold.id ?? ""), reason: String(hold.reason ?? ""), started_at: String(hold.started_at ?? "") };
+      if (hold.record_id === id) contactRecordHold = parsed;
+      else if (hold.record_id == null) contactCategoryHold = parsed;
+    }
+  }
   const status = String(ticket.status ?? "open");
   const updatedMessage = query.updated === "claimed"
     ? "Ticket claimed by you."
@@ -73,7 +100,13 @@ export default async function SupportTicket({ params, searchParams }: { params: 
               ? "Ticket reopened."
               : query.updated === "status"
                 ? "Ticket status updated."
-                : null;
+                : query.updated === "contact_hold_created"
+                  ? "Contact evidence retention hold created."
+                  : query.updated === "contact_hold_released"
+                    ? "Contact evidence retention hold released."
+                    : query.updated === "contact_escalated"
+                      ? "Contact ticket escalated to an investigation and placed under retention hold."
+                      : null;
 
   return <AdminPage>
     <AdminHeader active={isPublicContact ? "contact" : "support"} eyebrow={isPublicContact ? "Contact message" : "Support ticket"} title={ticket.ticket_code} description={ticket.subject} backHref={returnTo} backLabel={isPublicContact ? "Contact Inbox" : "Support Inbox"} isAdmin={role === "admin"}>
@@ -119,7 +152,35 @@ export default async function SupportTicket({ params, searchParams }: { params: 
 
       <aside className="space-y-8 border-l border-black/10 pl-8">
         <section aria-labelledby="queue-context-heading"><h2 id="queue-context-heading" className="section-title">Queue context</h2><p className="mt-3 text-sm text-black/55">This ticket is part of the {isPublicContact ? "Contact Inbox" : "Support Inbox"} and is separate from moderation cases.</p><dl className="mt-5 space-y-3 border-t border-black/10 pt-4 text-sm"><div><dt className="text-black/45">Ticket type</dt><dd className="mt-1">{ticket.ticket_type}</dd></div><div><dt className="text-black/45">Status</dt><dd className="mt-1">{statusLabel(status, isPublicContact)}</dd></div><div><dt className="text-black/45">Priority</dt><dd className="mt-1">{labelFor(ticket.priority)}</dd></div></dl></section>
-        {isPublicContact && <section className="border-t border-black/10 pt-7" aria-labelledby="abuse-context-heading"><p className="admin-eyebrow">Staff-only</p><h2 id="abuse-context-heading" className="section-title mt-1">Abuse context</h2><p className="mt-3 text-sm text-black/55">Request metadata is retained for contact-form abuse prevention and investigation.</p><dl className="mt-5 space-y-3 border-t border-black/10 pt-4 text-sm"><div><dt className="text-black/45">Email verified</dt><dd className="mt-1 font-medium">{contactMetadata.email_verified === true ? "Yes" : "No"}</dd></div><div><dt className="text-black/45">Verified at</dt><dd className="mt-1">{dateLabel(contactMetadata.email_verified_at)}</dd></div><div><dt className="text-black/45">Submission IP</dt><dd className="mt-1 break-all font-mono text-xs">{metadataText("ip") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">Verification IP</dt><dd className="mt-1 break-all font-mono text-xs">{metadataText("verification_ip") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">Cloudflare country / Ray</dt><dd className="mt-1 break-all text-xs">{metadataText("cf_country") ?? "Unavailable"} · {metadataText("cf_ray") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">User agent</dt><dd className="mt-1 break-words text-xs">{metadataText("user_agent") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">Accept-Language</dt><dd className="mt-1 break-words text-xs">{metadataText("accept_language") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">Referrer</dt><dd className="mt-1 break-all text-xs">{metadataText("referer") ?? "Unavailable"}</dd></div><div><dt className="text-black/45">Verification client</dt><dd className="mt-1">{contactMetadata.verification_same_client === true ? "Same client" : contactMetadata.verification_same_client === false ? "Different client" : "Unknown"}</dd></div><div><dt className="text-black/45">Earlier verified submissions</dt><dd className="mt-1">Email {metadataCount("prior_verified_email_count")} · client {metadataCount("prior_verified_client_count")} · IP {metadataCount("prior_verified_ip_count")}</dd></div><div><dt className="text-black/45">Client fingerprint hash</dt><dd className="mt-1 break-all font-mono text-[11px]">{metadataText("client_key_hash") ?? "Unavailable"}</dd></div></dl></section>}
+        {isPublicContact && <ContactAbuseContext metadata={contactMetadata} createdAt={ticket.created_at} integrity={contactIntegrity && typeof contactIntegrity === "object" ? contactIntegrity as Record<string, unknown> : null} />}
+        {isPublicContact && role === "admin" && <section className="border-t border-black/10 pt-7" aria-labelledby="contact-investigation-heading">
+          <p className="admin-eyebrow">Administrator only</p>
+          <h2 id="contact-investigation-heading" className="subsection-title mt-1">Investigation</h2>
+          {contactInvestigation ? <>
+            <p className="mt-3 text-sm font-medium text-[#8a5a00]">This Contact ticket has been escalated for investigation.</p>
+            <dl className="mt-3 space-y-2 text-xs text-black/55"><div><dt className="font-medium text-black/45">Status</dt><dd className="mt-1">{labelFor(contactInvestigation.status)}</dd></div><div><dt className="font-medium text-black/45">Reason</dt><dd className="mt-1 leading-5">{contactInvestigation.reason}</dd></div><div><dt className="font-medium text-black/45">Escalated</dt><dd className="mt-1">{dateLabel(contactInvestigation.created_at)}</dd></div></dl>
+            <form action={`/api/admin/contact-export/${id}`} method="post" className="mt-5 space-y-3 border-t border-black/10 pt-4"><label className="block text-sm text-black/60">Export reason<textarea name="reason" required maxLength={2000} rows={3} className="field mt-2 w-full resize-y" placeholder="Why is this forensic evidence package being prepared?" /></label><button className="btn-secondary w-full px-4 py-2.5 text-sm">Export evidence package</button><p className="text-xs leading-5 text-black/40">Creates a ZIP containing the immutable submission, ticket/messages, investigation, retention history, audit trail, embedded attachments and SHA-256 checksums. Export preparation is audited.</p></form>
+          </> : <>
+            <p className="mt-3 text-sm text-black/55">Escalate only when this Contact matter requires a formal internal investigation. Escalation automatically preserves the ticket under a record-level retention hold.</p>
+            <form action={escalateContactInvestigation} className="mt-4 space-y-3"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><label className="block text-sm text-black/60">Escalation reason<textarea name="reason" required maxLength={2000} rows={3} className="field mt-2 w-full resize-y" placeholder="Why does this Contact matter require investigation?" /></label><StaffSupportSubmitButton label="Escalate to investigation" pendingLabel="Escalating…" primary /></form>
+          </>}
+        </section>}
+        {isPublicContact && role === "admin" && <section className="border-t border-black/10 pt-7" aria-labelledby="contact-retention-heading">
+          <p className="admin-eyebrow">Administrator only</p>
+          <h2 id="contact-retention-heading" className="subsection-title mt-1">Evidence retention</h2>
+          {contactRecordHold ? <>
+            <p className="mt-3 text-sm font-medium text-[#8a5a00]">This Contact ticket has an active record-level retention hold.</p>
+            <dl className="mt-3 space-y-2 text-xs text-black/55"><div><dt className="font-medium text-black/45">Reason</dt><dd className="mt-1 leading-5">{contactRecordHold.reason}</dd></div><div><dt className="font-medium text-black/45">Started</dt><dd className="mt-1">{dateLabel(contactRecordHold.started_at)}</dd></div></dl>
+            {contactInvestigation && ["open", "investigating"].includes(contactInvestigation.status) ? <p className="mt-4 text-xs leading-5 text-black/50">This hold is locked while the Contact investigation is active. Resolve the investigation before releasing the evidence hold.</p> : <form action={releaseContactRetentionHold} className="mt-4"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><input type="hidden" name="hold_id" value={contactRecordHold.id} /><StaffSupportSubmitButton label="Release ticket hold" pendingLabel="Releasing…" /></form>}
+          </> : contactCategoryHold ? <>
+            <p className="mt-3 text-sm font-medium text-[#8a5a00]">This ticket is protected by a category-wide Contact evidence hold.</p>
+            <p className="mt-2 text-xs leading-5 text-black/50">{contactCategoryHold.reason}</p>
+            <p className="mt-3 text-xs text-black/40">Manage category-wide holds from Privacy &amp; Retention.</p>
+          </> : <>
+            <p className="mt-3 text-sm text-black/55">Preserve this ticket and its dependent Contact conversation from configured retention cleanup.</p>
+            <form action={createContactRetentionHold} className="mt-4 space-y-3"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><label className="block text-sm text-black/60">Hold reason<textarea name="reason" required maxLength={2000} rows={3} className="field mt-2 w-full resize-y" placeholder="Why must this Contact evidence be preserved?" /></label><StaffSupportSubmitButton label="Preserve this ticket" pendingLabel="Preserving…" primary /></form>
+          </>}
+        </section>}
         <section className="border-t border-black/10 pt-7" aria-labelledby="assignment-heading"><h2 id="assignment-heading" className="subsection-title">Assignment</h2><p className="mt-3 text-sm text-black/55">{assignedStaffId ? `Assigned to ${ticket.assigned_staff?.display_name || "another staff member"}.` : "No staff member owns this ticket yet."}</p>{!assignedStaffId ? <form action={claimSupportTicket} className="mt-4"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><StaffSupportSubmitButton label="Claim ticket" pendingLabel="Claiming…" primary /></form> : (assignedStaffId === uid || role === "admin") ? <form action={releaseSupportTicket} className="mt-4"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><StaffSupportSubmitButton label="Release assignment" pendingLabel="Releasing…" /></form> : <p className="mt-4 text-xs text-black/45">Only the assigned staff member or an administrator can change this assignment.</p>}</section>
         <section className="border-t border-black/10 pt-7" aria-labelledby="status-heading"><h2 id="status-heading" className="subsection-title">Ticket status</h2>{canAct ? <form action={setSupportTicketStatus} className="mt-4 space-y-3"><input type="hidden" name="ticket_id" value={id} /><input type="hidden" name="return_to" value={returnTo} /><label className="block text-sm text-black/60">Set status<select name="status" defaultValue={status} className="field mt-2 w-full"><option value="open">Open</option><option value="waiting_staff">Waiting for staff</option><option value="waiting_user">{isPublicContact ? "Waiting for contact" : "Waiting for user"}</option><option value="resolved">Resolved</option></select></label><StaffSupportSubmitButton label={status === "resolved" ? "Reopen or update status" : "Save status"} pendingLabel="Saving…" primary /></form> : <p className="mt-4 text-sm text-black/55">Claim this ticket before changing its status.</p>}</section>
       </aside>

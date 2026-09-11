@@ -8,7 +8,7 @@ const requestedBatchSize = Number.parseInt(process.env.BACKGROUND_JOB_BATCH_SIZE
 const batchSize = Number.isFinite(requestedBatchSize) ? Math.min(500, Math.max(1, requestedBatchSize)) : 100;
 
 export async function runBackgroundJobs(supabase, batchSize = 100) {
-  const summary = { avatar_jobs_processed: 0, snail_mail_delivered: 0, seo_snapshots_captured: 0, retention: null };
+  const summary = { avatar_jobs_processed: 0, snail_mail_delivered: 0, snail_mail_photos_deleted: 0, seo_snapshots_captured: 0, retention: null };
   const failures = [];
   // Keep dependent work together, but do not let one subsystem starve others.
   const attempt = async (name, work) => {
@@ -55,6 +55,29 @@ export async function runBackgroundJobs(supabase, batchSize = 100) {
     const { data: snailMailDelivered, error: snailMailError } = await supabase.rpc("process_snail_mail_delivery", { batch_size: batchSize });
     if (snailMailError) throw new Error("Snail Mail delivery job failed.");
     summary.snail_mail_delivered = snailMailDelivered ?? 0;
+  });
+
+  await attempt("snail_mail_photo_cleanup", async () => {
+    const { error: enqueueError } = await supabase.rpc("enqueue_expired_snail_mail_attachments", { batch_size: batchSize });
+    if (enqueueError) throw new Error("Unable to enqueue expired Snail Mail photos.");
+    const { data: claimed, error: claimError } = await supabase.rpc("claim_snail_mail_attachment_deletion_batch", { batch_size: batchSize });
+    if (claimError) throw new Error("Unable to claim Snail Mail photo cleanup jobs.");
+    const jobs = Array.isArray(claimed) ? claimed.filter((job) => job && typeof job.id === "string" && typeof job.path === "string") : [];
+    if (jobs.length) {
+      const ids = jobs.map((job) => job.id);
+      const paths = jobs.map((job) => job.path);
+      const { error: storageError } = await supabase.storage.from("snail-mail-attachments").remove(paths);
+      if (storageError) {
+        await supabase.rpc("fail_snail_mail_attachment_deletion_batch", { failed_ids: ids, cleanup_error: storageError.message });
+        throw new Error("Snail Mail photo cleanup failed and was returned to the retry queue.");
+      }
+      const { error: completeError } = await supabase.rpc("complete_snail_mail_attachment_deletion_batch", { completed_ids: ids });
+      if (completeError) {
+        await supabase.rpc("fail_snail_mail_attachment_deletion_batch", { failed_ids: ids, cleanup_error: completeError.message });
+        throw new Error("Snail Mail photo cleanup could not be completed and remains retryable.");
+      }
+    }
+    summary.snail_mail_photos_deleted = jobs.length;
   });
 
   await attempt("seo_refresh", async () => {

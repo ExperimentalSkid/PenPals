@@ -119,6 +119,7 @@ export async function saveNotificationPreferences(formData: FormData) {
     p_photo_access: formData.get("notify_photo_access") === "on",
     p_support_updates: formData.get("notify_support") === "on",
     p_verification_reminders: formData.get("notify_verification") === "on",
+    p_email_snail_mail: formData.get("email_snail_mail") === "on",
   });
   if (error) settingsError(t("server.settings.notificationSave"));
   redirect("/app/settings?notifications=saved#notifications");

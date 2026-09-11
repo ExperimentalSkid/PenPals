@@ -17,10 +17,11 @@ type GoogleAuthButtonProps = {
   legalAnd?: string;
   termsLabel?: string;
   privacyLabel?: string;
+  inviteToken?: string;
 };
 
 /** Google Auth login only; this never starts external-account verification. */
-export default function GoogleAuthButton({ errorPath = "/sign-in", next = "/app", openingLabel = "Opening Google…", continueLabel = "Continue with Google", errorMessage = "Google sign-in couldn't be completed. Please try again.", legalSignup = false, legalPrefix = "I agree to the", legalAnd = "and acknowledge the", termsLabel = "Terms", privacyLabel = "Privacy Policy" }: GoogleAuthButtonProps) {
+export default function GoogleAuthButton({ errorPath = "/sign-in", next = "/app", openingLabel = "Opening Google…", continueLabel = "Continue with Google", errorMessage = "Google sign-in couldn't be completed. Please try again.", legalSignup = false, legalPrefix = "I agree to the", legalAnd = "and acknowledge the", termsLabel = "Terms", privacyLabel = "Privacy Policy", inviteToken }: GoogleAuthButtonProps) {
   const [pending, setPending] = useState(false);
   const [legalAccepted, setLegalAccepted] = useState(false);
   const router = useRouter();
@@ -30,7 +31,7 @@ export default function GoogleAuthButton({ errorPath = "/sign-in", next = "/app"
     setPending(true);
     try {
       if (legalSignup) {
-        await prepareGoogleSignupLegalAcceptance();
+        await prepareGoogleSignupLegalAcceptance(inviteToken);
       }
       const params = new URLSearchParams({ mode: "login", next, ...(legalSignup ? { entry: "signup" } : {}) });
       const redirectTo = `${window.location.origin}/auth/callback?${params.toString()}`;

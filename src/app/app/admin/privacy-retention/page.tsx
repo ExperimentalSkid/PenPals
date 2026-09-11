@@ -7,6 +7,7 @@ const categories = [
   ["auth_security", "Auth & security"],
   ["moderation_audit", "Moderation audit"],
   ["moderation_evidence", "Moderation evidence"],
+  ["contact_evidence", "Contact evidence"],
 ] as const;
 
 const labelFor = (value: string) => categories.find(([key]) => key === value)?.[1] ?? value.replaceAll("_", " ");
@@ -34,7 +35,7 @@ export default async function PrivacyRetentionPage({ searchParams }: { searchPar
 
     <section className="mt-8" aria-labelledby="policies-heading">
       <div><p className="admin-eyebrow">Policies</p><h2 id="policies-heading" className="section-title mt-1">Retention periods</h2><p className="section-description mt-2 max-w-3xl">Each category remains disabled until an administrator records a period, purpose, legal basis, and explicitly enables it.</p></div>
-      <div className="mt-5 grid gap-4 lg:grid-cols-3">{categories.map(([category, label]) => {
+      <div className="mt-5 grid gap-4 lg:grid-cols-2 xl:grid-cols-4">{categories.map(([category, label]) => {
         const policy = policies.find((row: any) => row.category === category);
         return <article key={category} className="border border-black/10 bg-white/35 p-5">
           <div className="flex items-start justify-between gap-3"><h3 className="subsection-title">{label}</h3><StatusChip value={policy?.enabled ? "Enabled" : "Disabled"} tone={policy?.enabled ? "good" : "neutral"} /></div>

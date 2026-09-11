@@ -10,6 +10,7 @@ function client(failAt) {
       calls.push(name);
       if (name === failAt) return { error: { message: "private diagnostic" } };
       if (name === "claim_avatar_deletion_batch") return { data: [{ id: "job", path: "owner/avatar.png" }] };
+      if (name === "claim_snail_mail_attachment_deletion_batch") return { data: [] };
       return { data: 3 };
     },
     storage: { from: () => ({ remove: async () => {
@@ -23,11 +24,12 @@ function client(failAt) {
 test("all existing independent jobs run and SEO dependency order stays intact", async () => {
   const db = client();
   assert.deepEqual(await runBackgroundJobs(db, 50), {
-    avatar_jobs_processed: 1, snail_mail_delivered: 3,
+    avatar_jobs_processed: 1, snail_mail_delivered: 3, snail_mail_photos_deleted: 0,
     seo_snapshots_captured: 3, retention: 3, failed_jobs: [],
   });
   assert.deepEqual(db.calls, ["claim_avatar_deletion_batch", "storage.remove", "complete_avatar_deletion_batch",
-    "expire_introductions", "process_snail_mail_delivery", "refresh_seo_community_aggregates",
+    "expire_introductions", "process_snail_mail_delivery", "enqueue_expired_snail_mail_attachments",
+    "claim_snail_mail_attachment_deletion_batch", "refresh_seo_community_aggregates",
     "evaluate_seo_community_eligibility", "capture_seo_community_aggregate_snapshots", "purge_retained_data"]);
 });
 

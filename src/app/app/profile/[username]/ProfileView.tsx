@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { startConversation } from "@/app/app/messages/actions";
 import BlockControl from "@/app/app/profile/BlockControl";
@@ -13,6 +14,7 @@ import type { ProfileBadgeKey } from "@/lib/profile-badges";
 import type { LanguageCompatibility } from "@/lib/language-compatibility";
 import type { ReactNode } from "react";
 import { getPageI18n } from "@/i18n/server";
+import InviteMember from "@/app/app/profile/InviteMember";
 
 type Profile = {
   show_activity_status?: boolean | null;
@@ -49,6 +51,7 @@ type ProfileViewProps = {
   reportError?: string | null;
   reportSubmitted?: boolean;
   existingConversationId?: string | null;
+  memberInvites?: unknown[];
 };
 
 type DetailIconName = "languages" | "interests" | "response" | "communication" | "location" | "eye";
@@ -76,7 +79,7 @@ function interestName(value: ProfileInterest["interests"]) {
   return relation?.name?.trim() || null;
 }
 
-export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "", reportError = null, reportSubmitted = false, existingConversationId = null }: ProfileViewProps) {
+export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "", reportError = null, reportSubmitted = false, existingConversationId = null, memberInvites = [] }: ProfileViewProps) {
   const { t } = await getPageI18n();
   const initial = displayName.trim().charAt(0).toUpperCase() || "·";
   const communicationModes = communicationPreference === "snail_mail"
@@ -106,7 +109,7 @@ export default async function ProfileView({ profile, displayName, age, location,
           <aside className="w-full max-w-[300px] justify-self-center lg:max-w-[280px] lg:justify-self-start xl:max-w-[260px] 2xl:max-w-[300px]">
             <div className="relative aspect-[0.68] w-full overflow-hidden rounded-[20px] border border-[#d9cdb9] bg-[#f1e8d9] p-2 shadow-[0_3px_0_#e4d8c6]">
               <div className="relative h-full w-full overflow-hidden rounded-[14px] bg-[#e9e8df]">
-                {photo ? <img src={photo} alt={displayName} className="h-full w-full object-cover" /> : <div role="img" aria-label={t("app.profile.photoUnavailableFor", { name: displayName })} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
+                {photo ? <Image src={photo} alt={displayName} fill sizes="(max-width: 1023px) 300px, (max-width: 1279px) 280px, 300px" unoptimized className="object-cover" /> : <div role="img" aria-label={t("app.profile.photoUnavailableFor", { name: displayName })} className="flex h-full items-center justify-center"><span aria-hidden="true" className="font-serif text-6xl text-muted">{initial}</span></div>}
               </div>
               {photo && <div className="absolute bottom-4 left-1/2 inline-flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-[#fbfaf7]/95 px-3 py-1.5 text-xs font-medium text-brand shadow-sm"><DetailIcon name="eye" />{t("app.profile.photoVisible")}</div>}
             </div>
@@ -122,6 +125,7 @@ export default async function ProfileView({ profile, displayName, age, location,
                 </>}
               />
             </div>}
+            {isOwn && <InviteMember existingInvites={memberInvites} labels={{ title: t("app.profile.inviteTitle"), body: t("app.profile.inviteBody"), create: t("app.profile.inviteCreate"), creating: t("app.profile.inviteCreating"), copy: t("app.profile.inviteCopy"), copied: t("app.profile.inviteCopied"), revoke: t("app.profile.inviteRevoke"), revoked: t("app.profile.inviteRevoked"), expires: t("app.profile.inviteExpires"), active: t("app.profile.inviteActive"), opened: t("app.profile.inviteOpened"), unopened: t("app.profile.inviteUnopened"), error: t("app.profile.inviteError") }} />}
             <div className="mt-5 w-full [&>button]:min-h-11 [&>button]:w-full [&>button]:rounded-md">
               {isOwn ? <Link href="/app/profile/setup" className="btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-md text-center">{t("app.profile.edit")}</Link> : existingConversationId ? <Link href={`/app/messages/${existingConversationId}`} className="btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-md text-center">{t("app.profile.goToInbox")}</Link> : <IcebreakerModal action={startConversation} userId={targetId} username={username} recipientName={displayName} interestNames={interests.flatMap((interest) => { const name = interestName(interest.interests); return name ? [name] : []; })} />}
             </div>

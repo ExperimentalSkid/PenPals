@@ -109,7 +109,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
     db.rpc("get_my_security_settings_summary"),
   ]);
   const notificationPreferences = !notificationPreferenceError && notificationPreferenceData && typeof notificationPreferenceData === "object" && !Array.isArray(notificationPreferenceData)
-    ? notificationPreferenceData as { introductions?: boolean; photo_access?: boolean; support_updates?: boolean; verification_reminders?: boolean }
+    ? notificationPreferenceData as { introductions?: boolean; photo_access?: boolean; support_updates?: boolean; verification_reminders?: boolean; email_snail_mail?: boolean }
     : null;
   const securitySettings: SecuritySettingsSummary | null = !securitySettingsError && securitySettingsData && typeof securitySettingsData === "object" && !Array.isArray(securitySettingsData)
     ? securitySettingsData as SecuritySettingsSummary
@@ -200,6 +200,7 @@ export default async function Settings({ searchParams }: { searchParams: Promise
                 <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifyPhotos")}</span><input type="checkbox" name="notify_photo_access" defaultChecked={notificationPreferences.photo_access !== false} className="h-4 w-4 accent-[#087456]" /></label>
                 <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifySupport")}</span><input type="checkbox" name="notify_support" defaultChecked={notificationPreferences.support_updates !== false} className="h-4 w-4 accent-[#087456]" /></label>
                 <label className="flex items-center justify-between gap-6 py-4 text-sm"><span>{t("app.settings.notifyVerification")}</span><input type="checkbox" name="notify_verification" defaultChecked={notificationPreferences.verification_reminders !== false} className="h-4 w-4 accent-[#087456]" /></label>
+                <label className="flex items-start justify-between gap-6 py-4 text-sm"><span><span className="font-medium">{t("app.settings.emailSnailMail")}</span><span className="mt-1 block max-w-xl text-xs leading-5 text-black/50">{t("app.settings.emailSnailMailBody")}</span></span><input type="checkbox" name="email_snail_mail" defaultChecked={notificationPreferences.email_snail_mail !== false} className="mt-0.5 h-4 w-4 accent-[#087456]" /></label>
                 <div className="py-5"><button className="btn-primary px-4 py-2.5 text-sm">{t("app.settings.saveNotifications")}</button></div>
               </form>}
             </section>

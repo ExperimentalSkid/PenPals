@@ -12,8 +12,9 @@ export const metadata: Metadata = {
 };
 
 
-export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; appeal?: string; legal?: string }> }) {
-  const { error, message, appeal, legal } = await searchParams;
+export default async function SignUp({ searchParams }: { searchParams: Promise<{ error?: string; message?: string; appeal?: string; legal?: string; invite?: string }> }) {
+  const { error, message, appeal, legal, invite } = await searchParams;
+  const inviteToken = typeof invite === "string" && /^[0-9a-f]{64}$/.test(invite) ? invite : undefined;
   const { locale, t } = await getPageI18n();
   const displayError = legal === "required" ? t("auth.signUp.legalRequired") : error;
 
@@ -34,7 +35,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
         </header>
 
         <div className="mt-9 space-y-4">
-          <GoogleAuthButton errorPath="/sign-up" openingLabel={t("auth.google.open")} continueLabel={t("auth.google.continue")} errorMessage={t("auth.google.error")} legalSignup legalPrefix={t("auth.signUp.legalPrefix")} legalAnd={t("auth.signUp.legalAnd")} termsLabel={t("common.terms")} privacyLabel={t("common.privacyPolicy")} />
+          <GoogleAuthButton errorPath="/sign-up" openingLabel={t("auth.google.open")} continueLabel={t("auth.google.continue")} errorMessage={t("auth.google.error")} inviteToken={inviteToken} legalSignup legalPrefix={t("auth.signUp.legalPrefix")} legalAnd={t("auth.signUp.legalAnd")} termsLabel={t("common.terms")} privacyLabel={t("common.privacyPolicy")} />
           <div className="flex items-center gap-3 py-1 text-xs uppercase tracking-[.16em] text-black/40">
             <span className="h-px flex-1 bg-black/10" />
             <span>{t("common.or")}</span>
@@ -43,6 +44,7 @@ export default async function SignUp({ searchParams }: { searchParams: Promise<{
         </div>
 
         <form action={signUp} className="mt-4 space-y-5" aria-describedby={displayError ? "sign-up-error" : undefined}>
+          {inviteToken && <input type="hidden" name="member_invite_token" value={inviteToken} />}
           <label className="field-label">
             {t("common.email")}
             <input name="email" type="email" autoComplete="email" required className="field mt-2 block w-full" />

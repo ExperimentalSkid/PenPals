@@ -168,7 +168,7 @@ function buildFiles(data: ExportData, accessInformation: ReturnType<typeof build
     "pen-pals.net personal data export",
     "",
     "This ZIP contains data associated with your account at the time the export was generated.",
-    "Categories: account, profile, settings, notification preferences, active sessions, legal acceptances, languages, interests, introductions, conversations, messages, notifications, photo access, blocks, photos, activity/security history, external verification links, reports you submitted, and redacted reports or moderation records concerning this account.",
+    "Categories: account, profile, settings, notification preferences, active sessions, legal acceptances, member invitations, languages, interests, introductions, conversations, messages, notifications, photo access, blocks, photos, activity/security history, external verification links, reports you submitted, and redacted reports or moderation records concerning this account.",
     "Conversation participants are represented as self/other to protect other people's privacy; a permanently deleted participant is represented as Deleted user. Reports about this account and moderation records are included only as redacted access information; reporter identities and protected evidence are withheld.",
     "Messages are included because they are part of your communication history. Shared conversation records remain for surviving participants with deleted senders anonymized.",
     "The export is generated on demand and is not stored as a server-side archive.",
@@ -181,9 +181,11 @@ function buildFiles(data: ExportData, accessInformation: ReturnType<typeof build
     { name: "account.csv", content: csv([data.account], ["email", "created_at", "last_sign_in_at", "role", "status", "deactivated_at"]) },
     { name: "profile.csv", content: csv([data.profile], ["username", "display_name", "birth_date", "gender", "country", "city", "bio", "quote", "looking_for", "avatar_path", "created_at", "updated_at"]) },
     { name: "settings.csv", content: csv([data.settings], ["profile_visibility", "show_city", "show_activity_status", "show_response_rate", "accepting_new_conversations", "introduction_scope", "availability", "deactivated_at", "country_exclusion_codes", "require_login_mfa"]) },
-    { name: "notification-preferences.csv", content: csv([data.notification_preferences], ["introductions", "photo_access", "support_updates", "verification_reminders"]) },
+    { name: "notification-preferences.csv", content: csv([data.notification_preferences], ["introductions", "photo_access", "support_updates", "verification_reminders", "email_snail_mail"]) },
     { name: "active-sessions.csv", content: csv(asArray(data.active_sessions), ["id", "created_at", "updated_at", "refreshed_at", "not_after", "aal", "user_agent", "ip_address"]) },
     { name: "legal-acceptances.csv", content: csv(asArray(data.legal_acceptances), ["terms_version", "privacy_version", "accepted_at", "source", "locale"]) },
+    { name: "member-invites-sent.csv", content: csv(asArray(objectValue(data.member_invites).sent), ["id", "created_at", "expires_at", "opened_at", "registered_at", "completed_at", "revoked_at"]) },
+    { name: "member-invites-received.csv", content: csv(asArray(objectValue(data.member_invites).received), ["id", "inviter_username", "registered_at", "completed_at"]) },
     { name: "languages.csv", content: csv(asArray(data.languages), ["language", "proficiency", "purpose"]) },
     { name: "interests.csv", content: csv(asArray(data.interests).map((name) => ({ interest: name })), ["interest"]) },
     { name: "introductions.csv", content: csv(asArray(data.introductions), ["id", "direction", "body", "status", "created_at", "handled_at", "expires_at", "conversation_id"]) },
@@ -223,14 +225,15 @@ export async function GET() {
   const { data: claimsData } = await db.auth.getClaims();
   if (!claimsData?.claims?.sub) redirect("/sign-in");
 
-  const [supplementResult, notificationResult, securityResult, legalAcceptanceResult] = await Promise.all([
+  const [supplementResult, notificationResult, securityResult, legalAcceptanceResult, memberInviteResult] = await Promise.all([
     db.rpc("get_my_data_export_supplement"),
     db.rpc("get_my_notification_preferences"),
     db.rpc("get_my_security_settings_summary"),
     db.from("legal_acceptances").select("terms_version,privacy_version,accepted_at,source,locale").order("accepted_at", { ascending: true }),
+    db.rpc("get_my_member_invites"),
   ]);
   const { data: supplement, error: supplementError } = supplementResult;
-  if (supplementError || !supplement || typeof supplement !== "object" || notificationResult.error || securityResult.error || legalAcceptanceResult.error) {
+  if (supplementError || !supplement || typeof supplement !== "object" || notificationResult.error || securityResult.error || legalAcceptanceResult.error || memberInviteResult.error) {
     return new Response(JSON.stringify({ error: "We couldn't prepare the access information for your export." }), { status: 500, headers: { "content-type": "application/json" } });
   }
 
@@ -251,6 +254,7 @@ export async function GET() {
     notification_preferences: objectValue(notificationResult.data),
     active_sessions: asArray(objectValue(securityResult.data).sessions),
     legal_acceptances: asArray(legalAcceptanceResult.data),
+    member_invites: objectValue(memberInviteResult.data),
     external_verification: asArray(supplementRecord.external_verification),
     reports_about: asArray(supplementRecord.reports_about),
     moderation: objectValue(supplementRecord.moderation),

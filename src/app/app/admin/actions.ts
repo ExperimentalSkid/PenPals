@@ -203,7 +203,7 @@ export async function setAdminRetentionPolicy(formData: FormData) {
   const purpose = String(formData.get("purpose") ?? "").trim();
   const legalBasis = String(formData.get("legal_basis") ?? "").trim();
   const enabled = String(formData.get("enabled") ?? "") === "on";
-  if (!["auth_security", "moderation_audit", "moderation_evidence"].includes(category) || !Number.isInteger(days) || days < 1 || days > 36500 || !purpose || purpose.length > 2000 || !legalBasis || legalBasis.length > 2000) {
+  if (!["auth_security", "moderation_audit", "moderation_evidence", "contact_evidence"].includes(category) || !Number.isInteger(days) || days < 1 || days > 36500 || !purpose || purpose.length > 2000 || !legalBasis || legalBasis.length > 2000) {
     redirect(`/app/admin/privacy-retention?error=${encodeURIComponent("Choose a valid category and retention period, purpose, and legal basis.")}`);
   }
   const { error } = await db.rpc("set_data_retention_policy", {
@@ -223,7 +223,7 @@ export async function createAdminRetentionHold(formData: FormData) {
   const category = String(formData.get("category") ?? "");
   const recordId = String(formData.get("record_id") ?? "").trim() || null;
   const reason = String(formData.get("reason") ?? "").trim();
-  if (!["auth_security", "moderation_audit", "moderation_evidence"].includes(category) || reason.length < 1 || reason.length > 2000) {
+  if (!["auth_security", "moderation_audit", "moderation_evidence", "contact_evidence"].includes(category) || reason.length < 1 || reason.length > 2000) {
     redirect(`/app/admin/privacy-retention?error=${encodeURIComponent("Choose a valid category and provide a hold reason.")}`);
   }
   const { error } = await db.rpc("set_data_retention_hold", {

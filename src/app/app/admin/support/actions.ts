@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireStaff } from "../guard";
+import { requireAdmin, requireStaff } from "../guard";
 import { safeAdminReturnTo } from "../investigation-context";
 import {
   sendPublicContactReplyEmail,
@@ -118,4 +118,49 @@ export async function setSupportTicketStatus(formData: FormData) {
   if (error) ticketError(ticketId, returnTo, error.message ?? "Support ticket status could not be updated.");
   revalidatePath("/app", "layout");
   redirect(ticketPath(ticketId, returnTo, { updated: status === "open" ? "reopened" : "status" }));
+}
+export async function createContactRetentionHold(formData: FormData) {
+  const { db } = await requireAdmin();
+  const { ticketId, returnTo } = readTicket(formData);
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That contact ticket could not be found.");
+  if (reason.length < 1 || reason.length > 2000) ticketError(ticketId, returnTo, "Provide a retention-hold reason between 1 and 2,000 characters.");
+  const { error } = await db.rpc("admin_preserve_contact_evidence", {
+    ticket_uuid: ticketId,
+    hold_reason: reason,
+  });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "The Contact evidence hold could not be created.");
+  revalidatePath(`/app/admin/support/${ticketId}`);
+  revalidatePath("/app/admin/privacy-retention");
+  redirect(ticketPath(ticketId, returnTo, { updated: "contact_hold_created" }));
+}
+
+export async function releaseContactRetentionHold(formData: FormData) {
+  const { db } = await requireAdmin();
+  const { ticketId, returnTo } = readTicket(formData);
+  const holdId = String(formData.get("hold_id") ?? "").trim();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That contact ticket could not be found.");
+  if (!UUID_PATTERN.test(holdId)) ticketError(ticketId, returnTo, "That retention hold could not be found.");
+  const { error } = await db.rpc("admin_release_contact_evidence_hold", { ticket_uuid: ticketId, hold_uuid: holdId });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "The Contact evidence hold could not be released.");
+  revalidatePath(`/app/admin/support/${ticketId}`);
+  revalidatePath("/app/admin/privacy-retention");
+  redirect(ticketPath(ticketId, returnTo, { updated: "contact_hold_released" }));
+}
+
+
+export async function escalateContactInvestigation(formData: FormData) {
+  const { db } = await requireAdmin();
+  const { ticketId, returnTo } = readTicket(formData);
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!UUID_PATTERN.test(ticketId)) ticketError(ticketId, returnTo, "That contact ticket could not be found.");
+  if (reason.length < 1 || reason.length > 2000) ticketError(ticketId, returnTo, "Provide an escalation reason between 1 and 2,000 characters.");
+  const { data, error } = await db.rpc("admin_escalate_contact_investigation", {
+    ticket_uuid: ticketId,
+    escalation_reason: reason,
+  });
+  if (error) ticketError(ticketId, returnTo, error.message ?? "The Contact ticket could not be escalated.");
+  revalidatePath(`/app/admin/support/${ticketId}`);
+  revalidatePath("/app/admin/contact");
+  redirect(ticketPath(ticketId, returnTo, { updated: "contact_escalated", investigation: String(data ?? "") }));
 }

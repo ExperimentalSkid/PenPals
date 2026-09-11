@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
@@ -39,7 +40,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const { data: ageRestricted, error: ageRestrictionError } = await db.rpc("is_current_user_age_restricted");
   if (ageRestrictionError) redirect("/sign-in?error=Account%20unavailable");
   if (ageRestricted) redirect("/age-appeal");
-  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,role,deactivated_at,require_login_mfa,onboarding_welcome_completed_at").eq("id", uid).maybeSingle();
+  const { data: p, error: profileError } = await db.from("profiles").select("username,display_name,avatar_path,role,deactivated_at,require_login_mfa,onboarding_welcome_completed_at").eq("id", uid).maybeSingle();
   if (profileError) redirect("/sign-in?error=Account%20unavailable");
   if (p?.deactivated_at) redirect("/reactivate");
   if (p?.require_login_mfa && String(data?.claims?.aal ?? "") !== "aal2") redirect("/auth/mfa");
@@ -103,6 +104,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const modInboxCount = ["new_cases", "triage_cases", "investigating_cases", "waiting_cases"]
     .reduce((total, key) => total + Number(staffSummary?.[key] ?? 0), 0);
   const initial = (p?.display_name ?? p?.username ?? "P").trim().charAt(0).toUpperCase() || "P";
+  const profileHref = p?.username ? `/app/profile/${encodeURIComponent(p.username)}` : "/app/profile/setup";
+  const profilePhotoUrl = p?.avatar_path ? `/api/profile-photo/${encodeURIComponent(uid)}` : null;
 
   return <NextIntlClientProvider locale={locale} messages={messages}><PresenceProvider userId={uid}><div lang={locale} className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
     <aside className="app-sidebar">
@@ -110,8 +113,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       {/* Staff routes remain deep-linkable: href="/app/admin/cases" is rendered by AppNavigation. */}
       <AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} />
       <div className="app-user-block">
-        <Link href="/app/profile/setup" className="app-user-link">
-          <span className="app-user-avatar" aria-hidden="true">{initial}</span>
+        <Link href={profileHref} className="app-user-link" aria-label={t("app.shell.openProfile")}>
+          <span className="app-user-avatar relative overflow-hidden" aria-hidden="true">{profilePhotoUrl ? <Image src={profilePhotoUrl} alt="" fill sizes="40px" unoptimized className="object-cover" /> : initial}</span>
           <span className="min-w-0"><span className="block truncate text-sm font-semibold text-primary">{p?.display_name ?? t("app.shell.yourProfile")}</span><span className="block truncate text-xs text-black/50">@{p?.username ?? t("app.shell.member")}</span></span>
         </Link>
         <div className="mt-3 flex justify-center border-t border-black/10 pt-3"><LanguageSwitcher locale={locale} label={t("common.language")} /></div>
@@ -125,6 +128,6 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </div>
     </aside>
-    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label={t("common.homeAria")} className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href="/app/profile/setup" className="app-mobile-profile" aria-label={t("app.shell.openProfile")}>{initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
+    <div className="min-w-0"><div className="app-mobile-header"><div className="flex items-center justify-between gap-3"><Link href="/app/discover" aria-label={t("common.homeAria")} className="app-mobile-logo"><BrandLogo variant="wordmark" loading="eager" className="h-auto w-[8.5rem]" /></Link><Link href={profileHref} className="app-mobile-profile relative overflow-hidden" aria-label={t("app.shell.openProfile")}>{profilePhotoUrl ? <Image src={profilePhotoUrl} alt="" fill sizes="36px" unoptimized className="object-cover" /> : initial}</Link></div><AppNavigation unreadCount={Number(unreadCount ?? 0)} modInboxCount={modInboxCount} supportInboxCount={Number(supportInboxCount ?? 0)} contactInboxCount={Number(contactInboxCount ?? 0)} role={role} mobile /></div>{children}</div>
   </div></PresenceProvider></NextIntlClientProvider>;
 }

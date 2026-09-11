@@ -21,6 +21,7 @@ const validEnvironment = {
   NEXT_PUBLIC_SUPABASE_URL: "https://api.penpals.example",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: publishableKey,
   SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey,
+  CONTACT_CORRELATION_HMAC_SECRET: "c".repeat(32),
 };
 
 function run(overrides = {}) {
@@ -72,6 +73,10 @@ test("production application config guards key separation and optional deploymen
   const sameKey = run({ SUPABASE_SERVICE_ROLE_KEY: publishableKey });
   assert.notEqual(sameKey.status, 0);
   assert.match(sameKey.stderr, /must be distinct/);
+
+  const shortContactSecret = run({ CONTACT_CORRELATION_HMAC_SECRET: "too-short" });
+  assert.notEqual(shortContactSecret.status, 0);
+  assert.match(shortContactSecret.stderr, /CONTACT_CORRELATION_HMAC_SECRET must be at least 32 characters/);
 
   const shortGoogleSecret = run({ GOOGLE_LOGIN_STATE_SECRET: "too-short" });
   assert.notEqual(shortGoogleSecret.status, 0);

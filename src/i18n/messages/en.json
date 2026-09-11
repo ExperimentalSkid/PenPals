@@ -155,6 +155,13 @@
       "signOut": "Sign out instead"
     }
   },
+  "invite": {
+    "eyebrow": "Private invitation",
+    "title": "You’ve been invited to Pen-Pals",
+    "body": "{name} invited you to join Pen-Pals — a place for thoughtful international friendship, messages, and digital Snail Mail.",
+    "join": "Create your account",
+    "already": "Already a member?"
+  },
   "contact": {
     "eyebrow": "Contact",
     "title": "Contact pen-pals.net",
@@ -188,13 +195,14 @@
       "bug": "Bug report",
       "feedback": "Feedback",
       "other": "Other"
-    }
+    },
+    "privacyNotice": "To prevent spam and abuse, this form records request metadata such as IP address, browser/user-agent details, Cloudflare request information when available, language, and browser-reported timezone/clock data. These signals support verification and correlation; they do not prove identity or physical location. See Privacy for details."
   },
   "privacy": {
     "eyebrow": "Privacy",
     "title": "Privacy & data rights",
     "intro": "This page explains what pen-pals.net uses data for, what members can control, and where account export or deletion lives.",
-    "updated": "Last updated: September 9, 2026",
+    "updated": "Last updated: September 11, 2026",
     "summary": "pen-pals.net uses personal data to run accounts, profiles, introductions, messages, Snail Mail, settings, support, moderation, safety checks, and basic service security. It does not sell member profiles or private conversations.",
     "dataTitle": "Data the app uses",
     "cards": {
@@ -205,7 +213,7 @@
       "communicationTitle": "Communication data",
       "communicationBody": "Introductions, conversations, messages, Snail Mail letters, delivery/read state, notifications, and contact preferences.",
       "safetyTitle": "Privacy and safety data",
-      "safetyBody": "Blocks, reports, moderation records, support tickets, attachment metadata, availability choices, and private verification status."
+      "safetyBody": "Blocks, reports, moderation records, support and public Contact tickets, attachment metadata, availability choices, private verification status, and limited anti-abuse/security metadata used to protect the service."
     },
     "visibilityTitle": "What other members can see",
     "visibilityBody": "Public profile views use privacy-aware server checks. Members can control profile visibility, city display, activity status, response-rate display, communication modes, blocked users, and who can send new introductions. Verification shows only whether a profile is verified, not the private method used.",
@@ -219,7 +227,13 @@
     "rightsTitle": "Your rights",
     "rightsBody": "Depending on where you live, privacy laws may give you rights to access, correct, delete, restrict, export, or object to certain processing of your personal data. pen-pals.net is built around those practical controls where possible: export, correction, deletion, privacy settings, blocking, and support requests.",
     "contactTitle": "Contact",
-    "contactBody": "For privacy or data-rights questions, use the contact form. If you can sign in, you can also open Help & support from the app."
+    "contactBody": "For privacy or data-rights questions, use the contact form. If you can sign in, you can also open Help & support from the app.",
+    "contactDataTitle": "Public Contact form and anti-abuse data",
+    "contactDataBody": "When you use the public Contact form, pen-pals.net processes the name you provide, email address, topic, subject, message, email-verification status, and limited request metadata used for spam, abuse, security, and evidence-integrity purposes. This can include the IP address observed by the server, hashed IP/correlation values, user-agent and browser client hints, Cloudflare country/Ray identifiers when available, referrer/origin, accepted language, and browser-reported timezone, UTC offset, clock, and language settings. Browser-reported values can be spoofed and are treated only as supporting signals, not proof of identity or location.",
+    "contactPurposeTitle": "Why Contact security data is used",
+    "contactPurposeBody": "Contact data is used to deliver and verify your message, prevent repeated or automated abuse, correlate repeated submissions, investigate serious misuse, preserve evidence when a documented investigation or legal need requires it, and maintain an auditable record of privileged evidence access or export. Access to protected Contact evidence and investigation tools is restricted to authorised staff, with the most sensitive preservation, investigation, and export actions limited to administrators. These security and abuse-prevention activities are generally carried out on the basis of legitimate interests in operating and protecting the service, preventing fraud or unlawful use, and establishing, exercising, or defending legal claims where applicable.",
+    "contactRetentionTitle": "Contact retention and investigations",
+    "contactRetentionBody": "Unverified Contact submissions use one-time email verification and expire after one hour; stale pending verification records are cleaned up automatically, and verified pending records have their submitted content scrubbed after the Contact ticket is created. Resolved Contact tickets are subject to the retention rules configured by administrators. Serious matters may be placed under a documented record-level or category-wide retention hold, including while an investigation is active. When a hold is released and an applicable retention rule allows deletion, the Contact ticket and dependent message/evidence records are removed together."
   },
   "faq": {
     "eyebrow": "Help",
@@ -391,6 +405,7 @@
   },
   "app": {
     "nav": {
+      "penPals": "My Pen Pals",
       "discover": "Discover",
       "introductions": "Introductions",
       "messages": "Messages",
@@ -412,6 +427,24 @@
       "privacy": "Privacy",
       "gdpr": "GDPR",
       "faq": "FAQ"
+    },
+    "penPals": {
+      "eyebrow": "Your people",
+      "title": "My Pen Pals",
+      "intro": "The friendships you have already started, with your correspondence at a glance.",
+      "list": "Your pen pals",
+      "sent": "Sent",
+      "received": "Received",
+      "lastContact": "Last contact",
+      "noContact": "Not yet",
+      "unread": "Unread",
+      "openConversation": "Open conversation",
+      "viewProfile": "View profile",
+      "emptyTitle": "No pen pals yet",
+      "emptyBody": "When an introduction turns into a conversation, that person will appear here.",
+      "discover": "Discover someone new",
+      "deletedUser": "Deleted user",
+      "loadError": "We couldn’t load your pen pals right now. Please try again."
     },
     "discover": {
       "eyebrow": "Discover",
@@ -699,6 +732,9 @@
       "write": "Write a letter",
       "yourLetter": "Your letter",
       "limit": "Up to 5,000 characters",
+      "photos": "Photos",
+      "photosHint": "Optional · up to 3 photos · JPG, PNG, or WebP · 5 MB each · temporary storage",
+      "attachedPhotos": "Attached photos",
       "send": "Send letter",
       "cancelCompose": "Cancel",
       "description": "Send a digital letter. Its delivery time is set when you send it.",
@@ -750,7 +786,12 @@
       "lostPigeon2": "The pigeon has not reported back from the journey.",
       "lostDefault1": "Lost in transit. Somewhere, a sorting office has questions to answer.",
       "lostDefault2": "This letter never made it to its destination.",
-      "journeyMapLabel": "Approximate letter journey from {origin} to {destination}, {percent} percent complete"
+      "journeyMapLabel": "Approximate letter journey from {origin} to {destination}, {percent} percent complete",
+      "sensitivePhotosLabel": "These photos contain nudity or sexual content. Hide them behind a recipient warning.",
+      "photoSafetyConfirmation": "I confirm I classified these photos accurately and am not sending sexual or nude content without the recipient’s consent.",
+      "sensitivePhotosWarning": "This letter contains photos the sender marked as nudity or sexual content. They are hidden until you choose to view them.",
+      "showSensitivePhotos": "Show sensitive photos",
+      "photoRetention": "Photos are temporary: 14 active days after reading, or 30 active days after delivery if unread. Voluntary inactive mode pauses the clock."
     },
     "profile": {
       "preview": "Your profile preview",
@@ -804,6 +845,19 @@
       "photoVisible": "Photo visible to you",
       "verifiedTooltip": "Verified within the last 30 days using an authenticator app or another approved method. This helps show the account is actively controlled by a person; it is not a guarantee about the person or their activity.",
       "edit": "Edit profile",
+      "inviteTitle": "Invite someone",
+      "inviteBody": "Know someone who would enjoy thoughtful international friendship? Create a private invitation link to share with them.",
+      "inviteCreate": "Create invitation link",
+      "inviteCreating": "Creating…",
+      "inviteCopy": "Copy link",
+      "inviteCopied": "Copied",
+      "inviteRevoke": "Revoke",
+      "inviteRevoked": "Invitation revoked.",
+      "inviteExpires": "Expires {date}",
+      "inviteActive": "Active invitations",
+      "inviteOpened": "Opened",
+      "inviteUnopened": "Not opened yet",
+      "inviteError": "We couldn't update this invitation right now.",
       "goToInbox": "Go to inbox",
       "more": "more",
       "ownerTooltip": "This is the site owner and developer. Approach at your own risk.",
@@ -1105,12 +1159,14 @@
       "visibilityPublic": "Anyone",
       "visibilityMembers": "Signed-in members only",
       "chooseNotifications": "Choose what reaches you",
-      "notificationsBody": "Control which in-app updates are added to your notification inbox. Critical account and security messages are not optional.",
+      "notificationsBody": "Control your in-app updates and optional email alerts. Critical account and security messages are not optional.",
       "notificationsUnavailable": "Notification preferences are temporarily unavailable.",
       "notifyIntroductions": "Introductions and replies",
       "notifyPhotos": "Photo-access requests and updates",
       "notifySupport": "Support request updates",
       "notifyVerification": "Profile verification reminders",
+      "emailSnailMail": "Email me when Snail Mail arrives",
+      "emailSnailMailBody": "Sends a private arrival notice only. Letter text, photos, and sensitive-content details are never included in the email.",
       "saveNotifications": "Save notification preferences",
       "notificationsSaved": "Notification preferences saved.",
       "profileLanguageTitle": "Profile and language",
@@ -1373,10 +1429,14 @@
       "photoRevokeFailed": "We couldn’t revoke photo access. Please try again.",
       "letterWait": "Please wait before sending another letter.",
       "letterFailed": "We couldn’t send that letter. Please try again.",
+      "letterPhotoInvalid": "Add up to three JPG, PNG, or WebP photos under 5 MB each.",
+      "letterPhotoUploadFailed": "We couldn’t upload one of those photos. Please try again.",
       "letterSent": "Letter sent",
       "letterUnavailable": "That letter isn’t available right now.",
       "letterTransit": "This letter is no longer in transit.",
-      "letterLost": "Letter lost in transit"
+      "letterLost": "Letter lost in transit",
+      "letterPhotoSafetyRequired": "Confirm the photo safety statement before sending photos.",
+      "letterPhotoRevealFailed": "Those photos could not be revealed. Please try again."
     },
     "profile": {
       "saveFailed": "We couldn’t save your profile changes. Please try again.",
@@ -1579,7 +1639,7 @@
       "changesTitle": "Changes to these Terms",
       "changesBody": "We may update these Terms as the service changes or legal requirements evolve. The current version and effective date will be published here. If a change materially affects existing members, we will provide reasonable notice or request renewed acceptance where appropriate.",
       "generalTitle": "General",
-      "generalBody": "If a provision of these Terms is unenforceable, the remaining provisions continue to apply. Failure to enforce a provision once does not waive it. Applicable mandatory consumer and data-protection rights remain unaffected. Disputes are subject to the law and courts that apply under mandatory rules to the particular relationship.",
+      "generalBody": "If a provision of these Terms is unenforceable, the remaining provisions continue to apply. Failure to enforce a provision once does not waive it. Applicable mandatory consumer and data-protection rights remain unaffected. Disputes are subject to the law and courts that apply under mandatory rules to the particular relationship. In the event of any discrepancy or conflict between the English version and any translated version of these Terms, the English version shall prevail.",
       "contactTitle": "Contact",
       "contactBody": "Questions about these Terms can be sent through the public Contact page or, for signed-in members, through Help & support."
     }

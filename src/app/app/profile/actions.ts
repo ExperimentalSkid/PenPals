@@ -177,6 +177,7 @@ export async function saveProfile(formData: FormData) {
     if (!hasCompletedProfile(savedEntryProfile, languages.length, interests.length) && nextStep) {
       redirect(`/app/profile/setup?saved=1#${nextStep}`);
     }
+    await supabase.rpc("complete_my_member_invite");
     redirect(existingProfile ? "/app" : "/app/welcome");
   }
   profileErrorRedirect(t("server.profile.saveFailed"));

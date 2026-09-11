@@ -79,6 +79,11 @@ export function readProductionAppConfig(env = process.env) {
     }
   }
 
+  const contactCorrelationSecret = requiredValue(env, "CONTACT_CORRELATION_HMAC_SECRET", errors);
+  if (contactCorrelationSecret && contactCorrelationSecret.length < 32) {
+    errors.push("CONTACT_CORRELATION_HMAC_SECRET must be at least 32 characters");
+  }
+
   const googleStateSecret = valueFrom(env, "GOOGLE_LOGIN_STATE_SECRET");
   if (googleStateSecret) {
     if (googleStateSecret !== googleStateSecret.trim() || /[\r\n]/.test(googleStateSecret) || googleStateSecret.length < 32) {

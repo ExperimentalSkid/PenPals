@@ -8,15 +8,9 @@ export function AuthSession() {
     const restoreSession = async () => {
       const supabase = createClient();
       
-      // This ensures the session is restored from localStorage on page load
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session) {
-        console.log("✅ Session restored for:", session.user.email);
-        // Optionally set the auth state in your app
-      } else {
-        console.log("⏳ No session found");
-      }
+      // Trigger Supabase's client-side session restoration without logging
+      // account identifiers or session state to the browser console.
+      await supabase.auth.getSession();
     };
     
     restoreSession();

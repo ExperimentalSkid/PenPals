@@ -33,9 +33,5 @@ export async function getAuthorizedProfilePhoto(
     return { allowed: true, url: null, error: Boolean(profile.error) };
   }
 
-  const signed = await service.storage.from("avatars").createSignedUrl(avatarPath, 3600);
-  if (signed.error || !signed.data?.signedUrl) {
-    return { allowed: true, url: null, error: true };
-  }
-  return { allowed: true, url: signed.data.signedUrl, error: false };
+  return { allowed: true, url: `/api/profile-photo/${encodeURIComponent(ownerUser)}`, error: false };
 }

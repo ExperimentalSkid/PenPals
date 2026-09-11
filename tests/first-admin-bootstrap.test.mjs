@@ -16,6 +16,7 @@ const validEnvironment = {
   NEXT_PUBLIC_SUPABASE_URL: "https://api.pen-pals.example",
   NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "sb_publishable_test_key",
   SUPABASE_SERVICE_ROLE_KEY: "sb_secret_test_key",
+  CONTACT_CORRELATION_HMAC_SECRET: "test-contact-correlation-secret-32-bytes-minimum",
   PENPALS_DATABASE_URL: "postgresql://owner:password@private-db.example:5432/postgres?sslmode=require",
 };
 

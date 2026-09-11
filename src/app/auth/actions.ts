@@ -7,6 +7,7 @@ import { createGoogleLoginIntent, googleLoginCallbackUrl, googleLoginIntentCooki
 import { redirect } from "next/navigation";
 import { getPageI18n } from "@/i18n/server";
 import { createLegalAcceptanceIntent, legalAcceptanceCookie, legalAcceptanceMaxAge, PRIVACY_VERSION, TERMS_VERSION } from "@/lib/auth/legal-acceptance";
+import { MEMBER_INVITE_COOKIE, MEMBER_INVITE_MAX_AGE, validMemberInviteToken } from "@/lib/auth/member-invite";
 
 const confirmationRedirect = async () => `${emailConfirmationOrigin(await headers())}/auth/confirm`;
 
@@ -93,6 +94,8 @@ export async function signUp(formData: FormData) {
   const password = String(formData.get("password") ?? "");
   const birthDate = String(formData.get("birth_date") ?? "");
   const legalAccepted = formData.get("legal_acceptance") === "accepted";
+  const inviteTokenValue = String(formData.get("member_invite_token") ?? "");
+  const memberInviteToken = validMemberInviteToken(inviteTokenValue) ? inviteTokenValue : undefined;
   if (!legalAccepted) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.legalAcceptanceRequired"))}`);
   const { data: ageResult, error: ageError } = await supabase.rpc("age_gate_signup", { p_email: email, p_birth_date: birthDate || null });
   if (ageError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.ageUnavailable"))}`);
@@ -101,7 +104,7 @@ export async function signUp(formData: FormData) {
   if (ageResult === "cooldown") redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.cooldown"))}`);
   if (password.length < 8) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.passwordLength"))}`);
   try {
-    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale, legal_acceptance: "accepted", terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION } } });
+    const { error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: await confirmationRedirect(), data: { locale, legal_acceptance: "accepted", terms_version: TERMS_VERSION, privacy_version: PRIVACY_VERSION, ...(memberInviteToken ? { member_invite_token: memberInviteToken } : {}) } } });
     if (error) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.signInEmailPassword"))}`);
   } catch (error) {
     if (error instanceof VerificationConfigurationError) redirect(`/sign-up?error=${encodeURIComponent(t("server.auth.emailVerificationUnavailable"))}`);
@@ -181,7 +184,7 @@ export async function resendVerificationEmail(formData: FormData) {
   redirect("/check-email?sent=1");
 }
 
-export async function prepareGoogleSignupLegalAcceptance() {
+export async function prepareGoogleSignupLegalAcceptance(inviteToken?: string) {
   const { locale } = await getPageI18n();
   const cookieStore = await cookies();
   cookieStore.set(legalAcceptanceCookie, createLegalAcceptanceIntent(locale), {
@@ -191,6 +194,15 @@ export async function prepareGoogleSignupLegalAcceptance() {
     path: "/auth/callback",
     maxAge: legalAcceptanceMaxAge,
   });
+  if (validMemberInviteToken(inviteToken)) {
+    cookieStore.set(MEMBER_INVITE_COOKIE, inviteToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/auth/callback",
+      maxAge: MEMBER_INVITE_MAX_AGE,
+    });
+  }
 }
 
 /**

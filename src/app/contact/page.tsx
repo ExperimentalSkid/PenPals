@@ -2,6 +2,7 @@ import Link from "next/link";
 import PublicInfoPage from "@/app/components/PublicInfoPage";
 import { submitPublicContact } from "./actions";
 import ContactSubmitButton from "./ContactSubmitButton";
+import ContactClientMetadataFields from "./ContactClientMetadataFields";
 import { getPageI18n, resolveLocale } from "@/i18n/server";
 import { localizedPublicMetadata } from "@/lib/seo/localized-metadata";
 import { localizedPublicPath } from "@/lib/seo/public";
@@ -50,10 +51,12 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
           <div className="border-b border-[#D9D3C8] pb-5">
             <h2 className="section-title-large">{t("contact.formTitle")}</h2>
             <p className="mt-2 text-sm leading-6 text-muted">{t("contact.warning")}</p>
+            <p className="mt-3 text-xs leading-5 text-black/50">{t("contact.privacyNotice")} <Link href={localizedPublicPath("/privacy", locale)} className="text-brand underline">{t("privacy.title")}</Link></p>
           </div>
           {(query.error || query.verification) && <p className="notice notice-error mt-6" role="alert">{query.error ?? (query.verification === "expired" ? t("contact.verificationExpired") : query.verification === "failed" ? t("contact.verificationFailed") : t("contact.verificationInvalid"))}</p>}
           <form action={submitPublicContact} className="mt-6 space-y-5">
             <input name="website" tabIndex={-1} autoComplete="off" className="hidden" aria-hidden="true" />
+            <ContactClientMetadataFields />
             <label className="field-label">{t("contact.name")} <span className="font-normal text-black/45">({t("common.optional")})</span><input name="name" maxLength={120} autoComplete="name" className="field mt-2 block w-full" /></label>
             <label className="field-label">{t("common.email")}<input name="email" type="email" maxLength={254} autoComplete="email" required className="field mt-2 block w-full" /></label>
             <label className="field-label">{t("contact.topic")}<select name="topic" required defaultValue="" className="field mt-2 block w-full"><option value="" disabled>{t("contact.chooseTopic")}</option>{topicValues.map((value) => <option key={value} value={value}>{topicLabels[value]}</option>)}</select></label>

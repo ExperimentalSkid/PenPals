@@ -97,21 +97,68 @@ export async function respondPhotoAccess(formData: FormData) {
 export async function revokePhotoAccess(formData: FormData) {
   const { t } = await getPageI18n(); const db = await createClient(); const { data } = await db.auth.getClaims(); if (!data?.claims?.sub) redirect("/sign-in"); const conversationId = String(formData.get("conversation_id")); const { error } = await db.rpc("revoke_photo_access", { viewer_user: String(formData.get("viewer_id")) }); if (error) redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(t("server.messages.photoRevokeFailed"))}`); redirect(`/app/messages/${conversationId}`); }
 
+const MAX_SNAIL_MAIL_PHOTOS = 3;
+const MAX_SNAIL_MAIL_PHOTO_BYTES = 5 * 1024 * 1024;
+const SNAIL_MAIL_PHOTO_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+
 export async function sendSnailMail(formData: FormData) {
+  const { t } = await getPageI18n();
+  const db = await createClient();
+  const { data } = await db.auth.getClaims();
+  const userId = data?.claims?.sub;
+  if (!userId) redirect("/sign-in");
+  const conversationId = String(formData.get("conversation_id"));
+  const body = String(formData.get("body") ?? "");
+  const idempotencyKey = String(formData.get("idempotency_key") ?? "").trim();
+  const photos = formData.getAll("photos").filter((value): value is File => value instanceof File && value.size > 0);
+  const sensitiveContent = formData.get("sensitive_content") === "on";
+  const safetyConfirmed = formData.get("photo_safety_confirmed") === "on";
+  if (photos.length && !safetyConfirmed) {
+    redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(t("server.messages.letterPhotoSafetyRequired"))}`);
+  }
+  if (photos.length > MAX_SNAIL_MAIL_PHOTOS || photos.some((photo) => photo.size > MAX_SNAIL_MAIL_PHOTO_BYTES || !SNAIL_MAIL_PHOTO_TYPES.has(photo.type))) {
+    redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(t("server.messages.letterPhotoInvalid"))}`);
+  }
+
+  const uploadedPaths: string[] = [];
+  const attachments: Array<{ storage_path: string; file_name: string; mime_type: string; size_bytes: number }> = [];
+  for (const photo of photos) {
+    const extension = photo.type === "image/png" ? "png" : photo.type === "image/webp" ? "webp" : "jpg";
+    const storagePath = `${userId}/${idempotencyKey || crypto.randomUUID()}/${crypto.randomUUID()}.${extension}`;
+    const upload = await db.storage.from("snail-mail-attachments").upload(storagePath, photo, { contentType: photo.type, upsert: false });
+    if (upload.error) {
+      if (uploadedPaths.length) await db.storage.from("snail-mail-attachments").remove(uploadedPaths);
+      redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(t("server.messages.letterPhotoUploadFailed"))}`);
+    }
+    uploadedPaths.push(storagePath);
+    attachments.push({ storage_path: storagePath, file_name: photo.name.slice(0, 200) || `photo.${extension}`, mime_type: photo.type, size_bytes: photo.size });
+  }
+
+  const { error } = await db.rpc("send_snail_mail_with_attachments", {
+    target_conversation: conversationId,
+    letter_body: body,
+    idempotency_key: idempotencyKey || null,
+    p_attachments: attachments,
+    p_sensitive_content: sensitiveContent,
+  });
+  if (error) {
+    if (uploadedPaths.length) await db.storage.from("snail-mail-attachments").remove(uploadedPaths);
+    const message = error.message?.includes("Please wait before sending another letter") ? t("server.messages.letterWait") : t("server.messages.letterFailed");
+    redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(message)}`);
+  }
+  redirect(`/app/messages/${conversationId}?message=${encodeURIComponent(t("server.messages.letterSent"))}`);
+}
+
+export async function revealSnailMailPhotos(formData: FormData) {
   const { t } = await getPageI18n();
   const db = await createClient();
   const { data } = await db.auth.getClaims();
   if (!data?.claims?.sub) redirect("/sign-in");
   const conversationId = String(formData.get("conversation_id"));
-  const body = String(formData.get("body") ?? "");
-  const idempotencyKey = String(formData.get("idempotency_key") ?? "").trim();
-  const { error } = await db.rpc("send_snail_mail", {
-    target_conversation: conversationId,
-    letter_body: body,
-    idempotency_key: idempotencyKey || null,
-  });
-  if (error) { const message = error.message?.includes("Please wait before sending another letter") ? t("server.messages.letterWait") : t("server.messages.letterFailed"); redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(message)}`); }
-  redirect(`/app/messages/${conversationId}?message=${encodeURIComponent(t("server.messages.letterSent"))}`);
+  const letterId = String(formData.get("letter_id"));
+  const { error } = await db.rpc("reveal_snail_mail_attachments", { letter_uuid: letterId });
+  if (error) redirect(`/app/messages/${conversationId}?error=${encodeURIComponent(t("server.messages.letterPhotoRevealFailed"))}`);
+  redirect(`/app/messages/${conversationId}`);
 }
 
 export async function markSnailMailRead(formData: FormData) {

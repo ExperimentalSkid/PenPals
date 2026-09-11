@@ -5,10 +5,11 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 
 type Role = "admin" | "moderator" | "user" | null | undefined;
-type IconName = "compass" | "users" | "profile" | "message" | "bell" | "settings" | "help" | "shield" | "inbox" | "chart";
+type IconName = "home" | "compass" | "users" | "profile" | "message" | "bell" | "settings" | "help" | "shield" | "inbox" | "chart";
 type NavItem = { href: string; label: string; icon: IconName; badge?: number; badgeLabel?: string };
 
 const mainItems: NavItem[] = [
+  { href: "/app/pen-pals", label: "My Pen Pals", icon: "home" },
   { href: "/app/discover", label: "Discover", icon: "compass" },
   { href: "/app/introductions", label: "Introductions", icon: "users" },
   { href: "/app/messages", label: "Messages", icon: "message" },
@@ -27,6 +28,7 @@ function NavIcon({ name }: { name: IconName }) {
   };
   return (
     <svg aria-hidden="true" viewBox="0 0 24 24" className="h-[21px] w-[21px] shrink-0" {...common}>
+      {name === "home" && <><path d="M4 11.2 12 4l8 7.2" /><path d="M6.5 10.5V20h11v-9.5" /><path d="M10 20v-5h4v5" /></>}
       {name === "compass" && <><circle cx="12" cy="12" r="8.5" /><path d="m14.8 9.2-1.7 3.9-3.9 1.7 1.7-3.9 3.9-1.7Z" /></>}
       {name === "users" && <><circle cx="9" cy="8" r="3" /><path d="M3.8 19c.5-3 2.2-4.5 5.2-4.5s4.7 1.5 5.2 4.5" /><path d="M15.5 5.5a3 3 0 0 1 0 5.8M16.1 14.7c2.2.4 3.5 1.8 4.1 4.3" /></>}
       {name === "profile" && <><circle cx="12" cy="8" r="3.2" /><path d="M5 20c.7-3.4 3-5.2 7-5.2s6.3 1.8 7 5.2" /></>}
@@ -72,7 +74,7 @@ function Item({ item, pathname, mobile = false }: { item: NavItem; pathname: str
 export default function AppNavigation({ unreadCount, modInboxCount, supportInboxCount, contactInboxCount, role, mobile = false }: { unreadCount: number; modInboxCount: number; supportInboxCount: number; contactInboxCount: number; role: Role; mobile?: boolean }) {
   const pathname = usePathname();
   const t = useTranslations();
-  const labels: Record<string, string> = { Discover: t("app.nav.discover"), Introductions: t("app.nav.introductions"), Messages: t("app.nav.messages"), Notifications: t("app.nav.notifications"), Settings: t("app.nav.settings"), "Help & support": t("app.nav.support") };
+  const labels: Record<string, string> = { "My Pen Pals": t("app.nav.penPals"), Discover: t("app.nav.discover"), Introductions: t("app.nav.introductions"), Messages: t("app.nav.messages"), Notifications: t("app.nav.notifications"), Settings: t("app.nav.settings"), "Help & support": t("app.nav.support") };
   const items = mainItems.map((item) => ({ ...item, label: labels[item.label] ?? item.label, ...(item.href === "/app/notifications" ? { badge: unreadCount, badgeLabel: t("app.nav.unreadNotifications") } : {}) }));
   if (mobile) {
     const staffItems: NavItem[] = [

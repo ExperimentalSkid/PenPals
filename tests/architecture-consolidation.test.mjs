@@ -100,7 +100,7 @@ test("successful profile saves refresh the shared app layout before redirecting"
       auth: { getClaims: async () => ({ data: { claims: { sub: "test-member" } } }) },
       from: () => ({ select() { return this; }, eq() { return this; },
         maybeSingle: async () => ({ data: { id: "test-member", username: "test_member" }, error: null }) }),
-      rpc: async () => { events.push("save"); return { data: null, error: null }; },
+      rpc: async (name) => { events.push(name === "save_profile" ? "save" : `rpc:${name}`); return { data: null, error: null }; },
     }) },
     "next/navigation": { redirect: (path) => { events.push(path); throw new Error("redirect"); } },
     "next/cache": { revalidatePath: (path, type) => events.push(`refresh:${path}:${type}`) },
@@ -114,6 +114,6 @@ test("successful profile saves refresh the shared app layout before redirecting"
   form.set("birth_date", "1995-03-21");
   form.set("country", "Norway");
   await assert.rejects(actions.saveProfile(form), /redirect/);
-  assert.deepEqual(events, ["save", "refresh:/app:layout", "/app"]);
+  assert.deepEqual(events, ["save", "refresh:/app:layout", "rpc:complete_my_member_invite", "/app"]);
   assert.match(await read("src/app/app/profile/setup/page.tsx"), /profile\?\.gender === "prefer_not_to_say" \? ""/);
 });

@@ -155,6 +155,13 @@
       "signOut": "Cerrar sesión"
     }
   },
+  "invite": {
+    "eyebrow": "Invitación privada",
+    "title": "Te han invitado a Pen-Pals",
+    "body": "{name} te ha invitado a unirte a Pen-Pals, un lugar para amistades internacionales auténticas, mensajes y Snail Mail digital.",
+    "join": "Crear tu cuenta",
+    "already": "¿Ya eres miembro?"
+  },
   "contact": {
     "eyebrow": "Contacto",
     "title": "Contacta con pen-pals.net",
@@ -188,13 +195,14 @@
       "bug": "Informar de un error",
       "feedback": "Comentarios",
       "other": "Otro"
-    }
+    },
+    "privacyNotice": "Para prevenir spam y abuso, este formulario registra metadatos de la solicitud como la dirección IP, datos del navegador/agente de usuario, información de la solicitud de Cloudflare cuando esté disponible, idioma y datos de zona horaria/reloj indicados por el navegador. Estas señales sirven para verificación y correlación; no demuestran identidad ni ubicación física. Consulta Privacidad para más información."
   },
   "privacy": {
     "eyebrow": "Privacidad",
     "title": "Privacidad y derechos sobre tus datos",
     "intro": "Esta página explica para qué utiliza pen-pals.net los datos, qué pueden controlar los miembros y dónde se encuentran las opciones para exportar o eliminar una cuenta.",
-    "updated": "Última actualización: 9 de septiembre de 2026",
+    "updated": "Última actualización: 11 de septiembre de 2026",
     "summary": "pen-pals.net utiliza datos personales para gestionar cuentas, perfiles, presentaciones, mensajes, Snail Mail, ajustes, soporte, moderación, controles de seguridad y la seguridad básica del servicio. No vende perfiles de miembros ni conversaciones privadas.",
     "dataTitle": "Datos que utiliza la aplicación",
     "cards": {
@@ -205,7 +213,7 @@
       "communicationTitle": "Datos de comunicación",
       "communicationBody": "Presentaciones, conversaciones, mensajes, cartas de Snail Mail, estado de entrega y lectura, notificaciones y preferencias de contacto.",
       "safetyTitle": "Datos de privacidad y seguridad",
-      "safetyBody": "Bloqueos, denuncias, registros de moderación, solicitudes de soporte, metadatos de archivos adjuntos, preferencias de disponibilidad y estado privado de verificación."
+      "safetyBody": "Bloqueos, denuncias, registros de moderación, solicitudes de soporte y de Contacto público, metadatos de archivos adjuntos, preferencias de disponibilidad, estado privado de verificación y metadatos limitados de seguridad/antiabuso utilizados para proteger el servicio."
     },
     "visibilityTitle": "Qué pueden ver otros miembros",
     "visibilityBody": "Las vistas de perfiles utilizan comprobaciones del servidor que respetan la privacidad. Los miembros pueden controlar la visibilidad del perfil, si se muestra la ciudad, el estado de actividad, la tasa de respuesta, los modos de comunicación, los usuarios bloqueados y quién puede enviar nuevas presentaciones. La verificación solo muestra si un perfil está verificado, no el método privado utilizado.",
@@ -219,7 +227,13 @@
     "rightsTitle": "Tus derechos",
     "rightsBody": "Dependiendo de dónde vivas, las leyes de privacidad pueden darte derechos para acceder, corregir, eliminar, limitar, exportar u oponerte a determinados tratamientos de tus datos personales. pen-pals.net incorpora estos controles prácticos siempre que es posible: exportación, corrección, eliminación, ajustes de privacidad, bloqueo y solicitudes de soporte.",
     "contactTitle": "Contacto",
-    "contactBody": "Para consultas sobre privacidad o derechos de datos, utiliza el formulario de contacto. Si puedes iniciar sesión, también puedes abrir Ayuda y soporte desde la aplicación."
+    "contactBody": "Para consultas sobre privacidad o derechos de datos, utiliza el formulario de contacto. Si puedes iniciar sesión, también puedes abrir Ayuda y soporte desde la aplicación.",
+    "contactDataTitle": "Formulario público de Contacto y datos antiabuso",
+    "contactDataBody": "Cuando utilizas el formulario público de Contacto, pen-pals.net trata el nombre que facilites, dirección de correo electrónico, tema, asunto, mensaje, estado de verificación del correo y metadatos limitados de la solicitud usados para prevenir spam y abuso, proteger la seguridad y preservar la integridad de las pruebas. Estos datos pueden incluir la dirección IP observada por el servidor, valores hash de IP/correlación, agente de usuario y señales del navegador, país/Ray de Cloudflare cuando estén disponibles, referente/origen, idioma aceptado y zona horaria, desfase UTC, reloj e idioma indicados por el navegador. Los valores informados por el navegador pueden falsificarse y se consideran únicamente señales de apoyo, no prueba de identidad ni ubicación.",
+    "contactPurposeTitle": "Por qué se utilizan los datos de seguridad de Contacto",
+    "contactPurposeBody": "Los datos de Contacto se utilizan para entregar y verificar tu mensaje, impedir abuso repetido o automatizado, correlacionar envíos reiterados, investigar usos indebidos graves, preservar pruebas cuando una investigación documentada o una necesidad legal lo requiera y mantener un registro auditable del acceso o exportación privilegiados de pruebas. El acceso a las pruebas protegidas de Contacto y a las herramientas de investigación está restringido al personal autorizado; las acciones más sensibles de preservación, investigación y exportación están limitadas a administradores. Estas actividades de seguridad y prevención del abuso se realizan generalmente sobre la base de intereses legítimos en operar y proteger el servicio, prevenir fraude o usos ilícitos y formular, ejercer o defender reclamaciones legales cuando corresponda.",
+    "contactRetentionTitle": "Conservación de Contacto e investigaciones",
+    "contactRetentionBody": "Los envíos de Contacto no verificados utilizan un enlace de verificación de correo de un solo uso que caduca tras una hora; los registros de verificación pendientes obsoletos se limpian automáticamente y, una vez creado el ticket de Contacto, el contenido enviado se elimina del registro pendiente verificado. Los tickets de Contacto resueltos quedan sujetos a las reglas de conservación configuradas por los administradores. Los asuntos graves pueden quedar sujetos a una retención documentada a nivel de registro o de categoría, incluso mientras una investigación permanezca activa. Cuando se libera la retención y una regla de conservación aplicable permite la eliminación, el ticket de Contacto y sus registros dependientes de mensajes/pruebas se eliminan conjuntamente."
   },
   "faq": {
     "eyebrow": "Ayuda",
@@ -391,6 +405,7 @@
   },
   "app": {
     "nav": {
+      "penPals": "Mis Pen Pals",
       "discover": "Descubrir",
       "introductions": "Presentaciones",
       "messages": "Mensajes",
@@ -412,6 +427,24 @@
       "privacy": "Privacidad",
       "gdpr": "RGPD",
       "faq": "Preguntas frecuentes"
+    },
+    "penPals": {
+      "eyebrow": "Tu gente",
+      "title": "Mis Pen Pals",
+      "intro": "Las amistades que ya has empezado, con tu correspondencia de un vistazo.",
+      "list": "Tus pen pals",
+      "sent": "Enviados",
+      "received": "Recibidos",
+      "lastContact": "Último contacto",
+      "noContact": "Todavía no",
+      "unread": "Sin leer",
+      "openConversation": "Abrir conversación",
+      "viewProfile": "Ver perfil",
+      "emptyTitle": "Aún no tienes pen pals",
+      "emptyBody": "Cuando una presentación se convierta en conversación, esa persona aparecerá aquí.",
+      "discover": "Descubrir a alguien nuevo",
+      "deletedUser": "Usuario eliminado",
+      "loadError": "No pudimos cargar tus pen pals ahora mismo. Inténtalo de nuevo."
     },
     "discover": {
       "eyebrow": "Descubrir",
@@ -699,6 +732,9 @@
       "write": "Escribir una carta",
       "yourLetter": "Tu carta",
       "limit": "Hasta 5.000 caracteres",
+      "photos": "Fotos",
+      "photosHint": "Opcional · hasta 3 fotos · JPG, PNG o WebP · 5 MB cada una · almacenamiento temporal",
+      "attachedPhotos": "Fotos adjuntas",
       "send": "Enviar carta",
       "cancelCompose": "Cancelar",
       "description": "Envía una carta digital. El tiempo de entrega se fija al enviarla.",
@@ -750,7 +786,12 @@
       "lostPigeon2": "La paloma no ha vuelto a dar señales desde el viaje.",
       "lostDefault1": "Perdida en tránsito. En alguna oficina de clasificación tendrán que dar explicaciones.",
       "lostDefault2": "Esta carta nunca llegó a su destino.",
-      "journeyMapLabel": "Recorrido aproximado de la carta de {origin} a {destination}, {percent} por ciento completado"
+      "journeyMapLabel": "Recorrido aproximado de la carta de {origin} a {destination}, {percent} por ciento completado",
+      "sensitivePhotosLabel": "Estas fotos contienen desnudos o contenido sexual. Ocúltalas tras un aviso para el destinatario.",
+      "photoSafetyConfirmation": "Confirmo que he clasificado estas fotos correctamente y que no envío contenido sexual o desnudos sin el consentimiento del destinatario.",
+      "sensitivePhotosWarning": "Esta carta contiene fotos que el remitente marcó como desnudos o contenido sexual. Permanecen ocultas hasta que decidas verlas.",
+      "showSensitivePhotos": "Mostrar fotos sensibles",
+      "photoRetention": "Las fotos son temporales: 14 días activos después de leer la carta, o 30 días activos tras la entrega si no se lee. El modo inactivo voluntario pausa el plazo."
     },
     "profile": {
       "preview": "Vista previa de tu perfil",
@@ -804,6 +845,19 @@
       "photoVisible": "Foto visible para ti",
       "verifiedTooltip": "Verificado en los últimos 30 días mediante una aplicación de autenticación u otro método aprobado. Esto ayuda a mostrar que una persona controla activamente la cuenta; no es una garantía sobre la persona ni su actividad.",
       "edit": "Editar perfil",
+      "inviteTitle": "Invitar a alguien",
+      "inviteBody": "¿Conoces a alguien a quien le gustaría una amistad internacional con más intención? Crea un enlace de invitación privado para compartirlo.",
+      "inviteCreate": "Crear enlace de invitación",
+      "inviteCreating": "Creando…",
+      "inviteCopy": "Copiar enlace",
+      "inviteCopied": "Copiado",
+      "inviteRevoke": "Revocar",
+      "inviteRevoked": "Invitación revocada.",
+      "inviteExpires": "Caduca el {date}",
+      "inviteActive": "Invitaciones activas",
+      "inviteOpened": "Abierta",
+      "inviteUnopened": "Aún no abierta",
+      "inviteError": "No pudimos actualizar esta invitación ahora mismo.",
       "goToInbox": "Ir a mensajes",
       "more": "más",
       "ownerTooltip": "Este es el propietario y desarrollador del sitio. Acércate bajo tu propia responsabilidad.",
@@ -1105,12 +1159,14 @@
       "visibilityPublic": "Cualquiera",
       "visibilityMembers": "Solo miembros con sesión iniciada",
       "chooseNotifications": "Elige qué avisos quieres recibir",
-      "notificationsBody": "Controla qué actualizaciones internas se añaden a tu bandeja de notificaciones. Los avisos críticos de cuenta y seguridad no son opcionales.",
+      "notificationsBody": "Controla tus actualizaciones internas y los avisos opcionales por correo. Los avisos críticos de cuenta y seguridad no son opcionales.",
       "notificationsUnavailable": "Las preferencias de notificaciones no están disponibles temporalmente.",
       "notifyIntroductions": "Presentaciones y respuestas",
       "notifyPhotos": "Solicitudes y cambios de acceso a fotos",
       "notifySupport": "Actualizaciones de solicitudes de soporte",
       "notifyVerification": "Recordatorios de verificación del perfil",
+      "emailSnailMail": "Enviarme un correo cuando llegue Snail Mail",
+      "emailSnailMailBody": "Solo envía un aviso privado de llegada. El texto de la carta, las fotos y los detalles de contenido sensible nunca se incluyen en el correo.",
       "saveNotifications": "Guardar preferencias de notificaciones",
       "notificationsSaved": "Preferencias de notificaciones guardadas.",
       "profileLanguageTitle": "Perfil e idioma",
@@ -1373,10 +1429,14 @@
       "photoRevokeFailed": "No pudimos revocar el acceso a la foto. Inténtalo de nuevo.",
       "letterWait": "Espera antes de enviar otra carta.",
       "letterFailed": "No pudimos enviar esa carta. Inténtalo de nuevo.",
+      "letterPhotoInvalid": "Añade hasta tres fotos JPG, PNG o WebP de menos de 5 MB cada una.",
+      "letterPhotoUploadFailed": "No pudimos subir una de esas fotos. Inténtalo de nuevo.",
       "letterSent": "Carta enviada",
       "letterUnavailable": "Esa carta no está disponible ahora mismo.",
       "letterTransit": "Esta carta ya no está en tránsito.",
-      "letterLost": "Carta perdida en tránsito"
+      "letterLost": "Carta perdida en tránsito",
+      "letterPhotoSafetyRequired": "Confirma la declaración de seguridad de las fotos antes de enviarlas.",
+      "letterPhotoRevealFailed": "No se pudieron mostrar esas fotos. Inténtalo de nuevo."
     },
     "profile": {
       "saveFailed": "No pudimos guardar los cambios de tu perfil. Inténtalo de nuevo.",
@@ -1579,7 +1639,7 @@
       "changesTitle": "Cambios en estos Términos",
       "changesBody": "Podemos actualizar estos Términos cuando cambie el servicio o evolucionen los requisitos legales. La versión y fecha de entrada en vigor vigentes se publicarán aquí. Si un cambio afecta de forma material a miembros existentes, proporcionaremos un aviso razonable o solicitaremos una nueva aceptación cuando corresponda.",
       "generalTitle": "Disposiciones generales",
-      "generalBody": "Si una disposición de estos Términos no fuera exigible, las demás seguirán siendo aplicables. El hecho de no exigir una disposición en una ocasión no implica renunciar a ella. Los derechos obligatorios de consumidores y protección de datos permanecen intactos. Las controversias quedan sujetas a la ley y los tribunales que resulten aplicables conforme a las normas imperativas de la relación concreta.",
+      "generalBody": "Si una disposición de estos Términos no fuera exigible, las demás seguirán siendo aplicables. El hecho de no exigir una disposición en una ocasión no implica renunciar a ella. Los derechos obligatorios de consumidores y protección de datos permanecen intactos. Las controversias quedan sujetas a la ley y los tribunales que resulten aplicables conforme a las normas imperativas de la relación concreta. En caso de discrepancia o conflicto entre la versión en inglés y cualquier versión traducida de estos Términos, prevalecerá la versión en inglés.",
       "contactTitle": "Contacto",
       "contactBody": "Puedes enviar preguntas sobre estos Términos mediante la página pública de Contacto o, si has iniciado sesión, mediante Ayuda y soporte."
     }

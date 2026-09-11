@@ -6,6 +6,7 @@ import { createInboxProfileLoader } from "./inbox-profiles";
 import { redirect } from "next/navigation";
 import { isLostInTransit, lostInTransitCopy } from "@/app/app/messages/snailMailStory";
 import { isPrivateAvatarPath } from "@/lib/avatar";
+import { getAuthorizedProfilePhoto } from "@/lib/private-avatar-server";
 import { getPageI18n } from "@/i18n/server";
 import SnailMailJourneyMap from "./SnailMailJourneyMap";
 
@@ -211,7 +212,7 @@ export default async function Messages() {
       avatar_path: row.other_avatar_path,
     } : null;
     const photo = other?.avatar_path && isPrivateAvatarPath(other.avatar_path, other.id)
-      ? (await db.storage.from("avatars").createSignedUrl(other.avatar_path, 3600)).data?.signedUrl ?? null
+      ? (await getAuthorizedProfilePhoto(db, other.id, uid)).url
       : null;
     return {
       id: row.conversation_id,

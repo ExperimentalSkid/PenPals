@@ -1,2 +1,2 @@
 import {redirect} from "next/navigation";
-export default function AppPage(){redirect('/app/discover')}
+export default function AppPage(){redirect('/app/pen-pals')}

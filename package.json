@@ -16,7 +16,7 @@
     "jobs:run": "node scripts/run-background-jobs.mjs",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test",
+    "test": "node --test --test-concurrency=1",
     "schema:lint": "node scripts/schema-lint.mjs",
     "schema:check": "node scripts/check-migrations.mjs",
     "schema:check:local": "node scripts/check-migrations.mjs --local",
