@@ -7,6 +7,7 @@ import { LOCAL_DB_CONTAINER } from "./helpers/local-db.mjs";
 const root = new URL("../", import.meta.url);
 const migration = await readFile(new URL("supabase/migrations/20260903130000_harden_avatar_path_compatibility.sql", root), "utf8");
 const helper = await readFile(new URL("src/lib/avatar.ts", root), "utf8");
+const privateAvatarServer = await readFile(new URL("src/lib/private-avatar-server.ts", root), "utf8");
 const profilePage = await readFile(new URL("src/app/app/profile/[username]/page.tsx", root));
 const blockedPage = await readFile(new URL("src/app/app/settings/blocked/page.tsx", root));
 const profileActions = await readFile(new URL("src/app/app/profile/actions.ts", root));
@@ -22,7 +23,8 @@ test("legacy avatar values are quarantined, preserved, and rejected by the profi
   assert.match(migration, /Invalid avatar path/);
   assert.match(migration, /public\.is_private_avatar_path\(p\.id,p\.avatar_path\)/);
   assert.match(helper, /Legacy external URLs intentionally return false/);
-  assert.match(profilePage.toString(), /isPrivateAvatarPath\(profile\.avatar_path, targetId\)/);
+  assert.match(profilePage.toString(), /getAuthorizedProfilePhoto\(db, targetId, auth\.claims\.sub\)/);
+  assert.match(privateAvatarServer, /isPrivateAvatarPath\(avatarPath, ownerUser\)/);
   assert.doesNotMatch(blockedPage.toString(), /profiles\(username,display_name,avatar_path\)/);
   assert.match(profileActions.toString(), /isPrivateAvatarPath\(profile\.avatar_path, uid\)/);
 });

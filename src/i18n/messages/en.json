@@ -804,6 +804,7 @@
       "photoVisible": "Photo visible to you",
       "verifiedTooltip": "Verified within the last 30 days using an authenticator app or another approved method. This helps show the account is actively controlled by a person; it is not a guarantee about the person or their activity.",
       "edit": "Edit profile",
+      "goToInbox": "Go to inbox",
       "more": "more",
       "ownerTooltip": "This is the site owner and developer. Approach at your own risk.",
       "badges": "Badges",

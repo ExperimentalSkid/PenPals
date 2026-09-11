@@ -50,6 +50,7 @@ type ProfileViewProps = {
   backLabel?: string;
   reportError?: string | null;
   reportSubmitted?: boolean;
+  existingConversationId?: string | null;
 };
 
 type DetailIconName = "languages" | "interests" | "response" | "communication" | "location" | "eye";
@@ -77,7 +78,7 @@ function interestName(value: ProfileInterest["interests"]) {
   return relation?.name?.trim() || null;
 }
 
-export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "", reportError = null, reportSubmitted = false }: ProfileViewProps) {
+export default async function ProfileView({ profile, displayName, age, location, activity, responseRate, photo, languages, interests, friendshipDestinations = [], personality, communicationPreference, languageCompatibility, badges, blocked, targetId, username, reportControl, isOwn, backHref = "/app/discover", backLabel = "", reportError = null, reportSubmitted = false, existingConversationId = null }: ProfileViewProps) {
   const { t } = await getPageI18n();
   const initial = displayName.trim().charAt(0).toUpperCase() || "·";
   const communicationModes = communicationPreference === "snail_mail"
@@ -124,7 +125,7 @@ export default async function ProfileView({ profile, displayName, age, location,
               />
             </div>}
             <div className="mt-5 w-full [&>button]:min-h-11 [&>button]:w-full [&>button]:rounded-md">
-              {isOwn ? <Link href="/app/profile/setup" className="btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-md text-center">{t("app.profile.edit")}</Link> : <IcebreakerModal action={startConversation} userId={targetId} username={username} recipientName={displayName} interestNames={interests.flatMap((interest) => { const name = interestName(interest.interests); return name ? [name] : []; })} />}
+              {isOwn ? <Link href="/app/profile/setup" className="btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-md text-center">{t("app.profile.edit")}</Link> : existingConversationId ? <Link href={`/app/messages/${existingConversationId}`} className="btn-primary inline-flex min-h-11 w-full items-center justify-center rounded-md text-center">{t("app.profile.goToInbox")}</Link> : <IcebreakerModal action={startConversation} userId={targetId} username={username} recipientName={displayName} interestNames={interests.flatMap((interest) => { const name = interestName(interest.interests); return name ? [name] : []; })} />}
             </div>
             {!isOwn && <div className="mt-3 w-full"><details className="relative"><summary className="flex cursor-pointer list-none items-center justify-between rounded-md border border-[#d7d0c3] bg-[#fbfaf6] px-4 py-3 text-sm font-medium text-primary transition hover:bg-white/75">{t("app.profile.more")} <span className="text-black/40" aria-hidden="true">⌄</span></summary><div className="absolute left-0 top-[calc(100%+6px)] z-20 w-full rounded-md border border-black/10 bg-[#fffdfa] p-2 shadow-lg"><div className="p-1"><BlockControl blocked={blocked} id={targetId} username={username} /></div><div className="border-t border-black/[0.06] p-1 pt-2">{reportControl}</div></div></details></div>}
           </aside>

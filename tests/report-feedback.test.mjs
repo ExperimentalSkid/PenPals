@@ -35,6 +35,7 @@ async function loadPage(path) {
     "next/image": { default: component }, "next/link": { default: component },
     "next/navigation": { redirect() { throw new Error("Unexpected redirect"); }, notFound() { throw new Error("Unexpected notFound"); } },
     "@/lib/supabase/server": { createClient: async () => db },
+    "@/lib/private-avatar-server": { getAuthorizedProfilePhoto: async () => ({ allowed: false, url: null, error: false }) },
     "@/app/app/messages/actions": { markRead: async () => null },
     "@/app/app/messages/snailMailStory": { isLostInTransit: () => false },
     "@/app/PresenceProvider": { PresenceStatus: component },

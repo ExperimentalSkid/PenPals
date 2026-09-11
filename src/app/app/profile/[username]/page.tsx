@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { isPrivateAvatarPath } from "@/lib/avatar";
+import { getAuthorizedProfilePhoto } from "@/lib/private-avatar-server";
 import { submitReport } from "@/app/app/reports/actions";
 import { safeAdminReturnTo } from "@/app/app/admin/investigation-context";
 import { deriveLanguageCompatibility, languageNameFromRelation, type LanguageCompatibilityEntry, type LanguageRelation } from "@/lib/language-compatibility";
@@ -63,11 +63,10 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   const identity = Array.isArray(identityData) ? identityData[0] : identityData;
   if (!identity) notFound();
   const targetId = identity.id;
-  const [languageResult, interestResult, blockResult, photoAccess, communicationModeResult, personalityResult, friendshipDestinationResult, viewerLanguageResult, staffRoleResult, badgeResult] = await Promise.all([
+  const [languageResult, interestResult, blockResult, communicationModeResult, personalityResult, friendshipDestinationResult, viewerLanguageResult, staffRoleResult, badgeResult] = await Promise.all([
     targetId ? db.from("profile_languages").select("language_id, languages(name), proficiency, purpose").eq("profile_id", targetId) : Promise.resolve({ data: [] }),
     targetId ? db.from("profile_interests").select("interest_id, interests(name)").eq("profile_id", targetId) : Promise.resolve({ data: [] }),
     targetId ? db.from("profile_blocks").select("blocked_id").eq("blocker_id", auth.claims.sub).eq("blocked_id", targetId).maybeSingle() : Promise.resolve({ data: null }),
-    targetId ? db.rpc("can_view_profile_photo", { owner_user: targetId, viewer_user: auth.claims.sub }) : Promise.resolve({ data: false }),
     targetId ? db.rpc("get_public_communication_mode", { target_user: targetId }) : Promise.resolve({ data: null }),
     targetId ? db.rpc("get_public_personality_lifestyle", { target_user: targetId }) : Promise.resolve({ data: null }),
     targetId ? db.rpc("get_public_friendship_destinations", { target_user: targetId }) : Promise.resolve({ data: [] }),
@@ -82,10 +81,8 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
   const reportControl: ReactNode = isOwn ? null : <details><summary className="flex min-h-10 cursor-pointer list-none items-center rounded-md px-3 py-2 text-sm font-medium text-black/60 transition hover:bg-black/[0.035] hover:text-primary">{t("app.reports.profile")}</summary><form action={submitReport} className="user-soft-panel mt-2 space-y-3 p-3"><input type="hidden" name="target_type" value="profile" /><input type="hidden" name="target_id" value={targetId ?? ""} /><input type="hidden" name="return_to" value={`/app/profile/${encodeURIComponent(profile.username)}`} /><select name="reason" className="field w-full text-sm" aria-label={t("app.reports.reason")}><option value="spam">{t("app.reports.spam")}</option><option value="scam/fraud">{t("app.reports.scam")}</option><option value="harassment">{t("app.reports.harassment")}</option><option value="sexual/inappropriate content">{t("app.reports.sexual")}</option><option value="hate/abuse">{t("app.reports.hate")}</option><option value="fake profile/impersonation">{t("app.reports.fake")}</option><option value="underage concern">{t("app.reports.underage")}</option><option value="other">{t("app.reports.other")}</option></select><textarea name="details" aria-label={t("app.reports.details")} className="field min-h-24 w-full text-sm" placeholder={t("app.profile.reportDetailsPlaceholder")} /><button className="user-danger-button w-full">{t("app.reports.profile")}</button></form></details>;
   const displayName = profile.display_name?.replace(/\b\w/g, (character: string) => character.toUpperCase()) ?? profile.username;
   const age = typeof profile.age === "number" ? profile.age : (typeof identity.age === "number" ? identity.age : null);
-  let photo: string | null = null;
-  if (photoAccess.data && profile.avatar_path && isPrivateAvatarPath(profile.avatar_path, targetId)) {
-    photo = (await db.storage.from("avatars").createSignedUrl(profile.avatar_path, 3600)).data?.signedUrl ?? null;
-  }
+  const authorizedPhoto = targetId ? await getAuthorizedProfilePhoto(db, targetId, auth.claims.sub) : { allowed: false, url: null, error: false };
+  const photo = authorizedPhoto.url;
   const activity = profile.activity_status ?? null;
   const viewProfile = {
     ...profile,
@@ -93,6 +90,12 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
     show_activity_status: activity !== null,
     availability: activity === "Away" ? "away" : "available",
   };
+  const existingMemberships = isOwn ? { data: [], error: null } : await db.from("conversation_participants").select("conversation_id").eq("user_id", auth.claims.sub);
+  const existingConversationIds = (existingMemberships.data ?? []).map((row) => row.conversation_id);
+  const existingConversationResult = !isOwn && existingConversationIds.length
+    ? await db.from("conversation_participants").select("conversation_id").eq("user_id", targetId).in("conversation_id", existingConversationIds).limit(1).maybeSingle()
+    : { data: null, error: null };
+  const existingConversationId = existingConversationResult.data?.conversation_id ?? null;
   const backHref = adminReturnTo
     ? adminReturnTo
     : navigation.from === "conversation" && navigation.conversation
@@ -121,5 +124,5 @@ export default async function ProfilePage({ params, searchParams }: { params: Pr
       ? profile.country.trim()
       : null;
   const friendshipDestinations = Array.isArray(friendshipDestinationResult.data) ? friendshipDestinationResult.data : [];
-  return <ProfileView profile={viewProfile} displayName={displayName} age={age} location={location ?? ""} activity={activity} responseRate={profile.response_rate_label ?? null} photo={photo} languages={languageResult.data ?? []} interests={interestResult.data ?? []} friendshipDestinations={friendshipDestinations} personality={personalityResult.data ?? null} communicationPreference={communicationModeResult.data ?? null} languageCompatibility={languageCompatibility} badges={badgeKeys(badgeResult.data)} blocked={Boolean(blockResult.data)} targetId={targetId} username={profile.username} reportControl={reportControl} isOwn={isOwn} backHref={backHref} backLabel={backLabel} reportError={navigation.error ?? null} reportSubmitted={navigation.reported === "1"} />;
+  return <ProfileView profile={viewProfile} displayName={displayName} age={age} location={location ?? ""} activity={activity} responseRate={profile.response_rate_label ?? null} photo={photo} languages={languageResult.data ?? []} interests={interestResult.data ?? []} friendshipDestinations={friendshipDestinations} personality={personalityResult.data ?? null} communicationPreference={communicationModeResult.data ?? null} languageCompatibility={languageCompatibility} badges={badgeKeys(badgeResult.data)} blocked={Boolean(blockResult.data)} targetId={targetId} username={profile.username} reportControl={reportControl} isOwn={isOwn} backHref={backHref} backLabel={backLabel} reportError={navigation.error ?? null} reportSubmitted={navigation.reported === "1"} existingConversationId={existingConversationId} />;
 }

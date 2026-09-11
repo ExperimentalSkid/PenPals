@@ -12,6 +12,7 @@ import LanguageFlag from "@/app/components/LanguageFlag";
 import ConversationThread from "./ConversationThread";
 import SnailMailPanel, { type SnailMailLetter } from "./SnailMailPanel";
 import { isPrivateAvatarPath, isSignedAvatarUrl } from "@/lib/avatar";
+import { getAuthorizedProfilePhoto } from "@/lib/private-avatar-server";
 import { deriveLanguageCompatibility, formatLanguageProficiency, type LanguageCompatibilityEntry } from "@/lib/language-compatibility";
 import { getPageI18n } from "@/i18n/server";
 
@@ -119,18 +120,14 @@ export default async function Conversation({ params, searchParams }: { params: P
 
   const photoRequestsResult = await db.from("profile_photo_access_requests").select("id,requester_id,owner_id,status,created_at,updated_at").eq("conversation_id", id).order("created_at", { ascending: false });
   const photoRequests = photoRequestsResult.data ?? [];
-  const photoGrantResult = targetId ? await db.rpc("can_view_profile_photo", { owner_user: targetId, viewer_user: uid }) : { data: false, error: null };
-  const photoGrant = Boolean(photoGrantResult.data);
+  const authorizedPhoto = targetId ? await getAuthorizedProfilePhoto(db, targetId, uid) : { allowed: false, url: null, error: false };
+  const photoGrant = authorizedPhoto.allowed;
   const ownGrantResult = targetId ? await db.from("profile_photo_access_grants").select("owner_id").eq("owner_id", uid).eq("viewer_id", targetId).maybeSingle() : { data: null, error: null };
   const ownGrant = ownGrantResult.data;
-  const photoStateError = Boolean(publicResult.error || photoRequestsResult.error || photoGrantResult.error || ownGrantResult.error || ownProfileResult.error || pairBlockResult.error);
+  const photoStateError = Boolean(publicResult.error || photoRequestsResult.error || authorizedPhoto.error || ownGrantResult.error || ownProfileResult.error || pairBlockResult.error);
   const ownPhotoAvailable = Boolean(ownProfileResult.data?.avatar_path && isPrivateAvatarPath(ownProfileResult.data.avatar_path, uid));
   const now = currentTimestamp();
-  let photoUrl: string | null = null;
-  const path = publicProfile.avatar_path;
-  if (photoGrant && path && isPrivateAvatarPath(path, targetId)) {
-    photoUrl = (await db.storage.from("avatars").createSignedUrl(path, 3600)).data?.signedUrl ?? null;
-  }
+  const photoUrl = authorizedPhoto.url;
 
   const messagePageResult = await db.from("messages").select("id,body,created_at,sender_id,moderation_status,reply_to_message_id").eq("conversation_id", id).order("created_at", { ascending: false }).limit(51);
   const messageHistoryLoadFailed = Boolean(messagePageResult.error);

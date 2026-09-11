@@ -6,6 +6,7 @@ const root = new URL("../", import.meta.url);
 const duplicateGuard = await readFile(new URL("supabase/migrations/20260904153000_prevent_duplicate_snail_mail_acceptance.sql", root), "utf8");
 const actions = await readFile(new URL("src/app/app/messages/actions.ts", root), "utf8");
 const profileView = await readFile(new URL("src/app/app/profile/[username]/ProfileView.tsx", root), "utf8");
+const profilePage = await readFile(new URL("src/app/app/profile/[username]/page.tsx", root), "utf8");
 const conversationPage = await readFile(new URL("src/app/app/messages/[id]/page.tsx", root), "utf8");
 
 test("acceptance serializes participant pairs for Snail-Mail-only relationships", () => {
@@ -22,4 +23,8 @@ test("contact actions and conversation UI remain mode-aware after acceptance", (
   assert.match(conversationPage, /conversationMode === "snail_mail"/);
   assert.match(conversationPage, /canComposeSnailMail/);
   assert.match(profileView, /<IcebreakerModal action=\{startConversation\}/);
+  assert.match(profileView, /existingConversationId \? <Link href=\{`\/app\/messages\/\$\{existingConversationId\}`\}/);
+  assert.match(profileView, /app\.profile\.goToInbox/);
+  assert.match(profilePage, /conversation_participants/);
+
 });
