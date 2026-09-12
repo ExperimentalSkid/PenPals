@@ -19,3 +19,8 @@ Each backup contains the PostgreSQL custom-format dump, Supabase Storage files, 
 Always restore into an isolated database/container first. The production Supabase Postgres image uses a restricted `postgres` role; full archive restoration was validated with `supabase_admin`. Validate schema/data and Storage before any production recovery.
 
 Never overwrite a running production database as the first restore test.
+## Health monitoring
+
+`penpals-backup-health.timer` runs hourly. It fails visibly in systemd if the most recent successful backup is more than 36 hours old, its recorded backup directory/checksum manifest is missing, or the daily backup timer is inactive.
+
+Status markers are stored under `/var/backups/penpals/.status/`. A successful backup refreshes `last-success`, `last-success-epoch`, and `last-success-path`; a failed backup records `last-failure`.

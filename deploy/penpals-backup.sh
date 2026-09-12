@@ -13,7 +13,15 @@ LOCK=/run/lock/penpals-backup.lock
 exec 9>"$LOCK"
 flock -n 9 || { echo "backup already running" >&2; exit 0; }
 mkdir -p "$DEST"
-trap 'rm -rf "$DEST"' ERR
+STATUS_DIR="$BACKUP_ROOT/.status"
+mkdir -p "$STATUS_DIR"
+backup_failed() {
+  rc=$?
+  rm -rf "$DEST"
+  printf '%s\n' "$STAMP" > "$STATUS_DIR/last-failure"
+  exit "$rc"
+}
+trap backup_failed ERR
 
 # Database: custom-format PostgreSQL archive.
 docker exec supabase-db pg_dump -U postgres -d postgres -Fc > "$DEST/postgres.dump"
@@ -79,4 +87,8 @@ printf 'created_utc=%s\nretention_days=%s\n' "$STAMP" "$RETENTION_DAYS" > "$DEST
 )
 chmod -R go-rwx "$DEST"
 find "$BACKUP_ROOT" -mindepth 1 -maxdepth 1 -type d -mtime +"$RETENTION_DAYS" -exec rm -rf -- {} +
+printf '%s\n' "$STAMP" > "$STATUS_DIR/last-success"
+date -u +%s > "$STATUS_DIR/last-success-epoch"
+printf '%s\n' "$DEST" > "$STATUS_DIR/last-success-path"
+rm -f "$STATUS_DIR/last-failure"
 echo "Pen-Pals backup complete: $DEST"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly Pen-Pals.net backup health check
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=penpals-backup-health.service
+
+[Install]
+WantedBy=timers.target
