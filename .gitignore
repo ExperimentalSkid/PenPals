@@ -51,3 +51,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local AI/tooling skill state (not application source)
+/.agents/
+/.claude/
+/skills-lock.json
+
+# local/source-only artifacts that must not enter the application tree
+/Resources/
+/middleware.ts.disabled
+/src/app/app/profile/actions.ts.bak*
